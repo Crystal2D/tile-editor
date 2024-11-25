@@ -1,0 +1,119 @@
+class InputHandler extends GameBehavior
+{
+    #draggingView = false;
+    #mouseX = 0;
+    #mouseY = 0;
+    #mouseXOld = 0;
+    #mouseYOld = 0;
+
+    #docBody = null;
+    #cam = null;
+    #grid = null;
+    #previewTile = null;
+    #viewMat = null;
+    #mousePos = null;
+
+    #testMap = null;
+
+    Start ()
+    {
+        this.#docBody = document.body;
+        this.#cam = GameObject.Find("camera").GetComponent("Camera");
+        this.#grid = GameObject.Find("obj_tiles").GetComponent("Grid");
+        this.#previewTile = GameObject.Find("preview_tile");
+
+        this.RecalcViewMat();
+
+        this.#testMap = GameObject.FindComponents("Tilemap")[0];
+
+        FPSMeter.SetActive(true);
+    }
+
+    OnEnable ()
+    {
+        InputManager.onWheel.Add(delta => {
+            if (this.#cam.orthographicSize + this.#cam.orthographicSize * delta < 0) return;
+
+            this.#cam.orthographicSize += this.#cam.orthographicSize * delta;
+
+            // this.#cam.transform.position = this.#mousePos;
+
+            this.RecalcViewMat();
+        });
+    }
+
+    OnDisable ()
+    {
+        InputManager.onWheel.Clear();
+    }
+
+    Update ()
+    {
+        this.#mouseXOld = this.#mouseX;
+        this.#mouseX = InputManager.GetMouseX();
+
+        this.#mouseYOld = this.#mouseY;
+        this.#mouseY = InputManager.GetMouseY();
+
+        if (InputManager.GetKey("right") || InputManager.GetKey("middle")) this.DragView();
+        if (this.#draggingView && ((InputManager.GetKeyUp("right") && !InputManager.GetKey("middle")) || (InputManager.GetKeyUp("middle") && !InputManager.GetKey("right"))))
+        {
+            this.#docBody.style.cursor = "auto";
+            this.#draggingView = false;
+        }
+
+        const mouseMat = Matrix3x3.Translate(new Vector2(
+            (this.#mouseX / Interface.width) - 0.5,
+            (this.#mouseY / Interface.height) - 0.5,
+        ));
+        const targetMat = Matrix3x3.Multiply(this.#viewMat, mouseMat);
+
+        this.#mousePos = new Vector2(targetMat.GetValue(2, 0), -targetMat.GetValue(2, 1));
+
+        const snappedPos = this.#grid.SnapToGrid(this.#mousePos);
+        this.#previewTile.transform.position = snappedPos;
+
+        if (InputManager.GetKey("left")) this.#testMap.AddTile(new Tile(
+            "yoki_room",
+            48,
+            this.#grid.WorldToCell(snappedPos)
+        ));
+
+        // if (InputManager.GetKey("left")) this.#testMap.RemoveTileByPosition(this.#grid.WorldToCell(snappedPos));
+    }
+
+    LateUpdate ()
+    {
+        FPSMeter.Update();
+    }
+
+    RecalcViewMat ()
+    {
+        this.#viewMat = Matrix3x3.TRS(
+            Vector2.Scale(this.#cam.transform.position, new Vector2(1, -1)),
+            5.555555555555556e-3 * -this.#cam.transform.rotation * Math.PI,
+            this.#cam.bounds.size
+        );
+    }
+
+    DragView ()
+    {
+        const deltaX = this.#mouseXOld - this.#mouseX;
+        const deltaY = this.#mouseY - this.#mouseYOld;
+
+        if (Math.abs(deltaX) <= 0 && Math.abs(deltaY) <= 0 && !this.#draggingView) return;
+
+        this.#draggingView = true;
+
+        this.#docBody.style.cursor = "grabbing";
+
+        const camSize = this.#cam.bounds.size;
+
+        this.#cam.transform.position = Vector2.Add(this.#cam.transform.position, new Vector2(
+            deltaX * (camSize.x / Interface.width),
+            deltaY * (camSize.y / Interface.height)
+        ));
+
+        this.RecalcViewMat();
+    }
+}

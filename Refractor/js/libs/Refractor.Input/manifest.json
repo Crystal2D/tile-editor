@@ -1,0 +1,14 @@
+{
+    "name": "Refractor.Input",
+    "description": "",
+    "scripts": [
+        "InputManager",
+        "InputHandler"
+    ],
+    "classes": [
+        {
+            "name" : "InputHandler",
+            "type" : 0
+        }
+    ]
+} 

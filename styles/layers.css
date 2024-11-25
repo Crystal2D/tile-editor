@@ -1,0 +1,53 @@
+#dock > .content > .layers
+{
+    user-select: none;
+    position: absolute;
+    left: 0;
+    width: 100%;
+    min-height: calc(100% - 30px);
+    overflow-y: auto;
+}
+
+#dock > .content > .layers .item
+{
+    padding: 4px;
+    padding-left: 24px;
+    height: 16px;
+    position: absolute;
+    width: calc(100% - 28px);
+}
+
+#dock > .content > .layers .item[focused="1"]
+{
+    background: rgb(120, 130, 170) !important;
+    z-index: 1;
+}
+
+body[cursor-locked="0"] #dock > .content > .layers .item:hover
+{
+    background: rgb(68, 68, 68);
+}
+
+#dock > .content > .layers .label
+{
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    overflow: clip;
+    width: calc(100% - 40px);
+}
+
+#dock > .content > .layers .visibility
+{
+    width: 18px;
+    height: 18px;
+    padding: 3px;
+    position: absolute;
+    right: 16px;
+    top: 0;
+    user-select: none;
+}
+
+body[cursor-locked="0"] #dock > .content > .layers .visibility:hover
+{
+    background: rgba(255, 255, 255, 0.2);
+}

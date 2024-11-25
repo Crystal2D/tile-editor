@@ -1,0 +1,17 @@
+{
+    "libs" : [
+        "Crystal.RPGTiles",
+        "Refractor.Input"
+    ],
+    "scripts" : [
+        "plugins/Crispixels",
+        "plugins/FPSMeter"
+    ],
+    "scenes" : [
+        "main"
+    ],
+    "targetFrameRate" : -1,
+    "vSyncCount" : 1,
+    "maximumDeltaTime" : 0.3333333,
+    "partioningMaxDepth" : 8
+}

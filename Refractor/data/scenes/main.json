@@ -1,0 +1,104 @@
+{
+    "name" : "Main",
+    "resources" : [
+        "sprites/tilesets/yoki_room"
+    ],
+    "gameObjects" : [
+        {
+            "name" : "camera",
+            "id" : 0,
+            "components" : [
+                {
+                    "type" : "Camera",
+                    "args": {
+                        "orthographicSize": 10
+                    }
+                }
+            ]
+        },
+        {
+            "name" : "obj_tiles",
+            "id" : 1,
+            "components" : [
+                {
+                    "type" : "Grid"
+                }
+            ]
+        },
+        {
+            "name" : "preview_tile",
+            "id" : 2,
+            "components" : [
+                {
+                    "type" : "SpriteRenderer",
+                    "args" : {
+                        "sprite" : {
+                            "texture" : "sprites/tilesets/yoki_room",
+                            "index" : 49
+                        },
+                        "color": {
+                            "r": 255,
+                            "g": 255,
+                            "b": 255,
+                            "a": 128
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name" : "input",
+            "id" : 3,
+            "components" : [
+                {
+                    "type" : "InputHandler"
+                }
+            ]
+        },
+        {
+            "name" : "tile_Background",
+            "id" : 4,
+            "parent" : 1,
+            "active" : true,
+            "components" : [
+                {
+                    "type" : "Tilemap",
+                    "args" : {
+                        "tiles" : [
+                            {
+                                "palette": "yoki_room",
+                                "spriteID" : 1,
+                                "position" : { "x" : -3, "y" : 2 }
+                            },
+                            {
+                                "palette": "yoki_room",
+                                "spriteID" : 2,
+                                "position" : { "x" : -2, "y" : 2 }
+                            },
+                            {
+                                "palette": "yoki_room",
+                                "spriteID" : 3,
+                                "position" : { "x" : -1, "y" : 2 }
+                            },
+                            {
+                                "palette": "yoki_room",
+                                "spriteID" : 9,
+                                "position" : { "x" : -3, "y" : 1 }
+                            },
+                            {
+                                "palette": "yoki_room",
+                                "spriteID" : 10,
+                                "position" : { "x" : -2, "y" : 1 }
+                            },
+                            {
+                                "palette": "yoki_room",
+                                "spriteID" : 11,
+                                "position" : { "x" : -1, "y" : 1 }
+                            }
+                        ]
+                    }
+                }
+            ]
+        }
+    ]
+}

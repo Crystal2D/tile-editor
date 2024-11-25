@@ -1,0 +1,73 @@
+body > .context-menu
+{
+    background: rgb(46, 46, 46);
+    color: white;
+    min-width: 25px;
+    min-height: 20.5px;
+    position: fixed;
+    top: 0;
+    left: 0;
+    outline: 1.5px solid rgba(0, 0, 0, 0.25);
+    border-radius: 4px;
+    padding: 2px 4px;
+    margin: 1.5px;
+    user-select: none;
+    z-index: 69423;
+}
+
+body > .context-menu[thin-padding="1"]
+{
+    padding: 4px;
+}
+
+body > .context-menu div
+{
+    padding: 3px 50px;
+    padding-left: 20px;
+    cursor: pointer;
+    border-radius: 3px;
+    white-space: nowrap;
+}
+
+body > .context-menu div[enabled="0"]
+{
+    color: rgb(100, 100, 100);
+    pointer-events: none;
+}
+
+body > .context-menu[thin-padding="1"] div
+{
+    padding: 3px 10px;
+}
+
+body > .context-menu div:hover
+{
+    background: rgba(255, 255, 255, 0.063);
+}
+
+body > .context-menu hr
+{
+    background: rgba(255, 255, 255, 0.125);
+    border: none;
+    outline: 0;
+    height: 1px;
+    margin: 3px 2px;
+}
+
+body > .context-menu .tip
+{
+    position: absolute;
+    right: 20px;
+    color: rgba(255, 255, 255, 0.5);
+}
+
+body > .context-menu div[enabled="0"] .tip
+{
+    color: rgb(100, 100, 100);
+}
+
+.ui-label
+{
+    padding-bottom: 4px;
+    user-select: none;
+}

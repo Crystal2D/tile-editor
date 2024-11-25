@@ -1,0 +1,120 @@
+class Application
+{
+    static #inited = false;
+    static #loaded = false;
+    static #playing = false;
+    static #unloaded = false;
+    static #binded = false;
+    static #projDir = "";
+    static #onLoad = () => { };
+    static #onUnload = () => { };
+    
+    static #canvas = null;
+    static #gl = null;
+    static #gl_md = null;
+    
+    static targetFrameRate = 0;
+    static vSyncCount = 0;
+
+    static wantsToQuit = null;
+    static unloading = null;
+    static quitting = null;
+    
+    static get isLoaded ()
+    {
+        return this.#loaded;
+    }
+
+    static get isPlaying ()
+    {
+        return this.#playing;
+    }
+    
+    static get projectDir ()
+    {
+        return this.#projDir;
+    }
+    
+    static get htmlCanvas ()
+    {
+        return this.#canvas;
+    }
+    
+    static get gl ()
+    {
+        return this.#gl;
+    }
+
+    static get gl_multidraw ()
+    {
+        return this.#gl_md;
+    }
+
+    static isInElectron ()
+    {
+        return navigator.userAgent.indexOf("Electron") >= 0;
+    }
+    
+    static Init ()
+    {
+        if (this.#inited) return;
+        
+        const URLSearch = new URLSearchParams(window.location.search);
+        this.#projDir = decodeURIComponent(URLSearch.get("dir"));
+        
+        this.#canvas = document.createElement("canvas");
+        
+        this.#canvas.style.margin = "auto";
+        this.#canvas.style.objectFit = "contain";
+        
+        this.#gl = this.#canvas.getContext("webgl2");
+        this.#gl.clearColor(0.0, 0.0, 0.0, 1.0);
+
+        this.#gl_md = this.#gl.getExtension("WEBGL_multi_draw");
+        
+        document.body.append(this.#canvas);
+        
+        this.#inited = true;
+    }
+    
+    static Bind (onLoad)
+    {
+        if (this.#binded) return;
+        
+        this.#onLoad = async () => await onLoad();
+        this.#onUnload = async () => await onUnload();
+        
+        this.#binded = true;
+    }
+    
+    static Quit ()
+    {
+        if (this.#playing) this.#playing = false;
+    }
+
+    static CancelQuit ()
+    {
+        if (!this.#playing) this.#playing = true;
+    }
+    
+    static async Load ()
+    {
+        if (this.#loaded) return;
+
+        await this.#onLoad();
+
+        this.#loaded = true;
+        this.#playing = true;
+    }
+    
+    static async Unload ()
+    {
+        if (this.#unloaded) return;
+
+        this.unloading.Invoke();
+
+        await this.#onUnload();
+
+        this.#unloaded = true;
+    }
+}
