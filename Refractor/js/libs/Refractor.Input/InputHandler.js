@@ -32,11 +32,22 @@ class InputHandler extends GameBehavior
     OnEnable ()
     {
         InputManager.onWheel.Add(delta => {
-            if (this.#cam.orthographicSize + this.#cam.orthographicSize * delta < 0) return;
+            const zoomOld = this.#cam.orthographicSize;
+            
+            if (zoomOld + zoomOld * delta < 0) return;
 
-            this.#cam.orthographicSize += this.#cam.orthographicSize * delta;
+            this.#cam.orthographicSize += zoomOld * delta;
 
-            // this.#cam.transform.position = this.#mousePos;
+            this.#cam.transform.position = Vector2.Add(
+                this.#cam.transform.position,
+                Vector2.Scale(
+                    Vector2.Subtract(
+                        this.#mousePos,
+                        this.#cam.transform.position
+                    ),
+                    (zoomOld - this.#cam.orthographicSize) / zoomOld
+                )
+            );
 
             this.RecalcViewMat();
         });
