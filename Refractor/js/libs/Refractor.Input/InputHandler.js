@@ -1,5 +1,6 @@
 class InputHandler extends GameBehavior
 {
+    #recalcViewMat = true;
     #draggingView = false;
     #mouseX = 0;
     #mouseY = 0;
@@ -21,8 +22,6 @@ class InputHandler extends GameBehavior
         this.#cam = GameObject.Find("camera").GetComponent("Camera");
         this.#grid = GameObject.Find("obj_tiles").GetComponent("Grid");
         this.#previewTile = GameObject.Find("preview_tile");
-
-        this.RecalcViewMat();
 
         this.#testMap = GameObject.FindComponents("Tilemap")[0];
 
@@ -49,7 +48,7 @@ class InputHandler extends GameBehavior
                 )
             );
 
-            this.RecalcViewMat();
+            this.#recalcViewMat = true;
         });
     }
 
@@ -66,11 +65,23 @@ class InputHandler extends GameBehavior
         this.#mouseYOld = this.#mouseY;
         this.#mouseY = InputManager.GetMouseY();
 
+        this.WalkView();
+
         if (InputManager.GetKey("right") || InputManager.GetKey("middle")) this.DragView();
         if (this.#draggingView && ((InputManager.GetKeyUp("right") && !InputManager.GetKey("middle")) || (InputManager.GetKeyUp("middle") && !InputManager.GetKey("right"))))
         {
             this.#docBody.style.cursor = "auto";
             this.#draggingView = false;
+        }
+
+        if (this.#recalcViewMat)
+        {
+            this.#viewMat = Matrix3x3.TRS(
+                Vector2.Scale(this.#cam.transform.position, new Vector2(1, -1)),
+                5.555555555555556e-3 * -this.#cam.transform.rotation * Math.PI,
+                this.#cam.bounds.size
+            );
+            this.#recalcViewMat = false;
         }
 
         const mouseMat = Matrix3x3.Translate(new Vector2(
@@ -98,15 +109,6 @@ class InputHandler extends GameBehavior
         FPSMeter.Update();
     }
 
-    RecalcViewMat ()
-    {
-        this.#viewMat = Matrix3x3.TRS(
-            Vector2.Scale(this.#cam.transform.position, new Vector2(1, -1)),
-            5.555555555555556e-3 * -this.#cam.transform.rotation * Math.PI,
-            this.#cam.bounds.size
-        );
-    }
-
     DragView ()
     {
         const deltaX = this.#mouseXOld - this.#mouseX;
@@ -125,6 +127,23 @@ class InputHandler extends GameBehavior
             deltaY * (camSize.y / Interface.height)
         ));
 
-        this.RecalcViewMat();
+        this.#recalcViewMat = true;
+    }
+
+    WalkView ()
+    {
+        const input = new Vector2(
+            +Input.GetKey(KeyCode.D) - +Input.GetKey(KeyCode.A),
+            +Input.GetKey(KeyCode.W) - +Input.GetKey(KeyCode.S)
+        );
+
+        if (input.Equals(Vector2.zero)) return;
+
+        this.#cam.transform.position = Vector2.Add(
+            this.#cam.transform.position,
+            Vector2.Scale(input.normalized, this.#cam.orthographicSize * Time.deltaTime * (Input.GetKey(KeyCode.Shift) ? 2 : 1.25))
+        );
+        
+        this.#recalcViewMat = true;
     }
 }

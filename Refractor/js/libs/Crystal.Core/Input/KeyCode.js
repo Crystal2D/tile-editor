@@ -1,9 +1,9 @@
 class KeyCode
 {
-    static get ArrowUp () { return 0; }
-    static get ArrowDown () { return 1; }
-    static get ArrowLeft () { return 2; }
-    static get ArrowRight () { return 3; }
+    static get W () { return 0; }
+    static get S () { return 1; }
+    static get A () { return 2; }
+    static get D () { return 3; }
     static get Shift () { return 4; }
     static get F4 () { return 5; }
     static get F1 () { return 6; }
@@ -17,6 +17,5 @@ class KeyCode
     static get F10 () { return 14; }
     static get F11 () { return 15; }
     static get F12 () { return 16; }
-    static get X () { return 17; }
-    static get Z () { return 18; }
+    static get Ctrl () { return 17; }
 }

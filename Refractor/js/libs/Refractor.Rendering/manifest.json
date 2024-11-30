@@ -1,0 +1,13 @@
+{
+    "name": "Refractor.Rendering",
+    "description": "",
+    "scripts": [
+        "GridRenderer"
+    ],
+    "classes": [
+        {
+            "name" : "GridRenderer",
+            "type" : 0
+        }
+    ]
+} 

@@ -53,10 +53,10 @@ class Input
     static Init ()
     {
         this.#keys = [
-            new this.#Key("up", "ArrowUp"),
-            new this.#Key("down", "ArrowDown"),
-            new this.#Key("left", "ArrowLeft"),
-            new this.#Key("right", "ArrowRight"),
+            new this.#Key("w", "w", true),
+            new this.#Key("s", "s", true),
+            new this.#Key("a", "a", true),
+            new this.#Key("d", "d", true),
             new this.#Key("shift", "Shift"),
             new this.#Key("f4", "F4"),
             new this.#Key("f1", "F1"),
@@ -70,8 +70,7 @@ class Input
             new this.#Key("f10", "F10"),
             new this.#Key("f11", "F11"),
             new this.#Key("f12", "F12"),
-            new this.#Key("x", "x", true),
-            new this.#Key("z", "z", true)
+            new this.#Key("ctrl", "Ctrl")
         ];
         
         document.addEventListener("keydown", event => {

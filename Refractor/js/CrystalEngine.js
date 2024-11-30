@@ -305,10 +305,19 @@ class CrystalEngine
 
             const buildResponse = await fetch(`${projDir}\\data\\build.json`);
             const buildData = await buildResponse.json();
+
+            buildData.shaders.unshift("vertex", "fragment");
             
             for (let i = 0; i < buildData.shaders.length; i++)
             {
                 const shaderResponse = await fetch(`${projDir}\\shaders\\${buildData.shaders[i]}.glsl`);
+
+                this.#compiledData.shaders.push(await shaderResponse.text());
+            }
+
+            for (let i = 0; i < this.#buildData.shaders.length; i++)
+            {
+                const shaderResponse = await fetch(`shaders/${this.#buildData.shaders[i]}.glsl`);
 
                 this.#compiledData.shaders.push(await shaderResponse.text());
             }

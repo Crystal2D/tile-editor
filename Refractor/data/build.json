@@ -1,7 +1,8 @@
 {
     "libs" : [
         "Crystal.RPGTiles",
-        "Refractor.Input"
+        "Refractor.Input",
+        "Refractor.Rendering"
     ],
     "scripts" : [
         "plugins/Crispixels",
@@ -9,6 +10,10 @@
     ],
     "scenes" : [
         "main"
+    ],
+    "shaders" : [
+        "grid/vertex",
+        "grid/fragment"
     ],
     "targetFrameRate" : -1,
     "vSyncCount" : 1,
