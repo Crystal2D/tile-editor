@@ -62,12 +62,12 @@ async function InitWindow ()
     const projectWin = await CreateWindow({
         width: 1100,
         height: 700,
-        src: "Refractor/index.html",
+        src: "index.html",
         search: "dir=C:\\Users\\marcp\\Documents\\GitHub\\crystal2d.github.io",
-        // maximized: true
+        maximized: true
     });
     projectWin.setMinimumSize(1100, 700);
-    projectWin.setMaximumSize(1100, 700);
+    // projectWin.setMaximumSize(1100, 700);
     projectWin.webContents.openDevTools({ mode: "detach" });
 
     app.focus();

@@ -1,11 +1,15 @@
 class InputHandler extends GameBehavior
 {
-    #recalcViewMat = true;
+    #recalcViewMat = false;
     #draggingView = false;
     #mouseX = 0;
     #mouseY = 0;
     #mouseXOld = 0;
     #mouseYOld = 0;
+    #onWheel = () => { };
+    #onMouseEnter = () => { };
+    #onMouseExit = () => { };
+    #onResize = () => { };
 
     #docBody = null;
     #cam = null;
@@ -21,7 +25,9 @@ class InputHandler extends GameBehavior
         this.#docBody = document.body;
         this.#cam = GameObject.Find("camera").GetComponent("Camera");
         this.#grid = GameObject.Find("obj_tiles").GetComponent("Grid");
+
         this.#previewTile = GameObject.Find("preview_tile");
+        this.#previewTile.SetActive(InputManager.isMouseOver);
 
         this.#testMap = GameObject.FindComponents("Tilemap")[0];
 
@@ -30,7 +36,7 @@ class InputHandler extends GameBehavior
 
     OnEnable ()
     {
-        InputManager.onWheel.Add(delta => {
+        this.#onWheel = InputManager.onWheel.Add(delta => {
             const zoomOld = this.#cam.orthographicSize;
             
             if (zoomOld + zoomOld * delta < 0) return;
@@ -50,11 +56,21 @@ class InputHandler extends GameBehavior
 
             this.#recalcViewMat = true;
         });
+        this.#onMouseEnter = InputManager.onMouseEnter.Add(() => this.#previewTile.SetActive(true));
+        this.#onMouseExit = InputManager.onMouseExit.Add(() => this.#previewTile.SetActive(false));
+
+        this.#onResize = Interface.onResize.Add(() => this.#recalcViewMat = true);
+
+        this.#recalcViewMat = true;
+
     }
 
     OnDisable ()
     {
-        InputManager.onWheel.Clear();
+        InputManager.onWheel.Remove(this.#onWheel);
+        InputManager.onMouseEnter.Remove(this.#onMouseEnter);
+        InputManager.onMouseExit.Remove(this.#onMouseExit);
+        Interface.onResize.Remove(this.#onResize);
     }
 
     Update ()

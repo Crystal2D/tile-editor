@@ -11,3 +11,4 @@ const Dock = require("./js/Dock");
 const Layers = require("./js/Layers");
 const { Layer } = require("./js/Layers");
 const Inspector = require("./js/Inspector");
+const Refractor = require("./js/Refractor");

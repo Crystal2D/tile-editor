@@ -102,11 +102,14 @@ window.onload = async () => {
         }
     );
 
-    // const SceneView = require("./js/Refractor/Refractor");
-    // SceneView.Init(scene);
+    const SceneView = new Refractor.Embed(scene);
 
     Dock.Init();
-    // Dock.OnResize().Add(SceneView.Redraw);
+    Dock.OnResize().Add(() => {
+        SceneView.content.style.pointerEvents = "none";
+        SceneView.RecalcSize();
+    });
+    Dock.OnResizeEnd().Add(() => SceneView.content.style.pointerEvents = "");
 
     Layers.Init();
 
@@ -120,6 +123,6 @@ window.onload = async () => {
 
     window.addEventListener("resize", () => {
         MenuManager.CloseContextMenus();
-        // SceneView.Redraw();
+        SceneView.RecalcSize();
     });
 };

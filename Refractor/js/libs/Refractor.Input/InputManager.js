@@ -1,11 +1,19 @@
 class InputManager
 {
     static #loaded = false;
+    static #mouseOver = false;
     static #mouseX = 0;
     static #mouseY = 0;
     static #keys = [];
     
     static onWheel = new DelegateEvent();
+    static onMouseEnter = new DelegateEvent();
+    static onMouseExit = new DelegateEvent();
+
+    static get isMouseOver ()
+    {
+        return this.#mouseOver;
+    }
 
     static #Key = class
     {
@@ -64,6 +72,15 @@ class InputManager
         document.addEventListener("mousemove", event => {
             this.#mouseX = event.clientX;
             this.#mouseY = event.clientY;
+
+            if (this.#mouseOver) return;
+
+            this.onMouseEnter.Invoke();
+            this.#mouseOver = true;
+        });
+        document.addEventListener("mouseleave", () => {
+            this.onMouseExit.Invoke();
+            this.#mouseOver = false;
         });
         document.addEventListener("mousedown", event => {
             event.preventDefault();
@@ -93,7 +110,7 @@ class InputManager
 
             if (event.deltaY === 0) return;
 
-            this.onWheel.Invoke(event.deltaY * (event.ctrlKey ? 25 : 2) * 1e-3);
+            this.onWheel.Invoke(event.deltaY * ((event.ctrlKey && !Input.GetKey(KeyCode.Ctrl)) ? 25 : 2) * 1e-3);
         }, { passive: false });
 
         this.#loaded = true;

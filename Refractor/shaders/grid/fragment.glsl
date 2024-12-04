@@ -10,16 +10,14 @@ precision mediump float;
 uniform vec4 uColor;
 uniform vec2 uOffset;
 uniform vec2 uSize;
+uniform float uThickness;
 
 out vec4 fragColor;
 
 void main ()
-{   
-    fragColor = vec4(1, 1, 1 ,1);
+{
+    float x = gl_FragCoord.x - uOffset.x;
+    float y = gl_FragCoord.y - uOffset.y;
 
-    // float x = gl_FragCoord.x - uOffset.x;
-    // float y = gl_FragCoord.y - uOffset.y;
-    
-    // if (int(mod(x, uSize.x)) == 0 || int(mod(y, uSize.y)) == 0) fragColor = uColor;
-    // else fragColor = vec4(0.25, 0, 0.5, 1);
+    if (mod(x + uThickness * 0.5, uSize.x) <= uThickness || mod(y + uThickness * 0.5, uSize.y) <= uThickness) fragColor = uColor;
 }

@@ -1,0 +1,1 @@
+Interface.onResize = new DelegateEvent();

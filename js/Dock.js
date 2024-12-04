@@ -10,10 +10,16 @@ let content = null;
 let focused = null;
 
 const onResize = new DelegateEvent();
+const onResizeEnd = new DelegateEvent();
 
 function OnResize ()
 {
     return onResize;
+}
+
+function OnResizeEnd ()
+{
+    return onResizeEnd;
 }
 
 function Init ()
@@ -47,6 +53,8 @@ function Init ()
 
         Input.ResetCursor();
         Input.AvoidDrags(false);
+
+        onResizeEnd.Invoke();
     });
 
     RequestUpdate();
@@ -69,6 +77,7 @@ function Update ()
             main.style.setProperty("--dock-size", `${size}px`);
             
             onResize.Invoke();
+            onResizeEnd.Invoke();
         }
 
         RequestUpdate();
@@ -83,7 +92,7 @@ function Update ()
     size -= delta;
     main.style.setProperty("--dock-size", `${size}px`);
 
-    if (delta > 0) onResize.Invoke();
+    if (delta !== 0) onResize.Invoke();
 
     RequestUpdate();
 }
@@ -175,6 +184,7 @@ function ContainerEnd ()
 
 module.exports = {
     OnResize,
+    OnResizeEnd,
     Init,
     AddTab,
     Clear,

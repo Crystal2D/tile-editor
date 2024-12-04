@@ -70,11 +70,11 @@ class Input
             new this.#Key("f10", "F10"),
             new this.#Key("f11", "F11"),
             new this.#Key("f12", "F12"),
-            new this.#Key("ctrl", "Ctrl")
+            new this.#Key("ctrl", "Control")
         ];
         
         document.addEventListener("keydown", event => {
-            if (!document.hasFocus() || this.#terminated) return;
+            if (this.#terminated) return;
             
             const keyIndex = this.#FindKeyByCode(event.key);
             
@@ -85,7 +85,7 @@ class Input
             this.#keys[keyIndex].active = true;
         });
         document.addEventListener("keyup", event => {
-            if (!document.hasFocus() || this.#terminated) return;
+            if (this.#terminated) return;
             
             const keyIndex = this.#FindKeyByCode(event.key);
             

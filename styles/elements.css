@@ -77,3 +77,9 @@ body > footer
     height: 20.5px;
     background: rgb(42, 42, 42);
 }
+
+iframe
+{
+    border: none;
+    user-select: none;
+}

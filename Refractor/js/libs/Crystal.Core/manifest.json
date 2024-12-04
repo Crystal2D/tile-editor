@@ -5,6 +5,7 @@
         "bindings",
         "DelegateEvent",
         "Application.bindings",
+        "Interface.bindings",
         "Object.bindings",
         "Resources",
         "Time",

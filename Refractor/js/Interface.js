@@ -3,6 +3,8 @@ class Interface
     static #x = 0;
     static #y = 0;
     static #aspect = 0;
+
+    static onResize = null;
     
     static get width ()
     {
@@ -28,5 +30,7 @@ class Interface
         Application.htmlCanvas.height = this.#y;
             
         this.#aspect = this.#x / this.#y;
+
+        this.onResize?.Invoke();
     }
 }
