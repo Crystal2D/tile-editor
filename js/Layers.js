@@ -1,3 +1,4 @@
+let loaded = false;
 let cancelOnCtx = false;
 let mouse = 0;
 let layers = [];
@@ -11,10 +12,16 @@ let scenename = null;
 class Layer
 {
     #pos = 0;
+    #name = "";
 
     index = 0;
 
     item = null;
+
+    get name ()
+    {
+        return this.#name;
+    }
 
     get position ()
     {
@@ -29,6 +36,8 @@ class Layer
 
     constructor (name)
     {
+        this.#name = name;
+
         this.item = document.createElement("div");
         this.item.classList.add("item");
 
@@ -103,7 +112,7 @@ class Layer
 
         const visibility = document.createElement("img");
         visibility.classList.add("visibility");
-        visibility.src = "img/eye-show.svg";
+        visibility.src = "img/eye/show.svg";
 
         visibility.addEventListener("mousedown", () => {
             cancelSelect = true;
@@ -145,6 +154,11 @@ class Layer
     }
 }
 
+function Selection ()
+{
+    return focused;
+}
+
 function SetSceneName (name)
 {
     scenename = name;
@@ -152,9 +166,13 @@ function SetSceneName (name)
 
 function Init ()
 {
+    if (loaded) return;
+
     Input.OnMouseUp().Add(() => onDragDrop());
 
     RequestUpdate();
+
+    loaded = true;
 }
 
 function RequestUpdate ()
@@ -228,6 +246,8 @@ function DrawUI ()
     sceneName.style.whiteSpace = "nowrap";
     sceneName.style.overflow = "clip";
     sceneName.style.textOverflow = "ellipsis";
+    sceneName.style.margin = "6px 12px";
+    sceneName.style.marginBottom = "0";
 
     content = Dock.ContainerStart();
     content.classList.add("layers");
@@ -261,6 +281,7 @@ function OnContext ()
 
 module.exports = {
     Layer,
+    Selection,
     SetSceneName,
     Init,
     DrawUI,

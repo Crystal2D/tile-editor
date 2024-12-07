@@ -12,3 +12,4 @@ const Layers = require("./js/Layers");
 const { Layer } = require("./js/Layers");
 const Inspector = require("./js/Inspector");
 const Refractor = require("./js/Refractor");
+const Palette = require("./js/Palette");

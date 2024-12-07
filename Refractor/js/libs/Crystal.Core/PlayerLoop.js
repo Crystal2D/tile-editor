@@ -44,8 +44,6 @@ class PlayerLoop
             return;
         }
 
-        window.focus();
-
 
         // Initialization
         // SetLoopData

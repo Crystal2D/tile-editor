@@ -115,11 +115,11 @@ window.onload = async () => {
 
     const layers = Dock.AddTab("Layers");
     const inspector = Dock.AddTab("Inspector");
+    const palette = Dock.AddTab("Palette");
 
     layers.Bind(() => Layers.DrawUI(), () => Layers.OnContext());
     inspector.Bind(() => Inspector.DrawUI(), () => Inspector.OnContext());
-
-    // layers.Focus();
+    palette.Bind(() => Palette.DrawUI(), () => Palette.OnContext());
 
     window.addEventListener("resize", () => {
         MenuManager.CloseContextMenus();

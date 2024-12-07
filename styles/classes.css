@@ -71,3 +71,270 @@ body > .context-menu div[enabled="0"] .tip
     padding-bottom: 4px;
     user-select: none;
 }
+
+.ui-checkbox
+{
+    display: inline-block;
+    user-select: none;
+}
+
+[cursor-locked="0"] .ui-checkbox
+{
+    cursor: pointer;
+}
+
+.ui-checkbox .box
+{
+    display: inline-block;
+    background: rgb(32, 32, 32);
+    width: 14px;
+    height: 14px;
+    border-radius: 2px;
+    vertical-align: top;
+}
+
+.ui-checkbox[checked="1"] .box,
+.ui-checkbox[checked="2"] .box
+{
+    background: rgb(232, 232, 232);
+}
+
+[cursor-locked="0"] .ui-checkbox:hover .box
+{
+    background: rgb(42, 42, 42);
+}
+
+[cursor-locked="0"] .ui-checkbox[checked="1"]:hover .box,
+[cursor-locked="0"] .ui-checkbox[checked="2"]:hover .box
+{
+    background: rgb(180, 180, 180);
+}
+
+.ui-checkbox img
+{
+    display: none;
+    width: 10px;
+    padding: 2px;
+}
+
+.ui-checkbox[checked="1"] .checked
+{
+    display: block;
+}
+
+.ui-checkbox[checked="2"] .kinda
+{
+    display: block;
+}
+
+.ui-checkbox .label
+{
+    display: none;
+    margin-left: 5px;
+    vertical-align: top;
+}
+
+.ui-textarea
+{
+    display: flex;
+    user-select: none;
+    padding-bottom: 10px;
+}
+
+.ui-textarea[type="field"]
+{
+    padding-bottom: 6px;
+}
+
+.ui-textarea[type="number"]
+{
+    padding-bottom: 4px;
+}
+
+.ui-textarea .label
+{
+    display: none;
+    padding-top: 5px;
+    margin-right: 12px;
+}
+
+.ui-textarea[type="number"] .label
+{
+    width: 100%;
+    max-width: 35%;
+    overflow: clip;
+    text-overflow: ellipsis;
+    position: relative;
+}
+
+.ui-textarea .input-wrap
+{
+    background: rgb(32, 32, 32);
+    width: 100%;
+    border-radius: 6px;
+    overflow: auto;
+    min-height: 62px;
+    user-select: all;
+    border: 1.5px solid transparent;
+}
+
+[cursor-locked="0"] .ui-textarea .input-wrap:hover
+{
+    border: 1.5px solid rgb(232, 232, 232);
+}
+
+[cursor-locked="1"] .ui-textarea .input-wrap
+{
+    user-select: none;
+}
+
+.ui-textarea[type="field"] .input-wrap
+{
+    min-height: 34px;
+}
+
+.ui-textarea[type="number"] .input-wrap
+{
+    width: 65%;
+    min-height: 0;
+    height: 20.5px;
+    right: 0;
+    position: relative;
+}
+
+.ui-textarea .placehold
+{
+    padding: 9px;
+    color: rgb(120, 120, 120);
+    min-height: calc(100% - 18px);
+    font-style: italic;
+    user-select: none;
+    white-space: pre-wrap;
+    word-break: break-word;
+}
+
+[cursor-locked="0"] .ui-textarea .placehold
+{
+    cursor: text;
+}
+
+.ui-textarea[type="number"] .placehold,
+.ui-textarea[type="number"] .input
+{
+    padding: 3px 7px;
+}
+
+.ui-textarea .input
+{
+    padding: 9px;
+    outline: 0;
+    display: none;
+    min-height: calc(100% - 18px);
+    min-width: calc(100% - 18px);
+    width: fit-content;
+}
+
+.ui-textarea[type="field"] .input
+{
+    white-space: pre-wrap;
+    word-break: break-word;
+}
+
+.ui-vec2field
+{
+    display: flex;
+}
+
+.ui-vec2field .ui-label
+{
+    width: calc(35% - 10px);
+    padding-top: 5px;
+    padding-bottom: 0;
+    margin-right: 12px;
+}
+
+.ui-vec2field .wrap
+{
+    display: flex;
+    gap: 10px;
+    width: calc(65% + 10px);
+}
+
+.ui-vec2field .ui-textarea
+{
+    width: 50%;
+}
+
+.ui-vec2field .ui-textarea .input
+{
+    width: 0;
+    overflow: clip;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.ui-vec2field .ui-textarea .label
+{
+    width: 10px;
+    margin-right: 6px;
+}
+
+.ui-vec2field .ui-textarea .input-wrap
+{
+    width: 100%;
+}
+
+.ui-section-label
+{
+    user-select: none;
+    border-top: 1px solid rgb(32, 32, 32);
+    width: calc(100% - 20px);
+    padding: 4px 10px;
+    left: 0;
+    font-weight: bold;
+    color: rgb(232, 232, 232);
+    display: flex;
+}
+
+.ui-section-label[enabled="0"]
+{
+    border-bottom: 1px solid rgb(32, 32, 32);
+}
+
+[cursor-locked="0"] .ui-section-label:hover
+{
+    color: rgb(150, 160, 200);
+    background: rgb(62, 62, 62);
+}
+
+.ui-section-label .chevron
+{
+    height: 14px;
+    margin-right: 3px;
+}
+
+[cursor-locked="0"] .ui-section-label:hover .chevron
+{
+    opacity: 0.5;
+}
+
+.ui-section-content
+{
+    background: rgb(44, 44, 44);
+    border-top: 1.5px solid rgb(38, 38, 38);
+    border-bottom: 1px solid rgb(32, 32, 32);
+    padding: 6px 12px;
+    padding-left: 24px;
+    width: calc(100% - 36px);
+}
+
+.ui-section-content[enabled="0"]
+{
+    display: none;
+}
+
+.ui-section-content > :last-child,
+.ui-section-content > :last-child.ui-vec2field .ui-textarea
+{
+    padding-bottom: 0;
+}
