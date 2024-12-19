@@ -1,5 +1,5 @@
 {
-    "name" : "Main",
+    "name" : "Palette",
     "resources" : [
         "sprites/title"
     ],
@@ -11,7 +11,12 @@
                 {
                     "type" : "Camera",
                     "args": {
-                        "orthographicSize": 10
+                        "orthographicSize": 4,
+                        "backgroundColor": {
+                            "r": 32,
+                            "g": 32,
+                            "b": 32
+                        }
                     }
                 }
             ]
@@ -24,7 +29,19 @@
                     "type": "SceneListener"
                 },
                 {
-                    "type" : "InputHandler"
+                    "type": "InputHandler"
+                },
+                {
+                    "type": "PaletteInput"
+                }
+            ]
+        },
+        {
+            "name" : "selection_rect",
+            "id" : 2,
+            "components" : [
+                {
+                    "type": "RectRenderer"
                 }
             ]
         },

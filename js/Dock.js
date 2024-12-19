@@ -76,27 +76,51 @@ function Init ()
     content = document.createElement("div");
     content.classList.add("content");
 
-    content.addEventListener("contextmenu", () => onContext());
+    let mouseOver = false;
+    let contextDown = false;
+    let contextUp = false;
+
+    content.addEventListener("mouseover", () => mouseOver = true);
+    content.addEventListener("mouseout", () => mouseOver = false);
+    content.addEventListener("mouseup", event => {
+        const clicked = contextDown;
+        contextDown = false;
+
+        if (event.button === 2 && clicked) contextUp = true;
+    });
 
     dock.append(tabs, content, sizer);
 
+    Input.OnMouseDown().Add(event => {
+        if (resizing)
+        {
+            event.preventDefault();
+
+            document.activeElement.blur();
+        }
+
+        requestAnimationFrame(() => { if (event.button === 2 && mouseOver) contextDown = true; })
+    });
     Input.OnMouseUp().Add(() => {
-        if (!resizing) return;
+        if (resizing)
+        {
+            resizing = false;
 
-        resizing = false;
+            Input.ResetCursor();
+            Input.AvoidDrags(false);
 
-        Input.ResetCursor();
-        Input.AvoidDrags(false);
+            onResizeEnd.Invoke();
+        }
 
-        onResizeEnd.Invoke();
+        if (contextUp)
+        {
+            onContext();
+
+            contextUp = false;
+        }
     });
 
-    RequestUpdate();
-}
-
-function RequestUpdate ()
-{
-    requestAnimationFrame(Update.bind(this));
+    Loop.Append(() => Update());
 }
 
 function Update ()
@@ -114,8 +138,6 @@ function Update ()
             onResizeEnd.Invoke();
         }
 
-        RequestUpdate();
-
         return;
     }
 
@@ -127,8 +149,6 @@ function Update ()
     main.style.setProperty("--dock-size", `${size}px`);
 
     if (delta !== 0) onResize.Invoke();
-
-    RequestUpdate();
 }
 
 function AddTab (label)
@@ -287,8 +307,8 @@ function TextArea (label, placeholdText)
 
     const input = document.createElement("span");
     input.classList.add("input");
-    input.setAttribute("contenteditable", true);
-    input.setAttribute("spellcheck", false);
+    input.contentEditable = "plaintext-only";
+    input.spellcheck = false;
 
     output.SetText = value => {
         if (value == null) value = "";
@@ -358,11 +378,11 @@ function TextField (label, placeholdText)
 function NumberField (label, defaultValue)
 {
     const output = TextArea(label);
-    output.min = 0;
+    output.min = null;
     output.SetValue = value => {
-        if (Number.isNaN(parseFloat(value))) output.SetText(defaultValue ?? 0);
+        const val = Number.isNaN(parseFloat(value)) ? (defaultValue ?? 0) : parseFloat(value);
 
-        output.SetText(Math.max(parseFloat(input.textContent), output.min));
+        output.SetText(output.min == null ? val : Math.max(val, output.min));
     };
     output.SetText(defaultValue ?? 0);
 
@@ -434,7 +454,7 @@ function Vector2Field (label, defaultX, defaultY)
         fieldY: y,
         get x ()
         {
-            return x.value;
+            return parseFloat(x.value);
         },
         set x (value)
         {
@@ -442,7 +462,7 @@ function Vector2Field (label, defaultX, defaultY)
         },
         get y ()
         {
-            return y.value;
+            return parseFloat(y.value);
         },
         set y (value)
         {
@@ -505,6 +525,27 @@ function SectionEnd ()
     return ContainerEnd();
 }
 
+function Info (title, description)
+{
+    ContainerStart().classList.add("ui-info");
+
+    const img = document.createElement("img");
+    img.src = "img/eye/hide.svg";
+
+    const imgs = [
+        "bnuuy.png"
+    ];
+
+    img.src = `img/idk/${imgs[Math.floor(Math.random() * imgs.length)]}`;
+
+    AddContent(img);
+
+    Label(title).classList.add("title");
+    Label(description).classList.add("description");
+
+    return ContainerEnd();
+}
+
 
 module.exports = {
     OnResize,
@@ -522,5 +563,6 @@ module.exports = {
     ContainerEnd,
     Vector2Field,
     SectionStart,
-    SectionEnd
+    SectionEnd,
+    Info
 };

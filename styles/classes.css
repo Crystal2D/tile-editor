@@ -338,3 +338,33 @@ body > .context-menu div[enabled="0"] .tip
 {
     padding-bottom: 0;
 }
+
+.ui-info
+{
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    color: rgb(232, 232, 232);
+}
+
+.ui-info img
+{
+    margin: auto;
+    margin-bottom: 4px;
+    height: 30%;
+    image-rendering: pixelated;
+}
+
+.ui-info .title
+{
+    margin: 0 auto;
+    font-weight: bold;
+    font-size: 17px;
+}
+
+.ui-info .description
+{
+    margin: auto;
+    margin-top: 0;
+    font-size: 14px;
+}

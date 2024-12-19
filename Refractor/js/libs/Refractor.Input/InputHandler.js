@@ -10,26 +10,35 @@ class InputHandler extends GameBehavior
     #onMouseEnter = () => { };
     #onMouseExit = () => { };
     #onResize = () => { };
+    #mousePosSnapped = Vector2.zero;
 
     #docBody = null;
     #cam = null;
-    #grid = null;
-    #previewTile = null;
     #viewMat = null;
     #mousePos = null;
 
-    #testMap = null;
+    tilemap = null;
+    previewTile = null;
+
+    get mousePos ()
+    {
+        return this.#mousePos;
+    }
+
+    get mousePosSnapped ()
+    {
+        return this.#mousePosSnapped;
+    }
 
     Start ()
     {
         this.#docBody = document.body;
         this.#cam = GameObject.Find("camera").GetComponent("Camera");
-        this.#grid = GameObject.Find("obj_tiles").GetComponent("Grid");
 
-        this.#previewTile = GameObject.Find("preview_tile");
-        this.#previewTile.SetActive(InputManager.isMouseOver);
+        // this.#previewTile = GameObject.Find("preview_tile");
+        // this.#previewTile.SetActive(InputManager.isMouseOver);
 
-        this.#testMap = GameObject.FindComponents("Tilemap")[0];
+        // this.#testMap = GameObject.FindComponents("Tilemap")[0];
 
         FPSMeter.SetActive(true);
     }
@@ -56,8 +65,8 @@ class InputHandler extends GameBehavior
 
             this.#recalcViewMat = true;
         });
-        this.#onMouseEnter = InputManager.onMouseEnter.Add(() => this.#previewTile.SetActive(true));
-        this.#onMouseExit = InputManager.onMouseExit.Add(() => this.#previewTile.SetActive(false));
+        this.#onMouseEnter = InputManager.onMouseEnter.Add(() => this.previewTile?.SetActive(true));
+        this.#onMouseExit = InputManager.onMouseExit.Add(() => this.previewTile?.SetActive(false));
 
         this.#onResize = Interface.onResize.Add(() => this.#recalcViewMat = true);
 
@@ -108,14 +117,17 @@ class InputHandler extends GameBehavior
 
         this.#mousePos = new Vector2(targetMat.GetValue(2, 0), -targetMat.GetValue(2, 1));
 
-        const snappedPos = this.#grid.SnapToGrid(this.#mousePos);
-        this.#previewTile.transform.position = snappedPos;
+        if (SceneModifier.focusedGrid == null) return;
 
-        if (InputManager.GetKey("left")) this.#testMap.AddTile(new Tile(
-            "yoki_room",
-            48,
-            this.#grid.WorldToCell(snappedPos)
-        ));
+        this.#mousePosSnapped = SceneModifier.focusedGrid.SnapToGrid(this.#mousePos);
+
+        // this.#previewTile.transform.position = snappedPos;
+
+        // if (InputManager.GetKey("left")) this.#testMap.AddTile(new Tile(
+        //     "yoki_room",
+        //     48,
+        //     this.#grid.WorldToCell(snappedPos)
+        // ));
 
         // if (InputManager.GetKey("left")) this.#testMap.RemoveTileByPosition(this.#grid.WorldToCell(snappedPos));
     }

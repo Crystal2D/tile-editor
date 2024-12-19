@@ -1,0 +1,16 @@
+{
+    "name": "Refractor.Scene",
+    "description": "",
+    "scripts": [
+        "SceneBank",
+        "SceneInjector",
+        "SceneModifier",
+        "SceneListener"
+    ],
+    "classes": [
+        {
+            "name": "SceneListener",
+            "type": 0
+        }
+    ]
+} 

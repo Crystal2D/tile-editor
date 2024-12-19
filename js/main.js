@@ -1,7 +1,9 @@
+let SceneView = null;
+
+window.RefractBack = data => eval(data);
+
 window.onload = async () => {
     await ProjectManager.Init();
-
-    Input.Set();
 
     MenuManager.Init();
     MenuManager.AddToBar(
@@ -89,7 +91,12 @@ window.onload = async () => {
                     new MenuShortcutItem("New Scene", "Ctrl+N"),
                     new MenuShortcutItem("Open Scene", "Ctrl+O"),
                     new MenuLine(),
-                    new MenuShortcutItem("Save", "Ctrl+S"),
+                    new MenuShortcutItem("Save", "Ctrl+S", () => {
+                        MenuManager.UnfocusBar();
+                        MenuManager.CloseContextMenus();
+
+                        SceneManager.Save();
+                    }),
                     new MenuShortcutItem("Save As..", "Ctrl+Shift+S"),
                     new MenuLine(),
                     new MenuItem("Scene Settings")
@@ -102,7 +109,7 @@ window.onload = async () => {
         }
     );
 
-    const SceneView = new Refractor.Embed(scene);
+    SceneView = new Refractor.Embed(scene);
 
     Dock.Init();
     Dock.OnResize().Add(() => {
@@ -112,6 +119,9 @@ window.onload = async () => {
     Dock.OnResizeEnd().Add(() => SceneView.content.style.pointerEvents = "");
 
     Layers.Init();
+    Palette.Init();
+
+    await SceneManager.Load(ProjectManager.GetEditorData().scene);
 
     const layers = Dock.AddTab("Layers");
     const inspector = Dock.AddTab("Inspector");
@@ -119,7 +129,7 @@ window.onload = async () => {
 
     layers.Bind(() => Layers.DrawUI(), () => Layers.OnContext());
     inspector.Bind(() => Inspector.DrawUI(), () => Inspector.OnContext());
-    palette.Bind(() => Palette.DrawUI(), () => Palette.OnContext());
+    palette.Bind(() => Palette.DrawUI(), () => Palette.OnContext(), () => Palette.OnClear());
 
     window.addEventListener("resize", () => {
         MenuManager.CloseContextMenus();

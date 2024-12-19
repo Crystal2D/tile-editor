@@ -1,19 +1,14 @@
-class GridRenderer extends Renderer
+class RectRenderer extends Renderer
 {
     #loaded = false;
-    #boundsPos = Vector2.zero;
     #bounds = new Bounds();
 
     #material = null;
-    #grid = null;
-    #camera = null;
 
     uColorID = 0;
-    uOffsetID = 0;
-    uSizeID = 0;
     uThicknessID = 0;
-    thickness = 1;
-    color = new Color(1, 1, 1, 0);
+    thickness = 3;
+    color = new Color(0, 0, 0, 0);
 
     get isLoaded ()
     {
@@ -40,8 +35,8 @@ class GridRenderer extends Renderer
         super();
 
         this.#material = new Material(
-            Shader.Find("Refractor/Grid", "VERTEX"),
-            Shader.Find("Refractor/Grid", "FRAGMENT")
+            Shader.Find("Refractor/Rect", "VERTEX"),
+            Shader.Find("Refractor/Rect", "FRAGMENT")
         );
 
         let layerID = SortingLayer.layers.find(item => item.name === "Refractor Priority")?.id;
@@ -54,6 +49,7 @@ class GridRenderer extends Renderer
         }
 
         this.sortingLayer = layerID;
+        this.sortingOrder = 1;
 
         this.Reload();
     }
@@ -63,8 +59,8 @@ class GridRenderer extends Renderer
         if (this.#loaded) return;
         
         this.uColorID = this.material.GetPropertyNameID("uColor");
-        this.uOffsetID = this.material.GetPropertyNameID("uOffset");
-        this.uSizeID = this.material.GetPropertyNameID("uSize");
+        this.uMinID = this.material.GetPropertyNameID("uMin");
+        this.uMaxID = this.material.GetPropertyNameID("uMax");
         this.uThicknessID = this.material.GetPropertyNameID("uThickness");
 
         this.geometryBufferID = this.material.AddBuffer("geometry", null, 2);
@@ -85,7 +81,16 @@ class GridRenderer extends Renderer
 
     RecalcBounds ()
     {
-        this.#bounds = new Bounds(this.#boundsPos, Vector2.zero);
+        this.#bounds = new Bounds(
+            new Vector2(
+                this.transform.position.x,
+                this.transform.position.y
+            ),
+            new Vector2(
+                this.transform.scale.x,
+                this.transform.scale.y
+            ),
+        );
 
         super.RecalcBounds();
     }
@@ -93,50 +98,34 @@ class GridRenderer extends Renderer
     Render ()
     {
         if (!this.isLoaded || !this.gameObject.activeSelf) return;
-
-        if (this.#grid == null) this.#grid = this.GetComponent("Grid");
-        if (this.#camera == null) this.#camera = GameObject.FindComponents("Camera")[0];
-
-        if (!this.#boundsPos.Equals(this.#camera.transform.position))
-        {
-            this.#boundsPos = this.#camera.transform.position;
-
-            this.RecalcBounds();
-        }
         
         const gl = this.material.gl;
         
-        const renderMatrix = this.renderMatrix;
-
-        const scale = new Vector2(
-            Math.abs(renderMatrix.GetValue(0, 0)),
-            Math.abs(renderMatrix.GetValue(1, 1))
-        );
-        const gridSize = Vector2.Scale(
-            Vector2.Scale(
-                Vector2.Add(this.#grid.cellSize, this.#grid.cellGap),
-                Vector2.Scale(scale, 0.5)
-            ),
-            new Vector2(Interface.width, Interface.height)
-        );
-
         this.material.SetVector(this.uColorID,
             this.color.r,
             this.color.g,
             this.color.b,
-            this.color.a * Math.min(((Interface.aspect > 1 ? gridSize.y : gridSize.x) - 10) / 10, 1)
+            this.color.a
         );
 
-        const gridOffset = this.#grid.CellToWorld(Vector2.Scale(
-            scale,
-            Vector2.Divide(new Vector2(0.5, 0.5), this.transform.scale)
-        ));
+        const rect = new Rect();
+        rect.center = Vector2.one;
 
-        this.material.SetVector(this.uOffsetID,
-            (renderMatrix.GetValue(2, 0) + this.transform.position.x + 1 - gridOffset.x) * Interface.width * 0.5,
-            (renderMatrix.GetValue(2, 1) + this.transform.position.y + 1 - gridOffset.y) * Interface.height * 0.5
+        const renderMatrix = this.renderMatrix;
+
+        const renderRect = new Rect();
+        renderRect.size = new Vector2(
+            Math.abs(renderMatrix.GetValue(0, 0)) * 0.5 * Interface.width,
+            Math.abs(renderMatrix.GetValue(1, 1)) * 0.5 * Interface.height
         );
-        this.material.SetVector(this.uSizeID, gridSize.x, gridSize.y);
+        renderRect.center = new Vector2(
+            (renderMatrix.GetValue(2, 0) + 1) * Interface.width * 0.5,
+            (renderMatrix.GetValue(2, 1) + 1) * Interface.height * 0.5
+        );
+
+        this.material.SetVector(this.uMinID, renderRect.xMin, renderRect.yMin);
+        this.material.SetVector(this.uMaxID, renderRect.xMax, renderRect.yMax);
+
         this.material.SetFloat(this.uThicknessID, this.thickness);
 
         this.material.SetAttribute(this.aVertexPosID, this.geometryBufferID);

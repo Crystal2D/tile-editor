@@ -2,11 +2,26 @@
     "name": "Refractor.Rendering",
     "description": "",
     "scripts": [
-        "GridRenderer"
+        "GridRenderer",
+        "RectRenderer"
     ],
     "classes": [
         {
             "name": "GridRenderer",
+            "type": 0,
+            "args": [
+                {
+                    "name" : "color",
+                    "type" : "Color"
+                },
+                {
+                    "name" : "thickness",
+                    "type" : "number"
+                }
+            ]
+        },
+        {
+            "name": "RectRenderer",
             "type": 0,
             "args": [
                 {

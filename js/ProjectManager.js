@@ -1,5 +1,7 @@
 let projectData = { };
 let editorData = { };
+let resources = [];
+let palettes = [];
 
 let projectDir = null;
 
@@ -13,6 +15,26 @@ function ProjectName ()
     return projectData.name;
 }
 
+function GetEditorData ()
+{
+    return editorData;
+}
+
+function GetResources ()
+{
+    return resources;
+}
+
+function GetPalettes ()
+{
+    return palettes;
+}
+
+function FindResource (path)
+{
+    return resources.find(item => item.path === path);
+}
+
 async function Init ()
 {
     const URLSearch = new URLSearchParams(window.location.search);
@@ -21,6 +43,16 @@ async function Init ()
     const manifestRequest = await fetch(`${projectDir}\\manifest.json`);
     projectData = await manifestRequest.json();
 
+    const resourcesRequest = await fetch(`${projectDir}\\data\\resources.json`);
+    resources = await resourcesRequest.json();
+
+    try
+    {
+        const palettesRequest = await fetch(`${projectDir}\\data\\tilepalettes.json`);
+        palettes = await palettesRequest.json();
+    }
+    catch { }
+
     try
     {
         const editorRequest = await fetch(`${projectDir}\\editor.json`);
@@ -28,20 +60,23 @@ async function Init ()
     }
     catch { }
 
-    await SceneManager.Load("test");
+    if (editorData.scene == null) editorData.scene = "test";
+    if (editorData.palettes == null) editorData.palettes = [];
 }
 
 async function SaveEditorData ()
 {
-    editorData.scene = SceneManager.GetActiveSceneSrc();
-
-    await FS.writeFile(`${projectDir}\\editor.json`, JSON.stringify(editorData));
+    await FS.writeFile(`${projectDir}\\editor.json`, JSON.stringify(editorData, null, 4));
 }
 
 
 module.exports = {
     ProjectDir,
     ProjectName,
+    GetEditorData,
+    GetResources,
+    GetPalettes,
+    FindResource,
     Init,
     SaveEditorData
 };

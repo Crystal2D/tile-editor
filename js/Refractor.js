@@ -1,8 +1,25 @@
+let embeds = [];
+
 class Embed
 {
+    #loaded = false;
+    #index = 0;
+
     #wrap = null;
 
+    onLoad = new DelegateEvent();
+
     content = null;
+
+    get isLoaded ()
+    {
+        return this.#loaded;
+    }
+
+    get id ()
+    {
+        return this.#index;
+    }
 
     constructor (wrapper)
     {
@@ -13,7 +30,20 @@ class Embed
 
         wrapper.append(this.content);
 
-        this.RecalcSize();
+        this.#index = embeds.length;
+        embeds.push(this);
+
+        this.onLoad.Add(() => {
+            this.RecalcSize();
+
+            this.#loaded = true;
+        });
+
+        this.content.addEventListener("load", () => {
+            this.content.contentWindow.addEventListener("unload", () => this.#loaded = false);
+
+            this.Refract(`window.refractorID = ${this.#index}`);
+        });
     }
 
     RecalcSize ()
@@ -33,7 +63,13 @@ class Embed
     }
 }
 
+function FindEmbed (id)
+{
+    return embeds.find(item => item.id === id);
+}
+
 
 module.exports = {
-    Embed
+    Embed,
+    FindEmbed
 };

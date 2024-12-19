@@ -74,7 +74,7 @@ function ListItem (name, dir)
         const text = title.innerText;
 
         output.setAttribute("renaming", false);
-        title.setAttribute("contenteditable", false);
+        title.contentEditable = "false";
 
         stopClicks = false;
 
@@ -107,7 +107,7 @@ function ListItem (name, dir)
                     stopClicks = true;
 
                     output.setAttribute("renaming", true);
-                    title.setAttribute("contenteditable", true);
+                    title.contentEditable = "plaintext-only";
 
                     requestAnimationFrame(() => title.focus());
                 }),
@@ -219,7 +219,7 @@ async function Add (dir)
 
         Refresh();
     }
-    catch { console.log("aaaaaaaaaaaa"); }
+    catch { }
 }
 
 

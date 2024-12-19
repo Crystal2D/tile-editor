@@ -83,3 +83,10 @@ iframe
     border: none;
     user-select: none;
 }
+
+[contenteditable="true"]::selection,
+[contenteditable="plaintext-only"]::selection
+{
+    color: black;
+    background: white;
+}

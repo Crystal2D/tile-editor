@@ -1,0 +1,13 @@
+.palette-view
+{
+    padding: 10px;
+    padding-top: 0;
+    height: 50%;
+}
+
+.palette-view div
+{
+    height: 100%;
+    overflow: clip;
+    border-radius: 6px;
+}

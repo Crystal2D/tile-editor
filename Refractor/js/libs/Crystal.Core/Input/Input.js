@@ -72,29 +72,28 @@ class Input
             new this.#Key("f12", "F12"),
             new this.#Key("ctrl", "Control")
         ];
+    }
+
+    static KeyDown (code)
+    {
+        if (this.#terminated) return;
+
+        const keyIndex = this.#FindKeyByCode(code);
+
+        if (keyIndex === -1) return;
         
-        document.addEventListener("keydown", event => {
-            if (this.#terminated) return;
-            
-            const keyIndex = this.#FindKeyByCode(event.key);
-            
-            if (keyIndex === -1) return;
-            
-            event.preventDefault();
-            
-            this.#keys[keyIndex].active = true;
-        });
-        document.addEventListener("keyup", event => {
-            if (this.#terminated) return;
-            
-            const keyIndex = this.#FindKeyByCode(event.key);
-            
-            if (keyIndex === -1) return;
-            
-            event.preventDefault();
-            
-            this.#keys[keyIndex].active = false;
-        });
+        this.#keys[keyIndex].active = true;
+    }
+
+    static KeyUp (code)
+    {
+        if (this.#terminated) return;
+
+        const keyIndex = this.#FindKeyByCode(code);
+
+        if (keyIndex === -1) return;
+        
+        this.#keys[keyIndex].active = false;
     }
     
     static Terminate ()

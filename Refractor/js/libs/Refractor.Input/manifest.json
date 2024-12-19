@@ -3,11 +3,16 @@
     "description": "",
     "scripts": [
         "InputManager",
-        "InputHandler"
+        "InputHandler",
+        "PaletteInput"
     ],
     "classes": [
         {
             "name" : "InputHandler",
+            "type" : 0
+        },
+        {
+            "name" : "PaletteInput",
             "type" : 0
         }
     ]

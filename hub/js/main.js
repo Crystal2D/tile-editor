@@ -1,6 +1,4 @@
 window.onload = async () => {
-    Input.Set();
-
     MenuManager.Init();
     MenuManager.SetMinY(27);
 

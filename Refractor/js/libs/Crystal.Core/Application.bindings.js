@@ -1,9 +1,9 @@
 Application.Bind(async () => {
     Crispixels.effect = true;
 
-    await SceneManager.Load(0);
+    await SceneManager.Load(window.targetScene);
 
-    SceneManager.SetActiveScene(0);
+    SceneManager.SetActiveScene(window.targetScene);
 }, () => {
     Input.Terminate();
     SceneManager.Unload();

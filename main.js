@@ -87,7 +87,7 @@ async function InitWindow ()
         }
     });
     hubWindow.setMinimumSize(900, 600);
-    // hubWindow.webContents.openDevTools({ mode: "detach" });
+    hubWindow.webContents.openDevTools({ mode: "detach" });
 
     app.focus();
 }
