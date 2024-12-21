@@ -246,7 +246,7 @@ class Layer
         this.item.setAttribute("focused", 1);
 
         focused = this;
-        SceneView.Refract(`SceneModifier.FocusGrid(${this.#gridData.id})`);
+        SceneView.Refract(`SceneModifier.FocusGrid(${this.#gridData.id}); SceneModifier.FocusTilemap(${this.#data.id})`);
     }
 
     Delete ()

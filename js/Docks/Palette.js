@@ -170,7 +170,7 @@ async function LoadMap (name)
                 }
             }
         ]
-    })}) })()`);
+    })}); SceneModifier.FocusTilemap(1) })()`);
 }
 
 async function GenerateMap (name)

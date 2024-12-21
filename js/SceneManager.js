@@ -140,6 +140,16 @@ function GetGridChildren (id)
     return tilemaps.filter(item => item.parent === id);
 }
 
+function AddTile (mapID, data)
+{
+    const tilemap = activeScene.gameObjects.find(item => item.id === mapID).components.find(item => item.type === "Tilemap");
+
+    if (tilemap.args == null) tilemap.args = { };
+    if (tilemap.args.tiles == null) tilemap.args.tiles = [];
+
+    tilemap.args.tiles.push(data);
+}
+
 async function Load (src)
 {
     activeSceneSrc = src;
@@ -169,7 +179,33 @@ async function Load (src)
 
 async function Save ()
 {
-    let gridIndex = 0;
+    const grids = activeScene.gameObjects.filter(item => item.name.startsWith("tilegrid_"));
+
+    for (let i = 0; i < grids.length; i++)
+    {
+        const gameObject = grids[i];
+
+        gameObject.name = `tilegrid_${i}`;
+
+        const grid = gameObject.components.find(item => item.type === "Grid");
+
+        if (grid.args != null)
+        {
+            if (Vector2(grid.args.cellSize).Equals({ x: 0.5, y: 0.5 })) grid.args.cellSize = undefined;
+            if (Vector2(grid.args.cellGap).Equals({ x: 0, y: 0 })) grid.args.cellGap = undefined;
+
+            if (grid.args.cellSize == null && grid.args.cellGap == null) grid.args = undefined;
+        }
+
+        const objIndex = activeScene.gameObjects.indexOf(gameObject);
+        const awfulTile = activeScene.gameObjects.find((item, index) => item.parent === gameObject.id && index < objIndex);
+
+        if (awfulTile != null)
+        {
+            activeScene.gameObjects.splice(objIndex, 1);
+            activeScene.gameObjects.splice(activeScene.gameObjects.indexOf(awfulTile), 0, gameObject);
+        }
+    }
 
     for (let i = 0; i < activeScene.gameObjects.length; i++)
     {
@@ -183,23 +219,17 @@ async function Save ()
             if (gameObject.transform.position == null && gameObject.transform.scale == null) gameObject.transform = undefined;
         }
 
-        const grid = gameObject.components.find(item => item.type === "Grid");
+        const tilemap = gameObject.components.find(item => item.type === "Tilemap");
 
-        if (grid != null)
+        if (tilemap?.args != null)
         {
-            gameObject.name = `tilegrid_${gridIndex}`;
+            if (tilemap.args.tiles?.length === 0) tilemap.args.tiles = undefined;
 
-            gridIndex++;
-        }
-
-        if (grid?.args != null)
-        {
-            if (Vector2(grid.args.cellSize).Equals({ x: 0.5, y: 0.5 })) grid.args.cellSize = undefined;
-            if (Vector2(grid.args.cellGap).Equals({ x: 0, y: 0 })) grid.args.cellGap = undefined;
-
-            if (grid.args.cellSize == null && grid.args.cellGap == null) grid.args = undefined;
+            if (tilemap.args.tiles == null) tilemap.args = undefined;
         }
     }
+
+
 
     await FS.writeFile(`${ProjectManager.ProjectDir()}\\data\\scenes\\${activeSceneSrc}.json`, JSON.stringify(activeScene, null, 4));
 }
@@ -214,6 +244,7 @@ module.exports = {
     NewLayer,
     DestroyObject,
     GetGridChildren,
+    AddTile,
     Load,
     Save
 };

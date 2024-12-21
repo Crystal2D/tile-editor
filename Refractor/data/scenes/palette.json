@@ -1,8 +1,6 @@
 {
     "name" : "Palette",
-    "resources" : [
-        "sprites/title"
-    ],
+    "resources" : [],
     "gameObjects" : [
         {
             "name" : "camera",
@@ -42,23 +40,6 @@
             "components" : [
                 {
                     "type": "RectRenderer"
-                }
-            ]
-        },
-        {
-            "name" : "frhyu",
-            "id" : 147908,
-            "components" : [
-                {
-                    "type" : "SpriteRenderer",
-                    "args" : {
-                        "sprite": {
-                            "texture": "sprites/title"
-                        },
-                        "color": {
-                            "a": 0
-                        }
-                    }
                 }
             ]
         }

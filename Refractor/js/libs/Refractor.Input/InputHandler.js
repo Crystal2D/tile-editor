@@ -17,9 +17,6 @@ class InputHandler extends GameBehavior
     #viewMat = null;
     #mousePos = null;
 
-    tilemap = null;
-    previewTile = null;
-
     get mousePos ()
     {
         return this.#mousePos;
@@ -34,11 +31,6 @@ class InputHandler extends GameBehavior
     {
         this.#docBody = document.body;
         this.#cam = GameObject.Find("camera").GetComponent("Camera");
-
-        // this.#previewTile = GameObject.Find("preview_tile");
-        // this.#previewTile.SetActive(InputManager.isMouseOver);
-
-        // this.#testMap = GameObject.FindComponents("Tilemap")[0];
 
         FPSMeter.SetActive(true);
     }
@@ -120,16 +112,6 @@ class InputHandler extends GameBehavior
         if (SceneModifier.focusedGrid == null) return;
 
         this.#mousePosSnapped = SceneModifier.focusedGrid.SnapToGrid(this.#mousePos);
-
-        // this.#previewTile.transform.position = snappedPos;
-
-        // if (InputManager.GetKey("left")) this.#testMap.AddTile(new Tile(
-        //     "yoki_room",
-        //     48,
-        //     this.#grid.WorldToCell(snappedPos)
-        // ));
-
-        // if (InputManager.GetKey("left")) this.#testMap.RemoveTileByPosition(this.#grid.WorldToCell(snappedPos));
     }
 
     LateUpdate ()

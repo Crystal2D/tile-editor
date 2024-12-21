@@ -1,11 +1,29 @@
 class SceneModifier
 {
     static #focusedGrid = null;
+    static #gridID = null;
     static #gridComponent = null;
+    static #focusedMap = null;
+    static #mapID = null;
 
     static get focusedGrid ()
     {
         return this.#gridComponent;
+    }
+
+    static get focusedGridID ()
+    {
+        return this.#gridID;
+    }
+
+    static get focusedTilemap ()
+    {
+        return this.#focusedMap;
+    }
+
+    static get focusedTilemapID ()
+    {
+        return this.#mapID;
     }
 
     static FocusGrid (id)
@@ -14,6 +32,7 @@ class SceneModifier
 
         this.#focusedGrid = SceneBank.FindByID(id);
         this.#focusedGrid.GetComponent("GridRenderer").color.a = 0.75;
+        this.#gridID = id;
         this.#gridComponent = this.#focusedGrid.GetComponent("Grid");
     }
 
@@ -21,9 +40,26 @@ class SceneModifier
     {
         if (this.#focusedGrid == null) return;
             
+        this.#gridComponent = null;
+        this.#gridID = null;
         this.#focusedGrid.GetComponent("GridRenderer").color.a = 0;
         this.#focusedGrid = null;
-        this.#gridComponent = null;
+    }
+
+    static FocusTilemap (id)
+    {
+        this.UnfocusTilemap();
+
+        this.#focusedMap = SceneBank.FindByID(id).GetComponent("Tilemap");
+        this.#mapID = id;
+    }
+
+    static UnfocusTilemap ()
+    {
+        if (this.#focusedMap == null) return;
+        
+        this.#mapID = null;
+        this.#focusedMap = null;
     }
 
     static ChangeParent (childID, parentID)

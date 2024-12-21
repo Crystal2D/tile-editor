@@ -1,8 +1,6 @@
 {
     "name" : "Main",
-    "resources" : [
-        "sprites/title"
-    ],
+    "resources" : [],
     "gameObjects" : [
         {
             "name" : "camera",
@@ -25,23 +23,18 @@
                 },
                 {
                     "type" : "InputHandler"
+                },
+                {
+                    "type" : "MainInput"
                 }
             ]
         },
         {
-            "name" : "frhyu",
-            "id" : 147908,
+            "name" : "selection_rect",
+            "id" : 2,
             "components" : [
                 {
-                    "type" : "SpriteRenderer",
-                    "args" : {
-                        "sprite": {
-                            "texture": "sprites/title"
-                        },
-                        "color": {
-                            "a": 0
-                        }
-                    }
+                    "type": "RectRenderer"
                 }
             ]
         }

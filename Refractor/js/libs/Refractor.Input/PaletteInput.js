@@ -1,9 +1,11 @@
 class PaletteInput extends GameBehavior
 {
+    #gridSize = Vector2.one;
+
     #inputHandler = null;
+    #focusedTile = null;
     #selectionRect = null;
     #selectionRenderer = null;
-    #gridSize = Vector2.one;
 
     Start ()
     {
@@ -15,14 +17,20 @@ class PaletteInput extends GameBehavior
     Update ()
     {
         const grid = SceneModifier.focusedGrid;
+        const tilemap = SceneModifier.focusedTilemap;
 
-        if (grid == null) return;
+        if (grid == null || tilemap == null) return;
 
-        if (InputManager.GetKeyDown("left"))
+        const hoveredTile = tilemap.GetTile(grid.WorldToCell(this.#inputHandler.mousePosSnapped));
+
+        if (hoveredTile != null && InputManager.GetKeyDown("left") && this.#focusedTile !== hoveredTile)
         {
             this.#selectionRect.transform.position = this.#inputHandler.mousePosSnapped;
-            
-            this.#selectionRenderer.color = new Color(120 / 255, 130 / 255, 170 / 255);
+            this.#selectionRenderer.color = new Color(0, 1, 1);
+
+            this.#focusedTile = hoveredTile;
+
+            window.parent.RefractBack(`SceneView.Refract("GameObject.FindComponents(\\"MainInput\\")[0].tile = { palette: \\"${hoveredTile.palette}\\", spriteID: ${hoveredTile.spriteID} }");`);
         }
 
         const gridSize = Vector2.Add(grid.cellSize, grid.cellGap);
