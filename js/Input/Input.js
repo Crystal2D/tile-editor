@@ -28,7 +28,9 @@ let keys = [
     new Key("s", "s", true),
     new Key("a", "a", true),
     new Key("d", "d", true),
-    new Key("shift", "Shift")
+    new Key("shift", "Shift"),
+    new Key("delete", "Delete"),
+    new Key("f", "f", true)
 ];
 
 function FindKey (name)

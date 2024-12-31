@@ -7,8 +7,6 @@ class InputHandler extends GameBehavior
     #mouseXOld = 0;
     #mouseYOld = 0;
     #onWheel = () => { };
-    #onMouseEnter = () => { };
-    #onMouseExit = () => { };
     #onResize = () => { };
     #mousePosSnapped = Vector2.zero;
 
@@ -57,8 +55,6 @@ class InputHandler extends GameBehavior
 
             this.#recalcViewMat = true;
         });
-        this.#onMouseEnter = InputManager.onMouseEnter.Add(() => this.previewTile?.SetActive(true));
-        this.#onMouseExit = InputManager.onMouseExit.Add(() => this.previewTile?.SetActive(false));
 
         this.#onResize = Interface.onResize.Add(() => this.#recalcViewMat = true);
 
@@ -69,8 +65,6 @@ class InputHandler extends GameBehavior
     OnDisable ()
     {
         InputManager.onWheel.Remove(this.#onWheel);
-        InputManager.onMouseEnter.Remove(this.#onMouseEnter);
-        InputManager.onMouseExit.Remove(this.#onMouseExit);
         Interface.onResize.Remove(this.#onResize);
     }
 

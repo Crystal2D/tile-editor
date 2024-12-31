@@ -150,6 +150,27 @@ function AddTile (mapID, data)
     tilemap.args.tiles.push(data);
 }
 
+function RemoveTile (mapID, pos)
+{
+    const tilemap = activeScene.gameObjects.find(item => item.id === mapID).components.find(item => item.type === "Tilemap");
+
+    if (tilemap.args == null) tilemap.args = { };
+    if (tilemap.args.tiles == null)
+    {
+        tilemap.args.tiles = [];
+
+        return;
+    }
+
+    const tile = tilemap.args.tiles.find(item => item.position.x === pos.x && item.position.y === pos.y);
+
+    if (tile == null) return;
+
+    const index = tilemap.args.tiles.indexOf(tile);
+
+    tilemap.args.tiles.splice(index, 1);
+}
+
 async function Load (src)
 {
     activeSceneSrc = src;
@@ -245,6 +266,7 @@ module.exports = {
     DestroyObject,
     GetGridChildren,
     AddTile,
+    RemoveTile,
     Load,
     Save
 };

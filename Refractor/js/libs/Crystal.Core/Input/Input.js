@@ -70,7 +70,9 @@ class Input
             new this.#Key("f10", "F10"),
             new this.#Key("f11", "F11"),
             new this.#Key("f12", "F12"),
-            new this.#Key("ctrl", "Control")
+            new this.#Key("ctrl", "Control"),
+            new this.#Key("delete", "Delete"),
+            new this.#Key("f", "f", true)
         ];
     }
 

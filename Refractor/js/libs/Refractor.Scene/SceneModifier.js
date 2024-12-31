@@ -31,7 +31,7 @@ class SceneModifier
         this.UnfocusGrid();
 
         this.#focusedGrid = SceneBank.FindByID(id);
-        this.#focusedGrid.GetComponent("GridRenderer").color.a = 0.75;
+        this.#focusedGrid.GetComponent("GridRenderer").color.a = 0.5;
         this.#gridID = id;
         this.#gridComponent = this.#focusedGrid.GetComponent("Grid");
     }
