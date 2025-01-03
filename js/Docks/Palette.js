@@ -111,6 +111,19 @@ function DrawUI ()
     paletteView.RecalcSize();
 
     Dock.AddContent(tools);
+
+    const search = Dock.ContainerStart();
+    search.classList.add("palette-search");
+
+    const searchImg = document.createElement("img");
+    searchImg.src = "img/search.svg";
+    searchImg.addEventListener("dragstart", event => event.preventDefault());
+    Dock.AddContent(searchImg);
+
+    const searchbar = Dock.TextField();
+    searchbar.element.querySelector(".placehold").textContent = "Search...";
+
+    Dock.ContainerEnd();
 }
 
 function UseAction (index)
@@ -152,7 +165,7 @@ async function OnRefractorLoad ()
 
     paletteView.Refract("SceneModifier.FocusGrid(0)");
 
-    LoadMap("yoki_room");
+    LoadMap("colors");
 }
 
 async function LoadMap (name)

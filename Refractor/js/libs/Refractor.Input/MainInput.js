@@ -100,6 +100,7 @@ class MainInput extends GameBehavior
                 this.EraserAction(tilemap, grid, gridPos);
                 return;
             case 2:
+            case 3:
                 this.SelectAction(grid);
                 return;
         }
@@ -113,17 +114,18 @@ class MainInput extends GameBehavior
 
         if (this.#action === 3) this.Deselect();
 
-        if (index === 3 && SceneModifier.focusedTilemap != null)
-        {
-            if (this.#selectStart == null) this.SelectAll();
-                    
-            this.#transforming = true;
-            index = 2;
-        }
+        if (index === 3 && SceneModifier.focusedTilemap != null) { }
         else if (this.#action === 2) this.Deselect();
         else this.#selectionRenderer.color = new Color(0, 0, 0, 0);
 
         this.#action = index;
+
+        if (index === 3 && SceneModifier.focusedTilemap != null)
+        {
+            if (this.#selectStart == null) this.SelectAll();
+            
+            this.#transforming = true;
+        }
     }
 
     PencilAction (tilemap, grid, gridPos)
@@ -282,7 +284,7 @@ class MainInput extends GameBehavior
 
     SelectAll ()
     {
-        if (this.#action !== 2) this.UseAction(2);
+        if (this.#action !== 2 && this.#action !== 3) this.UseAction(2);
 
         if (!this.#selectionRenderer.color.Equals(new Color(0, 1, 1))) this.#selectionRenderer.color = new Color(0, 1, 1);
 
