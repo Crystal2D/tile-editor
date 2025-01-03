@@ -2,7 +2,7 @@
 {
     padding: 10px;
     padding-top: 0;
-    height: 50%;
+    height: 70%;
 }
 
 .palette-view div
@@ -10,4 +10,40 @@
     height: 100%;
     overflow: clip;
     border-radius: 6px;
+}
+
+.palette-tools
+{
+    display: flex;
+    margin: 0 10px;
+    flex-wrap: wrap;
+    gap: 3px;
+    justify-content: center;
+}
+
+.palette-tools img
+{
+    background: rgb(232, 232, 232);
+    border-radius: 4px;
+    width: 25px;
+    height: 25px;
+    padding: 3px;
+    user-select: none;
+}
+
+.palette-tools[enabled="0"] img
+{
+    opacity: 0.2;
+    pointer-events: none;
+}
+
+.palette-tools img[focused="1"]
+{
+    background: rgb(120, 130, 170);
+}
+
+[cursor-locked="0"] .palette-tools img:hover
+{
+    cursor: pointer;
+    opacity: 0.7;
 }

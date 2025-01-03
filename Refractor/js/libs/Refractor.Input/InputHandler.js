@@ -2,6 +2,7 @@ class InputHandler extends GameBehavior
 {
     #recalcViewMat = false;
     #draggingView = false;
+    #cancelWalk = false;
     #mouseX = 0;
     #mouseY = 0;
     #mouseXOld = 0;
@@ -76,8 +77,6 @@ class InputHandler extends GameBehavior
         this.#mouseYOld = this.#mouseY;
         this.#mouseY = InputManager.GetMouseY();
 
-        this.WalkView();
-
         if (InputManager.GetKey("right") || InputManager.GetKey("middle")) this.DragView();
         if (this.#draggingView && ((InputManager.GetKeyUp("right") && !InputManager.GetKey("middle")) || (InputManager.GetKeyUp("middle") && !InputManager.GetKey("right"))))
         {
@@ -110,6 +109,8 @@ class InputHandler extends GameBehavior
 
     LateUpdate ()
     {
+        this.WalkView();
+
         FPSMeter.Update();
     }
 
@@ -134,8 +135,20 @@ class InputHandler extends GameBehavior
         this.#recalcViewMat = true;
     }
 
+    CancelWalk ()
+    {
+        this.#cancelWalk = true;
+    }
+
     WalkView ()
     {
+        if (this.#cancelWalk)
+        {
+            this.#cancelWalk = false;
+
+            return;
+        }
+
         const input = new Vector2(
             +Input.GetKey(KeyCode.D) - +Input.GetKey(KeyCode.A),
             +Input.GetKey(KeyCode.W) - +Input.GetKey(KeyCode.S)

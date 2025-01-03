@@ -29,8 +29,13 @@ let keys = [
     new Key("a", "a", true),
     new Key("d", "d", true),
     new Key("shift", "Shift"),
-    new Key("delete", "Delete"),
-    new Key("f", "f", true)
+    new Key("backspace", "Backspace"),
+    new Key("f", "f", true),
+    new Key("t", "t", true),
+    new Key("ctrl", "Control"),
+    new Key("b", "b", true),
+    new Key("e", "e", true),
+    new Key("r", "r", true)
 ];
 
 function FindKey (name)

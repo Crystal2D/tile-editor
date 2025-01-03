@@ -353,6 +353,7 @@ body > .context-menu div[enabled="0"] .tip
     margin-bottom: 4px;
     height: 30%;
     image-rendering: pixelated;
+    user-select: none;
 }
 
 .ui-info .title

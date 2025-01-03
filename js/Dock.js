@@ -530,7 +530,7 @@ function Info (title, description)
     ContainerStart().classList.add("ui-info");
 
     const img = document.createElement("img");
-    img.src = "img/eye/hide.svg";
+    img.addEventListener("dragstart", event => event.preventDefault());
 
     const imgs = [
         "bnuuy.png"

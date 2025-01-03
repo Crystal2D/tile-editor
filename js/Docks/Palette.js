@@ -1,9 +1,12 @@
 let focused = false;
 let palettes = [];
 let paletteMaps = [];
+let actions = [];
 
 let paletteViewWrap = null;
 let paletteView = null;
+let tools = null;
+let currentAction = null;
 
 function Init ()
 {
@@ -29,6 +32,34 @@ function Init ()
 
     paletteViewWrap.append(wrap);
 
+    tools = document.createElement("div");
+    tools.classList.add("palette-tools");
+    tools.setAttribute("enabled", 0);
+
+    const pencilTool = document.createElement("img");
+    pencilTool.src = "img/pencil.svg";
+
+    const eraserTool = document.createElement("img");
+    eraserTool.src = "img/eraser.svg";
+
+    const selectTool = document.createElement("img");
+    selectTool.src = "img/cursor.svg";
+
+    const moveTool = document.createElement("img");
+    moveTool.src = "img/move.svg";
+
+    actions = [pencilTool, eraserTool, selectTool, moveTool];
+
+    for (let i = 0; i < actions.length; i++)
+    {
+        actions[i].addEventListener("dragstart", event => event.preventDefault());
+        actions[i].addEventListener("click", () => UseAction(i));
+    }
+
+    tools.append(...actions);
+
+    UseAction(0);
+
     Dock.OnResize().Add(() => {
         if (!focused) return;
 
@@ -37,6 +68,26 @@ function Init ()
     });
     Dock.OnResizeEnd().Add(() => { if (focused) paletteView.content.style.pointerEvents = ""; });
     window.addEventListener("resize", () => { if (focused) paletteView.RecalcSize(); });
+
+    Loop.Append(() => {
+        const hasSelection = Layers.Selection() != null;
+
+        tools.setAttribute("enabled", +hasSelection);
+
+        if (!hasSelection) return;
+
+        if (Input.GetKeyDown(KeyCode.B)) UseAction(0);
+        if (Input.GetKeyDown(KeyCode.E)) UseAction(+(currentAction !== 1));
+        if (Input.GetKey(KeyCode.Ctrl) && Input.GetKeyDown(KeyCode.R)) UseAction(2);
+        if (Input.GetKeyDown(KeyCode.T)) UseAction(3);
+
+        if (Input.GetKey(KeyCode.Ctrl) && !Input.GetKey(KeyCode.Shift) && Input.GetKeyDown(KeyCode.A))
+        {
+            UseAction(2);
+
+            SceneView.Refract("GameObject.FindComponents(\"MainInput\")[0].SelectAll()");
+        }
+    });
 }
 
 function DrawUI ()
@@ -58,6 +109,21 @@ function DrawUI ()
 
     Dock.AddContent(paletteViewWrap);
     paletteView.RecalcSize();
+
+    Dock.AddContent(tools);
+}
+
+function UseAction (index)
+{
+    if (currentAction === index) return;
+
+    if (currentAction != null) actions[currentAction].setAttribute("focused", 0);
+
+    actions[index].setAttribute("focused", 1);
+
+    requestAnimationFrame(() => SceneView.Refract(`GameObject.FindComponents("MainInput")[0].UseAction(${index})`));
+
+    currentAction = index;
 }
 
 function OnContext ()
@@ -305,5 +371,6 @@ module.exports = {
     Init,
     DrawUI,
     OnContext,
-    OnClear
+    OnClear,
+    UseAction
 };
