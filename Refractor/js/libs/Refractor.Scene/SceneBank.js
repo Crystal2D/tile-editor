@@ -23,6 +23,6 @@ class SceneBank
 
         const index = this.#objs.indexOf(obj);
 
-        return this.#objs.splice(index, 1).gameObject;
+        return this.#objs.splice(index, 1)[0].gameObject;
     }
 }

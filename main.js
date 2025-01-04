@@ -60,6 +60,7 @@ async function OpenFolder (path)
 async function InitWindow ()
 {
     const projectWin = await CreateWindow({
+        title: "Crystal Tile Editor",
         width: 1100,
         height: 700,
         src: "index.html",
@@ -99,6 +100,7 @@ ipcMain.handle("GetPath", (event, name) => app.getPath(name));
 ipcMain.handle("OpenFolder", async (event, path) => await OpenFolder(path));
 ipcMain.handle("OpenProject", async (event, dir) => {
     const projectWin = await CreateWindow({
+        title: "Crystal Tile Editor",
         width: 1100,
         height: 700,
         src: `index.html`,
@@ -107,4 +109,6 @@ ipcMain.handle("OpenProject", async (event, dir) => {
     });
     projectWin.setMinimumSize(1100, 700);
     projectWin.webContents.openDevTools({ mode: "detach" });
+
+    app.focus();
 });

@@ -8,6 +8,7 @@ class Embed
     #wrap = null;
 
     onLoad = new DelegateEvent();
+    onResourceLoad = new DelegateEvent();
 
     content = null;
 

@@ -173,6 +173,8 @@ function RemoveTile (mapID, pos)
 
 async function Load (src)
 {
+    LoadingScreen.SetText(`Opening Scene: ${src}`);
+
     activeSceneSrc = src;
 
     ProjectManager.GetEditorData().scene = src;
@@ -195,7 +197,12 @@ async function Load (src)
         for (let j = 0; j < localTilemaps.length; j++) new Layer(localTilemaps[j], grids[i]);
     }
 
-    SceneView.onLoad.Add(() => SceneView.Refract(`(async () => { await Resources.Load(...${JSON.stringify(activeScene.resources)}); await SceneInjector.Grid(...${JSON.stringify(grids)}); await SceneInjector.GameObject(...${JSON.stringify(tilemaps)}) })()`));
+    const loadCall = () => SceneView.Refract(`(async () => { await Resources.Load(...${JSON.stringify(activeScene.resources)}); await SceneInjector.Grid(...${JSON.stringify(grids)}); await SceneInjector.GameObject(...${JSON.stringify(tilemaps)}) })()`);
+
+    if (SceneView.isLoaded) loadCall();
+    else SceneView.onLoad.Add(() => loadCall());
+
+    LoadingScreen.Disable();
 }
 
 async function Save ()

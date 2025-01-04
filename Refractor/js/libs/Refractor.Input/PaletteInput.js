@@ -42,4 +42,12 @@ class PaletteInput extends GameBehavior
             this.#gridSize = gridSize;
         }
     }
+
+    Deselect ()
+    {
+        this.#focusedTile = null;
+        this.#selectionRenderer.color = new Color(0, 0, 0, 0);
+
+        window.parent.RefractBack("SceneView.Refract(\"GameObject.FindComponents(\\\"MainInput\\\")[0].tile = null\");");
+    }
 }

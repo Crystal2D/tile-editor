@@ -1,6 +1,7 @@
 const FS = require("fs/promises");
 const { ipcRenderer } = require("electron");
 
+const LoadingScreen = require("./js/LoadingScreen");
 const ProjectManager = require("./js/ProjectManager");
 const SceneManager = require("./js/SceneManager");
 const DelegateEvent = require("./js/DelegateEvent");

@@ -2,11 +2,20 @@ let focused = false;
 let palettes = [];
 let paletteMaps = [];
 let actions = [];
+let paletteListItems = [];
 
+let paletteViewBase = null;
 let paletteViewWrap = null;
 let paletteView = null;
 let tools = null;
 let currentAction = null;
+let paletteList = null;
+let currentPalette = null;
+
+function PaletteView ()
+{
+    return paletteView;
+}
 
 function Init ()
 {
@@ -21,16 +30,17 @@ function Init ()
 
     if (removingMaps.length > 0) ProjectManager.SaveEditorData();
 
+    paletteViewBase = document.createElement("div");
+    paletteViewBase.classList.add("palette-view-base");
+
     paletteViewWrap = document.createElement("div");
     paletteViewWrap.classList.add("palette-view");
 
-    const wrap = document.createElement("div");
-
-    paletteView = new Refractor.Embed(wrap);
+    paletteView = new Refractor.Embed(paletteViewWrap);
     paletteView.content.addEventListener("load", () => paletteView.Refract("window.targetScene = 1; document.body.style.background = \"rgb(32, 32, 32)\""));
     paletteView.onLoad.Add(() => OnRefractorLoad());
 
-    paletteViewWrap.append(wrap);
+    document.body.append(paletteViewWrap);
 
     tools = document.createElement("div");
     tools.classList.add("palette-tools");
@@ -58,18 +68,50 @@ function Init ()
 
     tools.append(...actions);
 
-    UseAction(0);
+    paletteList = document.createElement("div");
+    paletteList.classList.add("palette-list");
+
+    for (let i = 0; i < palettes.length; i++)
+    {
+        const item = document.createElement("div");
+        item.classList.add("item");
+        item.setAttribute("focused", 0);
+        item.append(palettes[i].name);
+
+        item.addEventListener("click", () => LoadMap(palettes[i].name));
+
+        paletteListItems.push(item);
+    }
+
+    paletteList.append(...paletteListItems);
 
     Dock.OnResize().Add(() => {
         if (!focused) return;
 
         paletteView.content.style.pointerEvents = "none";
+
+        paletteViewWrap.style.top = `${paletteViewBase.getBoundingClientRect().y}px`;
+        paletteViewWrap.style.left = `${paletteViewBase.getBoundingClientRect().x + 10}px`;
+        paletteViewWrap.style.width = `${paletteViewBase.getBoundingClientRect().width - 20}px`;
+        paletteViewWrap.style.height = `${paletteViewBase.getBoundingClientRect().height - 10}px`;
+
         paletteView.RecalcSize();
     });
     Dock.OnResizeEnd().Add(() => { if (focused) paletteView.content.style.pointerEvents = ""; });
-    window.addEventListener("resize", () => { if (focused) paletteView.RecalcSize(); });
+    window.addEventListener("resize", () => {
+        if (!focused) return;
+
+        paletteViewWrap.style.top = `${paletteViewBase.getBoundingClientRect().y}px`;
+        paletteViewWrap.style.left = `${paletteViewBase.getBoundingClientRect().x + 10}px`;
+        paletteViewWrap.style.width = `${paletteViewBase.getBoundingClientRect().width - 20}px`;
+        paletteViewWrap.style.height = `${paletteViewBase.getBoundingClientRect().height - 10}px`;
+
+        paletteView.RecalcSize();
+    });
 
     Loop.Append(() => {
+        if (currentAction == null && SceneView.isLoaded) UseAction(0);
+
         const hasSelection = Layers.Selection() != null;
 
         tools.setAttribute("enabled", +hasSelection);
@@ -96,6 +138,11 @@ function DrawUI ()
 
     focused = true;
 
+    const wrapper = Dock.ContainerStart();
+    wrapper.classList.add("palette-wrap");
+
+    Dock.ContainerStart().classList.add("palette-viewer");
+
     const layerName = Dock.Label(selection == null ? "No Layer Selected" : `Selected Layer: ${selection.name}`);
     layerName.style.fontWeight = "bold";
     layerName.style.fontSize = "14px";
@@ -106,11 +153,14 @@ function DrawUI ()
     layerName.style.textOverflow = "ellipsis";
     layerName.style.margin = "6px 12px";
     layerName.style.marginBottom = "0";
+    layerName.style.flexShrink = "0";
 
-    Dock.AddContent(paletteViewWrap);
-    paletteView.RecalcSize();
-
+    Dock.AddContent(paletteViewBase);
     Dock.AddContent(tools);
+
+    Dock.ContainerEnd();
+
+    Dock.ContainerStart().classList.add("palette-explorer");
 
     const search = Dock.ContainerStart();
     search.classList.add("palette-search");
@@ -124,6 +174,21 @@ function DrawUI ()
     searchbar.element.querySelector(".placehold").textContent = "Search...";
 
     Dock.ContainerEnd();
+
+    Dock.AddContent(paletteList);
+
+    Dock.ContainerEnd();
+
+
+    Dock.ContainerEnd();
+
+    paletteViewWrap.style.display = "block";
+    paletteViewWrap.style.top = `${paletteViewBase.getBoundingClientRect().y}px`;
+    paletteViewWrap.style.left = `${paletteViewBase.getBoundingClientRect().x + 10}px`;
+    paletteViewWrap.style.width = `${paletteViewBase.getBoundingClientRect().width - 20}px`;
+    paletteViewWrap.style.height = `${paletteViewBase.getBoundingClientRect().height - 10}px`;
+
+    paletteView.RecalcSize();
 }
 
 function UseAction (index)
@@ -147,6 +212,8 @@ function OnContext ()
 function OnClear ()
 {
     focused = false;
+
+    paletteViewWrap.style.display = "";
 }
 
 async function OnRefractorLoad ()
@@ -164,12 +231,16 @@ async function OnRefractorLoad ()
     await new Promise(resolve => requestAnimationFrame(resolve));
 
     paletteView.Refract("SceneModifier.FocusGrid(0)");
-
-    LoadMap("colors");
 }
 
 async function LoadMap (name)
 {
+    const lastPalette = currentPalette;
+    currentPalette = name;
+
+    paletteListItems.find(item => item.innerText === lastPalette)?.setAttribute("focused", 0);
+    paletteListItems.find(item => item.innerText === name)?.setAttribute("focused", 1);
+
     let map = paletteMaps.find(item => item.name === name);
     const palette = palettes.find(item => item.name === name);
 
@@ -237,7 +308,10 @@ async function LoadMap (name)
     }
 
     paletteView.Refract(`SceneBank.FindByID(0).GetComponent("Grid").cellSize = new Vector2(${map.cellSize.x}, ${map.cellSize.y})`);
-    paletteView.Refract(`(async () => { await Resources.Load(...${JSON.stringify(palette.textures.map(item => item.src))}); await SceneInjector.GameObject(${JSON.stringify({
+
+    if (lastPalette != null) paletteView.Refract(`GameObject.FindComponents(\"PaletteInput\")[0].Deselect(); SceneModifier.UnfocusTilemap(); GameObject.Destroy(SceneBank.Remove(1));`);
+
+    paletteView.Refract(`(async () => { await SceneInjector.GameObject(${JSON.stringify({
         name: "tiles",
         id: 1,
         parent: 0,
@@ -249,7 +323,7 @@ async function LoadMap (name)
                 }
             }
         ]
-    })}); SceneModifier.FocusTilemap(1) })()`);
+    })}); SceneModifier.FocusTilemap(1); requestAnimationFrame(() => { const cam = GameObject.FindComponents("Camera")[0]; const bounds = GameObject.FindComponents("Tilemap")[0].bounds; cam.transform.position = new Vector2(bounds.center.x, bounds.center.y); cam.orthographicSize = Math.min(bounds.size.x, bounds.size.y) + 1; GameObject.FindComponents("InputHandler")[0].RecalcViewMatrix() }) })()`);
 }
 
 async function GenerateMap (name)
@@ -287,6 +361,11 @@ async function GenerateMap (name)
 }
 
 async function MapTexture (map, data, pos)
+{
+    await MapTextureByPos(map, data, pos);
+}
+
+async function MapTextureBySize (map, data, pos)
 {
     if (!map.textures.includes(data.src)) map.textures.push(data.src);
 
@@ -328,6 +407,69 @@ async function MapTexture (map, data, pos)
 
         pos.x = 0;
         pos.y--;
+    }
+
+    pos.x = 0;
+    pos.y -= 2;
+}
+
+async function MapTextureByPos (map, data, pos)
+{
+    if (!map.textures.includes(data.src)) map.textures.push(data.src);
+
+    const texture = ProjectManager.FindResource(data.src);
+    const ppu = texture.args.pixelPerUnit ?? 16;
+    const sprites = [...texture.args.sprites.map((item, index) => { return {
+        item: item,
+        index: index + 1
+    }; })];
+
+    sprites.sort((a, b) => (a.item.rect.x ?? 0) - (b.item.rect.x ?? 0));
+    sprites.sort((a, b) => (a.item.rect.y ?? 0) - (b.item.rect.y ?? 0));
+
+    const zeroIndex = data.sprites.find(item => item.index === 0);
+
+    if (zeroIndex != null)
+    {
+        await MapSprite(map, data.src, zeroIndex, pos, 0);
+
+        pos.y--;
+    }
+
+    let localY = 0;
+
+    for (let i = 0; i < sprites.length; i++)
+    {
+        const sprite = sprites[i].item;
+        const paletteSprite = data.sprites.find(item => item.index === sprites[i].index);
+
+        if (paletteSprite == null) return;
+
+        const width = sprite.width / ppu;
+        const height = sprite.height / ppu;
+
+        if (width > map.cellSize.x) map.cellSize.x = width;
+        if (height > map.cellSize.y) map.cellSize.y = height;
+
+        if (localY == null) localY = sprite.rect.y ?? 0;
+
+        if (localY !== (sprite.rect.y ?? 0))
+        {
+            pos.x = 0;
+            pos.y--;
+            localY = sprite.rect.y ?? 0;
+        }
+
+        map.tiles.push({
+            palette: map.name,
+            spriteID: paletteSprite.id,
+            position: {
+                x: pos.x,
+                y: pos.y
+            }
+        });
+
+        pos.x++;
     }
 
     pos.x = 0;
@@ -381,6 +523,7 @@ async function MapSprite (map, texturePath, data, pos, maxX)
 
 
 module.exports = {
+    PaletteView,
     Init,
     DrawUI,
     OnContext,

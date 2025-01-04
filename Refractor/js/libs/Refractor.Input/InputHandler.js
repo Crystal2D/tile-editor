@@ -31,7 +31,7 @@ class InputHandler extends GameBehavior
         this.#docBody = document.body;
         this.#cam = GameObject.Find("camera").GetComponent("Camera");
 
-        FPSMeter.SetActive(true);
+        // FPSMeter.SetActive(true);
     }
 
     OnEnable ()
@@ -54,13 +54,12 @@ class InputHandler extends GameBehavior
                 )
             );
 
-            this.#recalcViewMat = true;
+            this.RecalcViewMatrix();
         });
 
         this.#onResize = Interface.onResize.Add(() => this.#recalcViewMat = true);
 
-        this.#recalcViewMat = true;
-
+        this.RecalcViewMatrix();
     }
 
     OnDisable ()
@@ -111,7 +110,7 @@ class InputHandler extends GameBehavior
     {
         this.WalkView();
 
-        FPSMeter.Update();
+        // FPSMeter.Update();
     }
 
     DragView ()
@@ -132,12 +131,17 @@ class InputHandler extends GameBehavior
             deltaY * (camSize.y / Interface.height)
         ));
 
-        this.#recalcViewMat = true;
+        this.RecalcViewMatrix();
     }
 
     CancelWalk ()
     {
         this.#cancelWalk = true;
+    }
+
+    RecalcViewMatrix ()
+    {
+        this.#recalcViewMat = true;
     }
 
     WalkView ()
@@ -161,6 +165,6 @@ class InputHandler extends GameBehavior
             Vector2.Scale(input.normalized, this.#cam.orthographicSize * Time.deltaTime * (Input.GetKey(KeyCode.Shift) ? 2 : 1.25))
         );
         
-        this.#recalcViewMat = true;
+        this.RecalcViewMatrix();
     }
 }

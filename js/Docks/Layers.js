@@ -245,6 +245,8 @@ class Layer
         focused?.item.setAttribute("focused", 0);
         this.item.setAttribute("focused", 1);
 
+        SceneView.Refract("GameObject.FindComponents(\"MainInput\")[0].Deselect()");
+
         focused = this;
         SceneView.Refract(`SceneModifier.FocusGrid(${this.#gridData.id}); SceneModifier.FocusTilemap(${this.#data.id})`);
     }

@@ -25,6 +25,11 @@ class GridRenderer extends Renderer
         return this.#material;
     }
 
+    get meshChanged ()
+    {
+        return true;
+    }
+
     get bounds ()
     {
         return new Bounds(this.#bounds.center, this.#bounds.size);
@@ -90,10 +95,8 @@ class GridRenderer extends Renderer
         super.RecalcBounds();
     }
 
-    Render ()
+    ForceMeshUpdate ()
     {
-        if (!this.isLoaded || !this.gameObject.activeSelf) return;
-
         if (this.#grid == null) this.#grid = this.GetComponent("Grid");
         if (this.#camera == null) this.#camera = GameObject.FindComponents("Camera")[0];
 
@@ -103,6 +106,11 @@ class GridRenderer extends Renderer
 
             this.RecalcBounds();
         }
+    }
+
+    Render ()
+    {
+        if (!this.isLoaded || !this.gameObject.activeSelf) return;
         
         const gl = this.material.gl;
         

@@ -165,6 +165,7 @@ main
 
 #createBtn
 {
+    display: none;
     background: rgb(80, 90, 130);
 }
 

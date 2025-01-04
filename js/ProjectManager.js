@@ -40,28 +40,55 @@ async function Init ()
     const URLSearch = new URLSearchParams(window.location.search);
     projectDir = decodeURIComponent(URLSearch.get("dir"));
 
-    const manifestRequest = await fetch(`${projectDir}\\manifest.json`);
-    projectData = await manifestRequest.json();
+    let counter = 0;
 
-    const resourcesRequest = await fetch(`${projectDir}\\data\\resources.json`);
-    resources = await resourcesRequest.json();
+    (async () => {
+        const manifestRequest = await fetch(`${projectDir}\\manifest.json`);
+        projectData = await manifestRequest.json();
 
-    try
-    {
-        const palettesRequest = await fetch(`${projectDir}\\data\\tilepalettes.json`);
-        palettes = await palettesRequest.json();
-    }
-    catch { }
+        counter++;
+    })();
 
-    try
-    {
-        const editorRequest = await fetch(`${projectDir}\\editor.json`);
-        editorData = await editorRequest.json();
-    }
-    catch { }
+    (async () => {
+        const resourcesRequest = await fetch(`${projectDir}\\data\\resources.json`);
+        resources = await resourcesRequest.json();
 
-    if (editorData.scene == null) editorData.scene = "test";
-    if (editorData.palettes == null) editorData.palettes = [];
+        counter++;
+    })();
+
+    (async () => {
+        try
+        {
+            const palettesRequest = await fetch(`${projectDir}\\data\\tilepalettes.json`);
+            palettes = await palettesRequest.json();
+        }
+        catch { }
+
+        counter++;
+    })();
+
+    (async () => {
+        try
+        {
+            const editorRequest = await fetch(`${projectDir}\\editor.json`);
+            editorData = await editorRequest.json();
+        }
+        catch { }
+
+        if (editorData.scene == null) editorData.scene = "test";
+        if (editorData.palettes == null) editorData.palettes = [];
+
+        counter++;
+    })();
+
+    await new Promise(resolve => Loop.Append(() => {
+        if (counter === 4)
+        {
+            resolve();
+
+            return;
+        }
+    }, null, () => counter === 4));
 }
 
 async function SaveEditorData ()
@@ -71,6 +98,8 @@ async function SaveEditorData ()
 
 
 module.exports = {
+    editiorVersion: 2025.1,
+    editorDisplayVersion: "2025.1f (The Bare Minimum Edition)",
     ProjectDir,
     ProjectName,
     GetEditorData,

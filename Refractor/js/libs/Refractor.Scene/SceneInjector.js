@@ -67,4 +67,14 @@ class SceneInjector
 
         obj.Destroy();
     }
+
+    static async Resources (...paths)
+    {
+        for (let i = 0; i < paths.length; i++)
+        {
+            await Resources.Load(paths[i]);
+
+            window.parent.RefractBack(`Refractor.FindEmbed(${window.refractorID}).onResourceLoad.Invoke("${paths[i]}")`);
+        }
+    }
 }

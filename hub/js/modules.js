@@ -8,5 +8,7 @@ const MenuManager = require("./../js/MenuManager");
 const { MenuItem, MenuLine, ContextMenu } = require("./../js/MenuManager");
 const ProjectManager = require("./js/ProjectManager");
 
+SceneView = null;
+
 const Input = require("./../js/Input/Input");
 const KeyCode = require("./../js/Input/KeyCode");

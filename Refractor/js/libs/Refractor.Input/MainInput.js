@@ -19,7 +19,19 @@ class MainInput extends GameBehavior
     {
         this.#tile = value;
 
-        this.#LoadTile();
+        if (value != null)
+        {
+            this.#LoadTile();
+
+            return;
+        }
+        
+        if (this.#preview == null) return;
+
+        GameObject.Destroy(this.#preview);
+
+        this.#preview = null;
+        this.#previewRenderer = null;
     }
 
     async #InjectPreview (sprite)

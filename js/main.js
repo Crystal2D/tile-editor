@@ -3,7 +3,13 @@ let SceneView = null;
 window.RefractBack = data => eval(data);
 
 window.onload = async () => {
+    LoadingScreen.Set();
+    LoadingScreen.Enable();
+    LoadingScreen.SetText("Fetching Data");
+
     await ProjectManager.Init();
+
+    window.addEventListener("resize", () => { MenuManager.CloseContextMenus(); });
 
     MenuManager.Init();
     MenuManager.AddToBar(
@@ -24,19 +30,19 @@ window.onload = async () => {
 
             new ContextMenu(
                 [
-                    new MenuItem("Project Settings"),
-                    new MenuItem("Build Settings", () => {
-                        // MenuManager.UnfocusBar();
-                        // MenuManager.CloseContextMenus();
+                    // new MenuItem("Project Settings"),
+                    // new MenuItem("Build Settings", () => {
+                    //     // MenuManager.UnfocusBar();
+                    //     // MenuManager.CloseContextMenus();
 
-                        // ipcRenderer.invoke("CreateWindow", {
-                        //     name : "Build Settings",
-                        //     width : 400,
-                        //     height : 300,
-                        //     src : "windows/build/index.html"
-                        // });
-                    }),
-                    new MenuLine(),
+                    //     // ipcRenderer.invoke("CreateWindow", {
+                    //     //     name : "Build Settings",
+                    //     //     width : 400,
+                    //     //     height : 300,
+                    //     //     src : "windows/build/index.html"
+                    //     // });
+                    // }),
+                    // new MenuLine(),
                     new MenuItem("Exit", () => window.close())
                 ]
             );
@@ -121,6 +127,27 @@ window.onload = async () => {
     Layers.Init();
     Palette.Init();
 
+    const paletteCount = ProjectManager.GetPalettes().length;
+    let paletteCounterA = 0;
+    let paletteCounterB = 0;
+
+    SceneView.onResourceLoad.Add(() => paletteCounterA++);
+    SceneView.onLoad.Add(() => SceneView.Refract(`SceneInjector.Resources(...${JSON.stringify(ProjectManager.GetPalettes().map(item => item.textures).flat().map(item => item.src))})`));
+
+    Palette.PaletteView().onResourceLoad.Add(() => paletteCounterB++);
+    Palette.PaletteView().onLoad.Add(() => Palette.PaletteView().Refract(`SceneInjector.Resources(...${JSON.stringify(ProjectManager.GetPalettes().map(item => item.textures).flat().map(item => item.src))})`));
+
+    await new Promise(resolve => Loop.Append(() => {
+        if (paletteCounterA === paletteCount && paletteCounterB === paletteCount)
+        {
+            resolve();
+
+            return;
+        }
+
+        LoadingScreen.SetText(`Loading Palettes (${Math.min(paletteCounterA, paletteCounterB) + 1}/${paletteCount})`);
+    }, null, () => paletteCounterA === paletteCount && paletteCounterB === paletteCount));
+
     await SceneManager.Load(ProjectManager.GetEditorData().scene);
 
     const layers = Dock.AddTab("Layers");
@@ -131,8 +158,5 @@ window.onload = async () => {
     inspector.Bind(() => Inspector.DrawUI(), () => Inspector.OnContext());
     palette.Bind(() => Palette.DrawUI(), () => Palette.OnContext(), () => Palette.OnClear());
 
-    window.addEventListener("resize", () => {
-        MenuManager.CloseContextMenus();
-        SceneView.RecalcSize();
-    });
+    window.addEventListener("resize", () => SceneView.RecalcSize());
 };
