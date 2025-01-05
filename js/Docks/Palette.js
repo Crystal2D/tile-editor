@@ -52,13 +52,16 @@ function Init ()
     const eraserTool = document.createElement("img");
     eraserTool.src = "img/eraser.svg";
 
+    const eyedropperTool = document.createElement("img");
+    eyedropperTool.src = "img/eyedropper.svg";
+
     const selectTool = document.createElement("img");
     selectTool.src = "img/cursor.svg";
 
     const moveTool = document.createElement("img");
     moveTool.src = "img/move.svg";
 
-    actions = [pencilTool, eraserTool, selectTool, moveTool];
+    actions = [pencilTool, eraserTool, eyedropperTool, selectTool, moveTool];
 
     for (let i = 0; i < actions.length; i++)
     {
@@ -120,12 +123,12 @@ function Init ()
 
         if (Input.GetKeyDown(KeyCode.B)) UseAction(0);
         if (Input.GetKeyDown(KeyCode.E)) UseAction(+(currentAction !== 1));
-        if (Input.GetKey(KeyCode.Ctrl) && Input.GetKeyDown(KeyCode.R)) UseAction(2);
-        if (Input.GetKeyDown(KeyCode.T)) UseAction(3);
+        if (Input.GetKey(KeyCode.Ctrl) && Input.GetKeyDown(KeyCode.R)) UseAction(3);
+        if (Input.GetKeyDown(KeyCode.T)) UseAction(4);
 
         if (Input.GetKey(KeyCode.Ctrl) && !Input.GetKey(KeyCode.Shift) && Input.GetKeyDown(KeyCode.A))
         {
-            UseAction(2);
+            UseAction(3);
 
             SceneView.Refract("GameObject.FindComponents(\"MainInput\")[0].SelectAll()");
         }

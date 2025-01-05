@@ -112,7 +112,10 @@ class MainInput extends GameBehavior
                 this.EraserAction(tilemap, grid, gridPos);
                 return;
             case 2:
+                // this.EyedropperAction();
+                return;
             case 3:
+            case 4:
                 this.SelectAction(grid);
                 return;
         }
@@ -124,15 +127,15 @@ class MainInput extends GameBehavior
 
         if (this.#action === 0 && this.#existingTiles.length > 0) SceneModifier.focusedTilemap.AddTile(this.#existingTiles[0]);
 
-        if (this.#action === 3) this.Deselect();
+        if (this.#action === 4) this.Deselect();
 
-        if (index === 3 && SceneModifier.focusedTilemap != null) { }
-        else if (this.#action === 2) this.Deselect();
+        if (index === 4 && SceneModifier.focusedTilemap != null) { }
+        else if (this.#action === 3) this.Deselect();
         else this.#selectionRenderer.color = new Color(0, 0, 0, 0);
 
         this.#action = index;
 
-        if (index === 3 && SceneModifier.focusedTilemap != null)
+        if (index === 4 && SceneModifier.focusedTilemap != null)
         {
             if (this.#selectStart == null) this.SelectAll();
             
@@ -296,7 +299,7 @@ class MainInput extends GameBehavior
 
     SelectAll ()
     {
-        if (this.#action !== 2 && this.#action !== 3) this.UseAction(2);
+        if (this.#action !== 3 && this.#action !== 4) this.UseAction(3);
 
         if (!this.#selectionRenderer.color.Equals(new Color(0, 1, 1))) this.#selectionRenderer.color = new Color(0, 1, 1);
 
@@ -323,7 +326,7 @@ class MainInput extends GameBehavior
     {
         if (this.#selectStart == null) return;
 
-        if (this.#transforming) window.parent.RefractBack("Palette.UseAction(2)");
+        if (this.#transforming) window.parent.RefractBack("Palette.UseAction(3)");
 
         this.#selectStart = null;
         this.#selectEnd = null;
@@ -491,7 +494,7 @@ class MainInput extends GameBehavior
 
         for (let i = 0; i < this.#existingTiles.length; i++)
         {
-            if (this.#selection.find(item => item.position.Equals(this.#existingTiles[i].position)) != null) return;
+            if (this.#selection.find(item => item.position.Equals(this.#existingTiles[i].position)) != null) continue;
 
             SceneModifier.focusedTilemap.AddTile(this.#existingTiles[i]);
 
@@ -530,10 +533,5 @@ class MainInput extends GameBehavior
             SceneModifier.focusedGrid.cellSize,
             SceneModifier.focusedGrid.cellGap
         ));
-    }
-
-    RectAction ()
-    {
-        
     }
 }
