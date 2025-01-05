@@ -112,7 +112,7 @@ class MainInput extends GameBehavior
                 this.EraserAction(tilemap, grid, gridPos);
                 return;
             case 2:
-                // this.EyedropperAction();
+                this.EyedropperAction(tilemap, grid, gridPos);
                 return;
             case 3:
             case 4:
@@ -125,7 +125,12 @@ class MainInput extends GameBehavior
     {
         if (this.#action === index) return;
 
-        if (this.#action === 0 && this.#existingTiles.length > 0) SceneModifier.focusedTilemap.AddTile(this.#existingTiles[0]);
+        if (this.#action === 0)
+        {
+            if (this.#preview != null && this.#preview.activeSelf) this.#preview.SetActive(false);
+
+            if (this.#existingTiles.length > 0) SceneModifier.focusedTilemap.AddTile(this.#existingTiles[0]);
+        }
 
         if (this.#action === 4) this.Deselect();
 
@@ -198,8 +203,6 @@ class MainInput extends GameBehavior
 
     EraserAction (tilemap, grid, gridPos)
     {
-        if (this.#preview != null && this.#preview.activeSelf) this.#preview.SetActive(false);
-
         if (InputManager.isMouseOver && !this.#selectionRenderer.color.Equals(Color.red)) this.#selectionRenderer.color = Color.red;
         else if (!InputManager.isMouseOver) this.#selectionRenderer.color = new Color(0, 0, 0, 0);
 
@@ -216,10 +219,28 @@ class MainInput extends GameBehavior
         window.parent.RefractBack(`SceneManager.RemoveTile(${SceneModifier.focusedTilemapID}, { x: ${gridPos.x}, y: ${gridPos.y} })`);
     }
 
+    EyedropperAction (tilemap, grid, gridPos)
+    {
+        if (InputManager.isMouseOver && !this.#selectionRenderer.color.Equals(Color.blue)) this.#selectionRenderer.color = Color.blue;
+        else if (!InputManager.isMouseOver) this.#selectionRenderer.color = new Color(0, 0, 0, 0);
+
+        const gridSize = Vector2.Add(grid.cellSize, grid.cellGap);
+
+        if (!this.#selectionRect.transform.scale.Equals(gridSize)) this.#selectionRect.transform.scale = gridSize;
+
+        this.#selectionRect.transform.position = this.#inputHandler.mousePosSnapped;
+
+        if (!InputManager.GetKeyUp("left")) return;
+
+        const tile = tilemap.GetTile(gridPos)
+
+        if (tile != null) window.parent.RefractBack(`(async () => { await Palette.LoadMap("${tile.palette}"); const tilePos = Palette.GetTilePos(${tile.spriteID}); if (tilePos == null) return; Palette.PaletteView().Refract(\`requestAnimationFrame(() => GameObject.FindComponents("PaletteInput")[0].SelectTileByPos(new Vector2(\${tilePos.x}, \${tilePos.y})))\`) })()`);
+
+        window.parent.RefractBack("Palette.UseAction(0)");
+    }
+
     SelectAction (grid)
     {
-        if (this.#preview != null && this.#preview.activeSelf) this.#preview.SetActive(false);
-
         if (InputManager.GetKeyDown("left") && !this.#transforming) this.#selectStart = this.#inputHandler.mousePosSnapped;
 
         if (this.#selectStart == null)

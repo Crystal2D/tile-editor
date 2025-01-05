@@ -7,6 +7,7 @@ let paletteListItems = [];
 let paletteViewBase = null;
 let paletteViewWrap = null;
 let paletteView = null;
+let currentMap = null;
 let tools = null;
 let currentAction = null;
 let paletteList = null;
@@ -123,6 +124,7 @@ function Init ()
 
         if (Input.GetKeyDown(KeyCode.B)) UseAction(0);
         if (Input.GetKeyDown(KeyCode.E)) UseAction(+(currentAction !== 1));
+        if (Input.GetKeyDown(KeyCode.P)) UseAction(2);
         if (Input.GetKey(KeyCode.Ctrl) && Input.GetKeyDown(KeyCode.R)) UseAction(3);
         if (Input.GetKeyDown(KeyCode.T)) UseAction(4);
 
@@ -238,13 +240,15 @@ async function OnRefractorLoad ()
 
 async function LoadMap (name)
 {
+    if (currentPalette === name) return;
+
     const lastPalette = currentPalette;
     currentPalette = name;
 
     paletteListItems.find(item => item.innerText === lastPalette)?.setAttribute("focused", 0);
     paletteListItems.find(item => item.innerText === name)?.setAttribute("focused", 1);
 
-    let map = paletteMaps.find(item => item.name === name);
+    const map = paletteMaps.find(item => item.name === name);
     const palette = palettes.find(item => item.name === name);
 
     if (map == null) map = await GenerateMap(name);
@@ -309,6 +313,8 @@ async function LoadMap (name)
 
         if (save) ProjectManager.SaveEditorData();
     }
+
+    currentMap = map;
 
     paletteView.Refract(`SceneBank.FindByID(0).GetComponent("Grid").cellSize = new Vector2(${map.cellSize.x}, ${map.cellSize.y})`);
 
@@ -524,6 +530,11 @@ async function MapSprite (map, texturePath, data, pos, maxX)
     pos.y--;
 }
 
+function GetTilePos (spriteID)
+{
+    return currentMap.tiles.find(item => item.spriteID === spriteID).position;
+}
+
 
 module.exports = {
     PaletteView,
@@ -531,5 +542,7 @@ module.exports = {
     DrawUI,
     OnContext,
     OnClear,
-    UseAction
+    UseAction,
+    LoadMap,
+    GetTilePos
 };

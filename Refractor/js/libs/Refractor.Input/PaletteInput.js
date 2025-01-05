@@ -17,23 +17,12 @@ class PaletteInput extends GameBehavior
     Update ()
     {
         const grid = SceneModifier.focusedGrid;
-        const tilemap = SceneModifier.focusedTilemap;
+        
+        if (grid == null || SceneModifier.focusedTilemap == null) return;
+        
+        if (InputManager.GetKeyDown("left")) this.SelectTileByPos(grid.WorldToCell(this.#inputHandler.mousePosSnapped));
 
-        if (grid == null || tilemap == null) return;
-
-        const hoveredTile = tilemap.GetTile(grid.WorldToCell(this.#inputHandler.mousePosSnapped));
-
-        if (hoveredTile != null && InputManager.GetKeyDown("left") && this.#focusedTile !== hoveredTile)
-        {
-            this.#selectionRect.transform.position = this.#inputHandler.mousePosSnapped;
-            this.#selectionRenderer.color = new Color(0, 1, 1);
-
-            this.#focusedTile = hoveredTile;
-
-            window.parent.RefractBack(`SceneView.Refract("GameObject.FindComponents(\\"MainInput\\")[0].tile = { palette: \\"${hoveredTile.palette}\\", spriteID: ${hoveredTile.spriteID} }");`);
-        }
-
-        const gridSize = Vector2.Add(grid.cellSize, grid.cellGap);
+       const gridSize = Vector2.Add(grid.cellSize, grid.cellGap);
 
         if (!this.#gridSize.Equals(gridSize))
         {
@@ -49,5 +38,22 @@ class PaletteInput extends GameBehavior
         this.#selectionRenderer.color = new Color(0, 0, 0, 0);
 
         window.parent.RefractBack("SceneView.Refract(\"GameObject.FindComponents(\\\"MainInput\\\")[0].tile = null\");");
+    }
+
+    SelectTileByPos (pos)
+    {
+        if (SceneModifier.focusedGrid == null || SceneModifier.focusedTilemap == null) return;
+
+        const tile = SceneModifier.focusedTilemap.GetTile(pos);
+
+        if (tile == null || this.#focusedTile === tile) return;
+        
+        this.#selectionRect.transform.position = SceneModifier.focusedGrid.CellToWorld(pos);
+        this.#selectionRenderer.color = new Color(0, 1, 1);
+
+        this.#focusedTile = tile;
+
+        window.parent.RefractBack(`SceneView.Refract("GameObject.FindComponents(\\"MainInput\\")[0].tile = { palette: \\"${tile.palette}\\", spriteID: ${tile.spriteID} }");`);
+        
     }
 }

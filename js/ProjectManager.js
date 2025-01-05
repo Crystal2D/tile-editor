@@ -61,6 +61,13 @@ async function Init ()
         {
             const palettesRequest = await fetch(`${projectDir}\\data\\tilepalettes.json`);
             palettes = await palettesRequest.json();
+
+            if (palettes.length > 1)
+            {
+                palettes.sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true }));
+
+                await FS.writeFile(`${projectDir}\\data\\tilepalettes.json`, JSON.stringify(palettes, null, 4));
+            }
         }
         catch { }
 

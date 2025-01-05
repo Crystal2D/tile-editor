@@ -10,5 +10,6 @@ module.exports = {
     Ctrl: 8,
     B: 9,
     E: 10,
-    R: 11
+    R: 11,
+    P: 12
 };

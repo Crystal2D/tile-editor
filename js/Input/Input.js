@@ -35,7 +35,8 @@ let keys = [
     new Key("ctrl", "Control"),
     new Key("b", "b", true),
     new Key("e", "e", true),
-    new Key("r", "r", true)
+    new Key("r", "r", true),
+    new Key("p", "p", true)
 ];
 
 function FindKey (name)
