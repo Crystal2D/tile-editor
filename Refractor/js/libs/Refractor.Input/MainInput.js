@@ -235,6 +235,7 @@ class MainInput extends GameBehavior
         const tile = tilemap.GetTile(gridPos)
 
         if (tile != null) window.parent.RefractBack(`(async () => { await Palette.LoadMap("${tile.palette}"); const tilePos = Palette.GetTilePos(${tile.spriteID}); if (tilePos == null) return; Palette.PaletteView().Refract(\`requestAnimationFrame(() => GameObject.FindComponents("PaletteInput")[0].SelectTileByPos(new Vector2(\${tilePos.x}, \${tilePos.y})))\`) })()`);
+        else window.parent.RefractBack("Palette.PaletteView().Refract(\"GameObject.FindComponents(\\\"PaletteInput\\\")[0].Deselect()\")");
 
         window.parent.RefractBack("Palette.UseAction(0)");
     }

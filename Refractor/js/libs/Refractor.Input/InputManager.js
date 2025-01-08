@@ -91,6 +91,8 @@ class InputManager
             this.#mouseY = event.clientY;
             
             this.#keys[keyIndex].active = true;
+
+            window.parent.RefractBack("document.activeElement?.blur()");
         });
         document.addEventListener("mouseup", event => {            
             event.preventDefault();
