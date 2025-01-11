@@ -51,6 +51,8 @@ function DrawUI ()
 
     const hidden = Dock.Checkbox("Hidden");
     hidden.element.style.marginTop = "6px";
+    hidden.value = +selection.hidden;
+    hidden.onUpdate = value => selection.hidden = value === 0 ? false : true;
 
     Dock.ContainerEnd();
 
@@ -89,6 +91,19 @@ function DrawUI ()
     cellGap.y = selection.cellGap.y;
     cellGap.fieldX.onUpdate = () => selection.SetCellGap(cellGap.x, cellGap.y);
     cellGap.fieldY.onUpdate = () => selection.SetCellGap(cellGap.x, cellGap.y);
+
+    Dock.SectionEnd();
+
+
+    Dock.SectionStart("Tilemap");
+
+    const sortingLayer = Dock.NumberField("Sorting Layer (ID)");
+    sortingLayer.SetValue(selection.sortingLayer);
+    sortingLayer.onUpdate = value => selection.sortingLayer = value;
+
+    const sortingOrder = Dock.NumberField("Sorting Order");
+    sortingOrder.SetValue(selection.sortingOrder);
+    sortingOrder.onUpdate = value => selection.sortingOrder = value;
 
     Dock.SectionEnd();
 }

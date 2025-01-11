@@ -192,6 +192,11 @@ function CloseContextMenus ()
     backdropEnabled = false;
 }
 
+function Enabled ()
+{
+    return backdropEnabled;
+}
+
 
 module.exports = {
     MenuItem,
@@ -204,5 +209,6 @@ module.exports = {
     AddToBar,
     FocusBar,
     UnfocusBar,
-    CloseContextMenus
+    CloseContextMenus,
+    Enabled
 };

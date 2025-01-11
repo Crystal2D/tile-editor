@@ -1,6 +1,8 @@
 let activeSceneSrc = null;
 let activeScene = null;
 
+let loaded = false;
+
 function GetActiveSceneSrc ()
 {
     return activeSceneSrc;
@@ -85,7 +87,7 @@ function NewGrid (data)
     return grid;
 }
 
-function NewLayer ()
+async function NewLayer ()
 {
     let objID = 0;
 
@@ -103,21 +105,19 @@ function NewLayer ()
         name: "tile_Unnamed",
         id: objID,
         parent: gridData.id,
-        components: [
-            {
-                type: "Tilemap"
-            }
-        ]
-    }
+        components: [ { type: "Tilemap" } ]
+    };
 
     activeScene.gameObjects.push(tilemap);
 
-    requestAnimationFrame(() => SceneView.Refract(`SceneInjector.GameObject(${JSON.stringify(tilemap)})`));
+    SceneView.Refract(`SceneInjector.GameObject(${JSON.stringify(tilemap)})`);
+
+    await new Promise(resolve => requestAnimationFrame(resolve));
 
     const layer = new Layer(tilemap, gridData);
     dock.querySelector(".layers")?.append(layer.item);
 
-    requestAnimationFrame(() => layer.Focus());
+    layer.Focus();
 }
 
 function DestroyObject (id)
@@ -173,6 +173,8 @@ function RemoveTile (mapID, pos)
 
 async function Load (src)
 {
+    loaded = false;
+
     LoadingScreen.SetText(`Opening Scene: ${src}`);
 
     activeSceneSrc = src;
@@ -194,13 +196,15 @@ async function Load (src)
     {
         const localTilemaps = GetGridChildren(grids[i].id);
 
-        for (let j = 0; j < localTilemaps.length; j++) new Layer(localTilemaps[j], grids[i]);
+        for (let j = localTilemaps.length - 1; j >= 0; j--) new Layer(localTilemaps[j], grids[i]);
     }
 
-    const loadCall = () => SceneView.Refract(`(async () => { await Resources.Load(...${JSON.stringify(activeScene.resources)}); await SceneInjector.Grid(...${JSON.stringify(grids)}); await SceneInjector.GameObject(...${JSON.stringify(tilemaps)}) })()`);
+    const loadCall = () => SceneView.Refract(`(async () => { await Resources.Load(...${JSON.stringify(activeScene.resources)}); await SceneInjector.Grid(...${JSON.stringify(grids)}); await SceneInjector.GameObject(...${JSON.stringify(tilemaps)}); requestAnimationFrame(() => window.parent.RefractBack("SceneManager.MarkAsLoaded()")) })()`);
 
     if (SceneView.isLoaded) loadCall();
     else SceneView.onLoad.Add(() => loadCall());
+
+    await new Promise(resolve => Loop.Append(() => { if (loaded) resolve(); }, null, () => loaded));
 
     LoadingScreen.Disable();
 }
@@ -224,15 +228,40 @@ async function Save ()
 
             if (grid.args.cellSize == null && grid.args.cellGap == null) grid.args = undefined;
         }
+    }
 
-        const objIndex = activeScene.gameObjects.indexOf(gameObject);
-        const awfulTile = activeScene.gameObjects.find((item, index) => item.parent === gameObject.id && index < objIndex);
+    const tilemaps = activeScene.gameObjects.filter(item => item.name.startsWith("tile_"));
 
-        if (awfulTile != null)
+    for (let i = 0; i < tilemaps.length; i++) activeScene.gameObjects.splice(activeScene.gameObjects.indexOf(tilemaps[i]), 1);
+
+    const ordering = Layers.GetOrdering();
+    let lastOnOrder = grids[grids.length - 1];
+
+    for (let i = ordering.length - 1; i >= 0; i--)
+    {
+        const gameObject = tilemaps.find(item => item.id === ordering[i]);
+
+        const tilemap = gameObject.components.find(item => item.type === "Tilemap");
+
+        if (tilemap?.args != null)
         {
-            activeScene.gameObjects.splice(objIndex, 1);
-            activeScene.gameObjects.splice(activeScene.gameObjects.indexOf(awfulTile), 0, gameObject);
+            if (tilemap.args.tiles?.length === 0) tilemap.args.tiles = undefined;
+
+            if (tilemap.args.color != null)
+            {
+                if (tilemap.args.color.a === 255) tilemap.args.color.a = undefined;
+                if (tilemap.args.color.r === 255 && tilemap.args.color.g === 255 && tilemap.args.color.b === 255 && tilemap.args.color.a == null && tilemap.args.color.trueA == null) tilemap.args.color = undefined;
+            }
+
+            if (tilemap.args.sortingLayer === 0) tilemap.args.sortingLayer = undefined;
+            if (tilemap.args.sortingOrder === 0) tilemap.args.sortingOrder = undefined;
+
+            if (tilemap.args.tiles == null) tilemap.args = undefined;
         }
+
+        activeScene.gameObjects.splice(activeScene.gameObjects.indexOf(lastOnOrder) + 1, 0, gameObject);
+
+        lastOnOrder = gameObject;
     }
 
     for (let i = 0; i < activeScene.gameObjects.length; i++)
@@ -246,20 +275,19 @@ async function Save ()
 
             if (gameObject.transform.position == null && gameObject.transform.scale == null) gameObject.transform = undefined;
         }
-
-        const tilemap = gameObject.components.find(item => item.type === "Tilemap");
-
-        if (tilemap?.args != null)
-        {
-            if (tilemap.args.tiles?.length === 0) tilemap.args.tiles = undefined;
-
-            if (tilemap.args.tiles == null) tilemap.args = undefined;
-        }
     }
 
-
-
     await FS.writeFile(`${ProjectManager.ProjectDir()}\\data\\scenes\\${activeSceneSrc}.json`, JSON.stringify(activeScene, null, 4));
+}
+
+function IsLoaded ()
+{
+    return loaded;
+}
+
+function MarkAsLoaded ()
+{
+    loaded = true;
 }
 
 
@@ -275,5 +303,7 @@ module.exports = {
     AddTile,
     RemoveTile,
     Load,
-    Save
+    Save,
+    IsLoaded,
+    MarkAsLoaded
 };

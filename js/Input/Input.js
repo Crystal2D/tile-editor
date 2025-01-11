@@ -36,7 +36,12 @@ let keys = [
     new Key("b", "b", true),
     new Key("e", "e", true),
     new Key("r", "r", true),
-    new Key("p", "p", true)
+    new Key("p", "p", true),
+    new Key("c", "c", true),
+    new Key("v", "v", true),
+    new Key("n", "n", true),
+    new Key("x", "x", true),
+    new Key("del", "Delete")
 ];
 
 function FindKey (name)
@@ -119,6 +124,13 @@ function Init ()
     document.addEventListener("mousedown", event => onMouseDown.Invoke(event));
     document.addEventListener("mouseup", event => onMouseUp.Invoke(event));
     document.addEventListener("keydown", event => {
+        if (MenuManager.Enabled())
+        {
+            event.preventDefault();
+
+            return;
+        }
+
         const focus = document.activeElement;
 
         if (focus.contentEditable === "true" || focus.contentEditable === "plaintext-only") return;
@@ -134,6 +146,13 @@ function Init ()
         if (SceneView?.isLoaded) SceneView.Refract(`Input.KeyDown("${event.key}")`);
     });
     document.addEventListener("keyup", event => {
+        if (MenuManager.Enabled())
+        {
+            event.preventDefault();
+
+            return;
+        }
+
         const focus = document.activeElement;
 
         if (focus.contentEditable === "true" || focus.contentEditable === "plaintext-only") return;
@@ -156,7 +175,7 @@ function Init ()
 
 function End ()
 {
-    const inputFocused = document.activeElement.contentEditable === "true" || document.activeElement.contentEditable === "plaintext-only";
+    const inputFocused = document.activeElement.contentEditable === "true" || document.activeElement.contentEditable === "plaintext-only" || MenuManager.Enabled();
 
     for (let i = 0; i < keys.length; i++)
     {

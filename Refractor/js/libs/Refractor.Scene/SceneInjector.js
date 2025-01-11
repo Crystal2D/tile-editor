@@ -65,7 +65,7 @@ class SceneInjector
 
         if (obj == null) return;
 
-        obj.Destroy();
+        GameObject.Destroy(obj);
     }
 
     static async Resources (...paths)

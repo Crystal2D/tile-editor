@@ -9,7 +9,8 @@ window.onload = async () => {
 
     await ProjectManager.Init();
 
-    window.addEventListener("resize", () => { MenuManager.CloseContextMenus(); });
+    window.addEventListener("resize", () => MenuManager.CloseContextMenus());
+    window.addEventListener("blur", () => MenuManager.CloseContextMenus());
 
     MenuManager.Init();
     MenuManager.AddToBar(
@@ -127,6 +128,14 @@ window.onload = async () => {
     Layers.Init();
     Palette.Init();
 
+    const layers = Dock.AddTab("Layers");
+    const inspector = Dock.AddTab("Inspector");
+    const palette = Dock.AddTab("Palette");
+
+    layers.Bind(() => Layers.DrawUI(), () => Layers.OnContext(), () => Layers.OnClear());
+    inspector.Bind(() => Inspector.DrawUI(), () => Inspector.OnContext());
+    palette.Bind(() => Palette.DrawUI(), () => Palette.OnContext(), () => Palette.OnClear());
+
     const paletteCount = ProjectManager.GetPalettes().length;
     let paletteCounterA = 0;
     let paletteCounterB = 0;
@@ -150,13 +159,7 @@ window.onload = async () => {
 
     await SceneManager.Load(ProjectManager.GetEditorData().scene);
 
-    const layers = Dock.AddTab("Layers");
-    const inspector = Dock.AddTab("Inspector");
-    const palette = Dock.AddTab("Palette");
-
-    layers.Bind(() => Layers.DrawUI(), () => Layers.OnContext());
-    inspector.Bind(() => Inspector.DrawUI(), () => Inspector.OnContext());
-    palette.Bind(() => Palette.DrawUI(), () => Palette.OnContext(), () => Palette.OnClear());
+    layers.Focus();
 
     window.addEventListener("resize", () => SceneView.RecalcSize());
 };

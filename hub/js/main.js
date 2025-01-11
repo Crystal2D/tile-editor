@@ -4,7 +4,8 @@ window.onload = async () => {
 
     ProjectManager.Init();
 
-    window.addEventListener("resize", () => { MenuManager.CloseContextMenus(); });
+    window.addEventListener("resize", () => MenuManager.CloseContextMenus());
+    window.addEventListener("blur", () => MenuManager.CloseContextMenus());
 
     const docsDir = await ipcRenderer.invoke("GetPath", "documents");
     importBtn.addEventListener("click", async () => {

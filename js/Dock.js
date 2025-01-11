@@ -184,8 +184,6 @@ function AddTab (label)
         }
     };
 
-    if (focused == null) output.Focus();
-
     tab.addEventListener("mousedown", event => { if (event.button === 0) output.Focus(); });
 
     tab.append(label);
@@ -286,7 +284,8 @@ function TextArea (label, placeholdText)
         value: "",
         element: textArea,
         onBlur: () => { },
-        onUpdate: () => { }
+        onUpdate: () => { },
+        onValuePass: value => value
     };
 
     const text = document.createElement("div");
@@ -329,8 +328,8 @@ function TextArea (label, placeholdText)
         input.innerText = input.innerText.trim();
         const text = input.innerText;
 
-        output.value = text;
-        output.onUpdate(text);
+        output.value = output.onValuePass(text);
+        output.onUpdate(output.onValuePass(text));
 
         if (text.length !== 0) return;
 
@@ -379,6 +378,7 @@ function NumberField (label, defaultValue)
 {
     const output = TextArea(label);
     output.min = null;
+    output.onValuePass = value => parseFloat(value);
     output.SetValue = value => {
         const val = Number.isNaN(parseFloat(value)) ? (defaultValue ?? 0) : parseFloat(value);
 
@@ -455,7 +455,7 @@ function Vector2Field (label, defaultX, defaultY)
         fieldY: y,
         get x ()
         {
-            return parseFloat(x.value);
+            return x.value;
         },
         set x (value)
         {
@@ -463,7 +463,7 @@ function Vector2Field (label, defaultX, defaultY)
         },
         get y ()
         {
-            return parseFloat(y.value);
+            return y.value;
         },
         set y (value)
         {

@@ -1,4 +1,5 @@
 let loaded = false;
+let tabFocused = false;
 let mouse = 0;
 let layers = [];
 let onDragDrop = () => { };
@@ -7,20 +8,35 @@ let content = null;
 let focused = null;
 let dragging = null;
 let scenename = null;
-let onContext = null
+let onContext = null;
+let copyBuffer = null;
 
 class Layer
 {
     #pos = 0;
 
+    #index = null;
     #data = null;
     #gridData = null;
     #gridComponent = null;
     #label = null;
-
-    index = 0;
+    #visibility = null;
 
     item = null;
+
+    get index ()
+    {
+        return this.#index;
+    }
+
+    set index (value)
+    {
+        if (this.#index === value) return;
+
+        this.#index = value;
+
+        SceneView.Refract(`SceneBank.SetOrdering(${this.#data.id}, ${value})`);
+    }
 
     get objID ()
     {
@@ -102,6 +118,88 @@ class Layer
         this.item.style.top = `${value}px`;
     }
 
+    get hidden ()
+    {
+        const tilemap = this.#data.components.find(item => item.type === "Tilemap");
+
+        return tilemap.args?.color?.a === 0;
+    }
+
+    set hidden (value)
+    {
+        const tilemap = this.#data.components.find(item => item.type === "Tilemap");
+
+        if ((tilemap.args?.color?.a === 0) === value) return;
+
+        this.#label.style.opacity = value ? 0.5 : 1;
+        this.#label.style.fontStyle = value ? "italic" : "";
+        this.#visibility.src = `img/eye/${value ? "hidden" : "shown"}.svg`;
+
+        if (tilemap.args == null) tilemap.args = { };
+        if (tilemap.args.color == null) tilemap.args.color = {
+            r: 255,
+            g: 255,
+            b: 255
+        };
+
+        if (tilemap.args.color.a == null) tilemap.args.color.a = 255;
+
+        if (value)
+        {
+            tilemap.args.color.trueA = tilemap.args.color.a;
+            tilemap.args.color.a = 0;
+
+            SceneView.Refract(`const tilemap = SceneBank.FindByID(${this.#data.id}).GetComponent("Tilemap"); tilemap.color = new Color(tilemap.color.r, tilemap.color.g, tilemap.color.b, 0)`);
+
+            return;
+        }
+
+        tilemap.args.color.a = tilemap.args.color.trueA;
+        tilemap.args.color.trueA = undefined;
+
+        SceneView.Refract(`const tilemap = SceneBank.FindByID(${this.#data.id}).GetComponent("Tilemap"); tilemap.color = new Color(tilemap.color.r, tilemap.color.g, tilemap.color.b, ${tilemap.args.color.a / 255})`);
+    }
+
+    get sortingLayer ()
+    {
+        const tilemap = this.#data.components.find(item => item.type === "Tilemap");
+
+        return tilemap.args?.sortingLayer ?? 0;
+    }
+
+    set sortingLayer (value)
+    {
+        const tilemap = this.#data.components.find(item => item.type === "Tilemap");
+
+        if ((tilemap.args?.sortingLayer ?? 0) === value) return;
+
+        if (tilemap.args == null) tile.args = { };
+
+        tilemap.args.sortingLayer = value;
+
+        SceneView.Refract(`SceneBank.FindByID(${this.#data.id}).GetComponent("Tilemap").sortingLayer = ${value}`);
+    }
+
+    get sortingOrder ()
+    {
+        const tilemap = this.#data.components.find(item => item.type === "Tilemap");
+
+        return tilemap.args?.sortingOrder ?? 0;
+    }
+
+    set sortingOrder (value)
+    {
+        const tilemap = this.#data.components.find(item => item.type === "Tilemap");
+
+        if ((tilemap.args?.sortingOrder ?? 0) === value) return;
+
+        if (tilemap.args == null) tile.args = { };
+
+        tilemap.args.sortingOrder = value;
+
+        SceneView.Refract(`SceneBank.FindByID(${this.#data.id}).GetComponent("Tilemap").sortingOrder = ${value}`);
+    }
+
     constructor (data, gridData)
     {
         this.#data = data;
@@ -118,18 +216,37 @@ class Layer
         let cancelDrag = false;
 
         this.item.addEventListener("mouseover", () => onContext = () => {
-            const paste = new MenuShortcutItem("Paste", "Ctrl+V");
-            paste.enabled = false;
+            const paste = new MenuShortcutItem("Paste", "Ctrl+V", () => {
+                MenuManager.CloseContextMenus();
+                
+                PasteLayer();
+            });
+            paste.enabled = copyBuffer != null;
 
             new ContextMenu(
                 [
-                    new MenuItem("Hide"),
-                    new MenuItem("Rename"),
+                    new MenuItem(this.hidden ? "Show" : "Hide", () => {
+                        MenuManager.CloseContextMenus();
+
+                        this.hidden = !this.hidden;
+                    }),
                     new MenuLine(),
-                    new MenuShortcutItem("Copy", "Ctrl+C"),
-                    new MenuShortcutItem("Cut", "Ctrl+X"),
+                    new MenuShortcutItem("Copy", "Ctrl+C", () => {
+                        MenuManager.CloseContextMenus();
+
+                        this.Copy();
+                    }),
+                    new MenuShortcutItem("Cut", "Ctrl+X", () => {
+                        MenuManager.CloseContextMenus();
+
+                        this.Cut();
+                    }),
                     paste,
-                    new MenuShortcutItem("Duplicate", "Ctrl+D"),
+                    new MenuShortcutItem("Duplicate", "Ctrl+D", () => {
+                        MenuManager.CloseContextMenus();
+
+                        this.Duplicate();
+                    }),
                     new MenuShortcutItem("Delete", "Del", () => {
                         MenuManager.CloseContextMenus();
                         
@@ -181,27 +298,35 @@ class Layer
             dragging = this;
         });
 
+        const hidden = this.hidden;
+
         this.#label = document.createElement("div");
         this.#label.classList.add("label");
         this.#label.append(this.name);
+        this.#label.style.opacity = hidden ? 0.5 : 1;
+        this.#label.style.fontStyle = hidden ? "italic" : "";
 
-        const visibility = document.createElement("img");
-        visibility.classList.add("visibility");
-        visibility.src = "img/eye/show.svg";
+        this.#visibility = document.createElement("img");
+        this.#visibility.classList.add("visibility");
+        this.#visibility.src = `img/eye/${hidden ? "hidden" : "shown"}.svg`;
 
-        visibility.addEventListener("mousedown", event => {
+        this.#visibility.addEventListener("mousedown", event => {
             if (event.button !== 0) return;
 
             cancelSelect = true;
             cancelDrag = true;
+
+            this.hidden = !this.hidden;
         });
 
-        this.item.append(this.#label, visibility);
+        this.item.append(this.#label, this.#visibility);
 
-        this.index = layers.length;
-        this.dockPos = this.index * 24;
+        const index = layers.length;
+        this.dockPos = index * 24;
 
         layers.push(this);
+
+        Loop.Append(() => { if (SceneManager.IsLoaded()) requestAnimationFrame(() => this.index = index); }, null, () => SceneManager.IsLoaded());
     }
 
     #OnDrop ()
@@ -242,6 +367,8 @@ class Layer
 
     Focus ()
     {
+        if (focused === this) return;
+
         focused?.item.setAttribute("focused", 0);
         this.item.setAttribute("focused", 1);
 
@@ -249,10 +376,20 @@ class Layer
 
         focused = this;
         SceneView.Refract(`SceneModifier.FocusGrid(${this.#gridData.id}); SceneModifier.FocusTilemap(${this.#data.id})`);
+
+        this.item.scrollIntoViewIfNeeded();
     }
 
     Delete ()
     {
+        const procedingLayers = layers.filter((item, index) => index > this.index);
+
+        for (let i = 0; i < procedingLayers.length; i++)
+        {
+            procedingLayers[i].index--;
+            procedingLayers[i].dockPos = procedingLayers[i].index * 24;
+        }
+
         this.item.remove();
         layers.splice(this.index, 1);
 
@@ -263,6 +400,30 @@ class Layer
         SceneManager.DestroyObject(this.objID);
 
         if (onlyChild) SceneManager.DestroyObject(this.#gridData.id);
+    }
+
+    Copy ()
+    {
+        copyBuffer = {
+            layer: this,
+            data: this.#data,
+            clear: false
+        };
+    }
+
+    Cut ()
+    {
+        this.Copy();
+        this.Delete();
+    }
+
+    Duplicate ()
+    {
+        this.Copy();
+
+        copyBuffer.clear = true;
+
+        PasteLayer();
     }
 
     SetPosition (x, y)
@@ -456,80 +617,190 @@ function SetSceneName (name)
     scenename = name;
 }
 
+async function PasteLayer ()
+{
+    if (copyBuffer == null) return;
+
+    const tilemapBase = copyBuffer.data.components.find(item => item.type === "Tilemap");
+
+    if (tilemapBase.args == null) tilemapBase.args = { };
+    if (tilemapBase.args.tiles == null) tilemapBase.args.tiles = [];
+
+    const colorBase = tilemapBase.args.color ?? { };
+
+    const tilemapData = {
+        type: "Tilemap",
+        args: {
+            tiles: [],
+            color: {
+                r: colorBase.r ?? 255,
+                g: colorBase.g ?? 255,
+                b: colorBase.b ?? 255,
+                a: colorBase.a ?? 255
+            }
+        }
+    };
+    
+    if (colorBase.trueA != null) tilemapData.args.color.trueA = colorBase.trueA;
+
+    for (let i = 0; i < tilemapBase.args.tiles.length; i++)
+    {
+        const tile = tilemapBase.args.tiles[i];
+
+        tilemapData.args.tiles.push({
+            palette: tile.palette,
+            spriteID: tile.spriteID,
+            position: {
+                x: tile.position.x,
+                y: tile.position.y
+            }
+        });
+    }
+
+    let objID = 0;
+
+    const activeScene = SceneManager.GetActiveScene();
+    
+    while (activeScene.gameObjects.find(item => item.id === objID) != null) objID++;
+
+    let objName = copyBuffer.data.name;
+    let nameIndex = objName.match(/ \(\d+\)$/);
+
+    if (nameIndex != null)
+    {
+        objName = objName.slice(0, -nameIndex[0].length);
+        nameIndex = parseInt(nameIndex[0].slice(2, -1));
+    }
+    else nameIndex = 0;
+
+    const nameRegex = new RegExp(`(${objName}) \\(\\d+\\)$`);
+
+    const nameMatches = activeScene.gameObjects.filter(item => item.name.match(nameRegex) != null || item.name === objName).map(item => parseInt((item.name.match(/ \(\d+\)$/) ?? [" (0)"])[0].slice(2, -1)));
+    nameMatches.sort((a, b) => a - b);
+
+    for (let i = 0; i < nameMatches.length; i++)
+    {
+        if (nameMatches[i] < nameIndex) continue;
+
+        if (nameMatches[i] - nameIndex === 0)
+        {
+            nameIndex++;
+
+            continue;
+        }
+
+        nameIndex = nameMatches[i - 1] + 1;
+
+        break;
+    }
+
+    const grid = {
+        position: { x: copyBuffer.layer.position.x, y: copyBuffer.layer.position.y },
+        scale: { x: copyBuffer.layer.scale.x, y: copyBuffer.layer.scale.y },
+        cellSize: { x: copyBuffer.layer.cellSize.x, y: copyBuffer.layer.cellSize.y },
+        cellGap: { x: copyBuffer.layer.cellGap.x, y: copyBuffer.layer.cellGap.y }
+    };
+    let gridData = SceneManager.FindGrid(grid) ?? SceneManager.NewGrid(grid);
+
+    const tilemap = {
+        name: nameIndex === 0 ? objName : `${objName} (${nameIndex})`,
+        id: objID,
+        parent: gridData.id,
+        components: [ tilemapData ]
+    };
+
+    activeScene.gameObjects.push(tilemap);
+
+    SceneView.Refract(`SceneInjector.GameObject(${JSON.stringify(tilemap)})`);
+
+    await new Promise(resolve => requestAnimationFrame(resolve));
+
+    const layer = new Layer(tilemap, gridData);
+    dock.querySelector(".layers")?.append(layer.item);
+
+    layer.Focus();
+
+    if (copyBuffer.clear) copyBuffer = null;
+}
+
 function Init ()
 {
     if (loaded) return;
 
     Input.OnMouseUp().Add(() => onDragDrop());
 
-    RequestUpdate();
+    Loop.Append(() => Update());
 
     loaded = true;
 }
 
-function RequestUpdate ()
-{
-    requestAnimationFrame(Update.bind(this));
-}
-
 function Update ()
 {
-    if (dragging == null)
-    {
-        RequestUpdate();
-
-        return;
-    }
-
-    if (dragging.dockPos <= (dragging.index - 1) * 24 && dragging.index > 0)
-    {
-        const switchee = layers[dragging.index - 1];
-
-        switchee.index++;
-        switchee.dockPos = switchee.index * 24;
-
-        dragging.index--;
-
-        layers.sort((a, b) => a.index - b.index);
-    }
-
-    if (dragging.dockPos >= (dragging.index + 1) * 24 && dragging.index < layers.length - 1)
-    {
-        const switchee = layers[dragging.index + 1];
-
-        switchee.index--;
-        switchee.dockPos = switchee.index * 24;
-
-        dragging.index++;
-
-        layers.sort((a, b) => a.index - b.index);
-    }
-
-    const mouseOld = mouse;
-    mouse = Math.max(Math.min(Input.MouseY(), content.getBoundingClientRect().top + (layers.length * 24)), content.getBoundingClientRect().top);
-    const delta = mouse - mouseOld;
-
-    dragging.dockPos = Math.max(Math.min(dragging.dockPos + delta, (layers.length - 1) * 24), 0);
-
-    if (dragging.dockPos < dragging.index * 24)
-    {
-        if (dragging.index > 0) layers[dragging.index - 1].dockPos -= delta;
-
-        if (dragging.index < layers.length - 1) layers[dragging.index + 1].dockPos = layers[dragging.index + 1].index * 24;
-    }
+    if (!tabFocused) return;
     
-    if (dragging.dockPos > dragging.index * 24)
+    if (Input.GetKey(KeyCode.Ctrl) && Input.GetKey(KeyCode.Shift) && Input.GetKeyDown(KeyCode.N)) SceneManager.NewLayer();
+    if (Input.GetKey(KeyCode.Ctrl) && Input.GetKeyDown(KeyCode.V)) PasteLayer();
+
+    if (focused != null)
     {
-        if (dragging.index > 0) layers[dragging.index - 1].dockPos = layers[dragging.index - 1].index * 24;
-        
-        if (dragging.index < layers.length - 1) layers[dragging.index + 1].dockPos -= delta;
+        if (Input.GetKey(KeyCode.Ctrl) && Input.GetKeyDown(KeyCode.C)) focused.Copy();
+        if (Input.GetKey(KeyCode.Ctrl) && Input.GetKeyDown(KeyCode.X)) focused.Cut();
+        if (Input.GetKey(KeyCode.Ctrl) && Input.GetKeyDown(KeyCode.D)) focused.Duplicate();
+        if (Input.GetKeyDown(KeyCode.Delete)) focused.Delete();
     }
 
-    RequestUpdate();
+    if (dragging != null)
+    {
+        if (dragging.dockPos <= (dragging.index - 1) * 24 && dragging.index > 0)
+        {
+            const switchee = layers[dragging.index - 1];
+
+            switchee.index++;
+            switchee.dockPos = switchee.index * 24;
+
+            dragging.index--;
+
+            layers.sort((a, b) => a.index - b.index);
+        }
+
+        if (dragging.dockPos >= (dragging.index + 1) * 24 && dragging.index < layers.length - 1)
+        {
+            const switchee = layers[dragging.index + 1];
+
+            switchee.index--;
+            switchee.dockPos = switchee.index * 24;
+
+            dragging.index++;
+
+            layers.sort((a, b) => a.index - b.index);
+        }
+
+        const mouseOld = mouse;
+        mouse = Math.max(Math.min(Input.MouseY(), content.getBoundingClientRect().top + (layers.length * 24)), content.getBoundingClientRect().top);
+        const delta = mouse - mouseOld;
+
+        dragging.dockPos = Math.max(Math.min(dragging.dockPos + delta, (layers.length - 1) * 24), 0);
+
+        if (dragging.dockPos < dragging.index * 24)
+        {
+            if (dragging.index > 0) layers[dragging.index - 1].dockPos -= delta;
+
+            if (dragging.index < layers.length - 1) layers[dragging.index + 1].dockPos = layers[dragging.index + 1].index * 24;
+        }
+
+        if (dragging.dockPos > dragging.index * 24)
+        {
+            if (dragging.index > 0) layers[dragging.index - 1].dockPos = layers[dragging.index - 1].index * 24;
+
+            if (dragging.index < layers.length - 1) layers[dragging.index + 1].dockPos -= delta;
+        }
+    }
 }
 
 function DrawUI ()
 {
+    tabFocused = true;
+
     const sceneName = Dock.Label(scenename);
     sceneName.style.fontWeight = "bold";
     sceneName.style.fontSize = "14px";
@@ -558,8 +829,12 @@ function OnContext ()
         return;
     }
 
-    const paste = new MenuShortcutItem("Paste", "Ctrl+V");
-    paste.enabled = false;
+    const paste = new MenuShortcutItem("Paste", "Ctrl+V", () => {
+        MenuManager.CloseContextMenus();
+        
+        PasteLayer();
+    });
+    paste.enabled = copyBuffer != null;
 
     new ContextMenu(
         [
@@ -579,6 +854,16 @@ function OnContext ()
     )
 }
 
+function OnClear ()
+{
+    tabFocused = false;
+}
+
+function GetOrdering ()
+{
+    return layers.map(item => item.objID);
+}
+
 
 module.exports = {
     Layer,
@@ -586,5 +871,7 @@ module.exports = {
     SetSceneName,
     Init,
     DrawUI,
-    OnContext
+    OnContext,
+    OnClear,
+    GetOrdering
 };

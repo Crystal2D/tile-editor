@@ -408,7 +408,7 @@ async function LoadMap (name)
 
     paletteView.Refract(`SceneBank.FindByID(0).GetComponent("Grid").cellSize = new Vector2(${map.cellSize.x}, ${map.cellSize.y})`);
 
-    if (lastPalette != null) paletteView.Refract(`GameObject.FindComponents(\"PaletteInput\")[0].Deselect(); SceneModifier.UnfocusTilemap(); GameObject.Destroy(SceneBank.Remove(1));`);
+    if (lastPalette != null) paletteView.Refract(`GameObject.FindComponents(\"PaletteInput\")[0].Deselect(); SceneModifier.UnfocusTilemap(); SceneInjector.Destroy(1)`);
 
     paletteView.Refract(`(async () => { await SceneInjector.GameObject(${JSON.stringify({
         name: "tiles",

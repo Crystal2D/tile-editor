@@ -11,5 +11,10 @@ module.exports = {
     B: 9,
     E: 10,
     R: 11,
-    P: 12
+    P: 12,
+    C: 13,
+    V: 14,
+    N: 15,
+    X: 16,
+    Delete: 17
 };

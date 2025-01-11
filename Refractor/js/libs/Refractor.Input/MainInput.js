@@ -14,6 +14,7 @@ class MainInput extends GameBehavior
     #selectStart = null;
     #selectEnd = null;
     #lastTransPos = null;
+    #sceneListener = null;
 
     set tile (value)
     {
@@ -84,14 +85,17 @@ class MainInput extends GameBehavior
         this.#inputHandler = this.GetComponent("InputHandler");
         this.#selectionRect = GameObject.Find("selection_rect");
         this.#selectionRenderer = this.#selectionRect.GetComponent("RectRenderer");
+        this.#sceneListener = this.GetComponent("SceneListener");
     }
 
     Update ()
     {
+        if (Input.GetKey(KeyCode.Ctrl) && Input.GetKey(KeyCode.D)) this.#inputHandler.CancelWalk();
+
         const grid = SceneModifier.focusedGrid;
         const tilemap = SceneModifier.focusedTilemap;
 
-        if (grid == null || tilemap == null)
+        if (grid == null || tilemap == null || tilemap.color.a === 0)
         {
             if (this.#preview != null && this.#preview.activeSelf) this.#preview.SetActive(false);
             if (this.#selectionRenderer.color.a !== 0) this.#selectionRenderer.color = new Color(0, 0, 0, 0);
@@ -153,8 +157,9 @@ class MainInput extends GameBehavior
         if (this.#existingTiles.length > 0 && (!this.#existingTiles[0].position.Equals(gridPos) || !InputManager.isMouseOver))
         {
             tilemap.AddTile(this.#existingTiles[0]);
-
             this.#existingTiles = [];
+
+            this.#sceneListener.SortOrdering();
         }
 
         if (InputManager.isMouseOver && !this.#selectionRenderer.color.Equals(Color.green)) this.#selectionRenderer.color = Color.green;
@@ -182,8 +187,9 @@ class MainInput extends GameBehavior
         if (hoveredTile != null && InputManager.isMouseOver && (hoveredTile.palette !== this.#tile.palette || hoveredTile.spriteID !== this.#tile.spriteID))
         {
             this.#existingTiles.push(hoveredTile);
-
             tilemap.RemoveTileByPosition(gridPos);
+
+            this.#sceneListener.SortOrdering();
         }
 
         if (!InputManager.GetKey("left") || (hoveredTile?.palette === this.#tile.palette && hoveredTile?.spriteID === this.#tile.spriteID) || (this.#existingTiles[0]?.palette === this.#tile.palette && this.#existingTiles[0]?.spriteID === this.#tile.spriteID)) return;
@@ -193,6 +199,8 @@ class MainInput extends GameBehavior
             this.#tile.spriteID,
             gridPos
         ));
+
+        this.#sceneListener.SortOrdering();
 
         if (this.#existingTiles.length > 0) window.parent.RefractBack(`SceneManager.RemoveTile(${SceneModifier.focusedTilemapID}, { x: ${gridPos.x}, y: ${gridPos.y} })`);
         
@@ -215,6 +223,8 @@ class MainInput extends GameBehavior
         if (!InputManager.GetKey("left") || tilemap.GetTile(gridPos) == null) return;
 
         tilemap.RemoveTileByPosition(gridPos);
+
+        this.#sceneListener.SortOrdering();
 
         window.parent.RefractBack(`SceneManager.RemoveTile(${SceneModifier.focusedTilemapID}, { x: ${gridPos.x}, y: ${gridPos.y} })`);
     }
@@ -417,7 +427,12 @@ class MainInput extends GameBehavior
             window.parent.RefractBack(`SceneManager.RemoveTile(${SceneModifier.focusedTilemapID}, { x: ${this.#selection[i].position.x}, y: ${this.#selection[i].position.y} })`);
         }
 
-        if (this.#selection.length > 0) this.Deselect();
+        if (this.#selection.length > 0)
+        {
+            this.Deselect();
+
+            this.#sceneListener.SortOrdering();
+        }
     }
 
     FillSelection ()
@@ -479,6 +494,8 @@ class MainInput extends GameBehavior
         }
 
         this.Deselect();
+
+        this.#sceneListener.SortOrdering();
     }
 
     TransformSelection (dir)
@@ -488,6 +505,8 @@ class MainInput extends GameBehavior
         for (let i = 0; i < this.#selection.length; i++)
         {
             SceneModifier.focusedTilemap.RemoveTileByPosition(this.#selection[i].position);
+
+            this.#sceneListener.SortOrdering();
 
             window.parent.RefractBack(`SceneManager.RemoveTile(${SceneModifier.focusedTilemapID}, { x: ${this.#selection[i].position.x}, y: ${this.#selection[i].position.y} })`);
         }
@@ -504,12 +523,16 @@ class MainInput extends GameBehavior
 
                 SceneModifier.focusedTilemap.RemoveTileByPosition(existingTile.position);
 
+                this.#sceneListener.SortOrdering();
+
                 window.parent.RefractBack(`SceneManager.RemoveTile(${SceneModifier.focusedTilemapID}, { x: ${existingTile.position.x}, y: ${existingTile.position.y} })`);
             }
             
             this.#selection[i].position = newPos;
 
             SceneModifier.focusedTilemap.AddTile(this.#selection[i]);
+
+            this.#sceneListener.SortOrdering();
 
             window.parent.RefractBack(`SceneManager.AddTile(${SceneModifier.focusedTilemapID}, { palette: \"${this.#selection[i].palette}\", spriteID: ${this.#selection[i].spriteID}, position: { x: ${this.#selection[i].position.x}, y: ${this.#selection[i].position.y} } })`);
         }
@@ -519,6 +542,8 @@ class MainInput extends GameBehavior
             if (this.#selection.find(item => item.position.Equals(this.#existingTiles[i].position)) != null) continue;
 
             SceneModifier.focusedTilemap.AddTile(this.#existingTiles[i]);
+
+            this.#sceneListener.SortOrdering();
 
             window.parent.RefractBack(`SceneManager.AddTile(${SceneModifier.focusedTilemapID}, { palette: \"${this.#existingTiles[i].palette}\", spriteID: ${this.#existingTiles[i].spriteID}, position: { x: ${this.#existingTiles[i].position.x}, y: ${this.#existingTiles[i].position.y} } })`);
         }
