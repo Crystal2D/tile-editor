@@ -3,11 +3,14 @@ let SceneView = null;
 window.RefractBack = data => eval(data);
 
 window.onload = async () => {
+    const URLSearch = new URLSearchParams(window.location.search);
+    window.windowID = parseInt(decodeURIComponent(URLSearch.get("windowID")));
+
     LoadingScreen.Set();
     LoadingScreen.Enable();
     LoadingScreen.SetText("Fetching Data");
 
-    await ProjectManager.Init();
+    await ProjectManager.Init(decodeURIComponent(URLSearch.get("dir")));
 
     window.addEventListener("resize", () => MenuManager.CloseContextMenus());
     window.addEventListener("blur", () => MenuManager.CloseContextMenus());
@@ -95,8 +98,18 @@ window.onload = async () => {
             
             new ContextMenu(
                 [
-                    new MenuShortcutItem("New Scene", "Ctrl+N"),
-                    new MenuShortcutItem("Open Scene", "Ctrl+O"),
+                    new MenuShortcutItem("New Scene", "Ctrl+N", () => {
+                        MenuManager.UnfocusBar();
+                        MenuManager.CloseContextMenus();
+
+                        SceneManager.NewScene();
+                    }),
+                    new MenuShortcutItem("Open Scene", "Ctrl+O", () => {
+                        MenuManager.UnfocusBar();
+                        MenuManager.CloseContextMenus();
+
+                        SceneManager.OpenScene();
+                    }),
                     new MenuLine(),
                     new MenuShortcutItem("Save", "Ctrl+S", () => {
                         MenuManager.UnfocusBar();
@@ -104,7 +117,12 @@ window.onload = async () => {
 
                         SceneManager.Save();
                     }),
-                    new MenuShortcutItem("Save As..", "Ctrl+Shift+S"),
+                    new MenuShortcutItem("Save As", "Ctrl+Shift+S", () => {
+                        MenuManager.UnfocusBar();
+                        MenuManager.CloseContextMenus();
+
+                        SceneManager.SaveAs();
+                    }),
                     new MenuLine(),
                     new MenuItem("Scene Settings")
                 ],
@@ -126,7 +144,7 @@ window.onload = async () => {
     Dock.OnResizeEnd().Add(() => SceneView.content.style.pointerEvents = "");
 
     Layers.Init();
-    Palette.Init();
+    await Palette.Init();
 
     const layers = Dock.AddTab("Layers");
     const inspector = Dock.AddTab("Inspector");
@@ -136,30 +154,41 @@ window.onload = async () => {
     inspector.Bind(() => Inspector.DrawUI(), () => Inspector.OnContext());
     palette.Bind(() => Palette.DrawUI(), () => Palette.OnContext(), () => Palette.OnClear());
 
-    const paletteCount = ProjectManager.GetPalettes().length;
+    Loop.Append(() => {
+        if (!SceneManager.IsLoaded() || LoadingScreen.IsEnabled()) return;
+
+        if (Input.GetKey(KeyCode.Ctrl) && Input.GetKeyDown(KeyCode.N) && !Input.GetKey(KeyCode.Shift)) SceneManager.NewScene();
+        if (Input.GetKey(KeyCode.Ctrl) && Input.GetKeyDown(KeyCode.O) && !Input.GetKey(KeyCode.Shift)) SceneManager.OpenScene();
+
+        if (Input.GetKey(KeyCode.Ctrl) && Input.GetKeyDown(KeyCode.S))
+        {
+            if (Input.GetKey(KeyCode.Shift)) SceneManager.SaveAs();
+            else SceneManager.Save();
+        }
+    });
+
+    const paletteResources = Palette.GetResources();
     let paletteCounterA = 0;
     let paletteCounterB = 0;
 
     SceneView.onResourceLoad.Add(() => paletteCounterA++);
-    SceneView.onLoad.Add(() => SceneView.Refract(`SceneInjector.Resources(...${JSON.stringify(ProjectManager.GetPalettes().map(item => item.textures).flat().map(item => item.src))})`));
+    SceneView.onLoad.Add(() => SceneView.Refract(`SceneInjector.Resources(...${JSON.stringify(paletteResources)})`));
 
     Palette.PaletteView().onResourceLoad.Add(() => paletteCounterB++);
-    Palette.PaletteView().onLoad.Add(() => Palette.PaletteView().Refract(`SceneInjector.Resources(...${JSON.stringify(ProjectManager.GetPalettes().map(item => item.textures).flat().map(item => item.src))})`));
+    Palette.PaletteView().onLoad.Add(() => Palette.PaletteView().Refract(`SceneInjector.Resources(...${JSON.stringify(paletteResources)})`));
 
     await new Promise(resolve => Loop.Append(() => {
-        if (paletteCounterA === paletteCount && paletteCounterB === paletteCount)
+        if (paletteCounterA === paletteResources.length && paletteCounterB === paletteResources.length)
         {
             resolve();
 
             return;
         }
 
-        LoadingScreen.SetText(`Loading Palettes (${Math.min(paletteCounterA, paletteCounterB) + 1}/${paletteCount})`);
-    }, null, () => paletteCounterA === paletteCount && paletteCounterB === paletteCount));
+        LoadingScreen.SetText(`Loading Resources (${Math.min(paletteCounterA, paletteCounterB) + 1}/${paletteResources.length})`);
+    }, null, () => paletteCounterA === paletteResources.length && paletteCounterB === paletteResources.length));
 
     await SceneManager.Load(ProjectManager.GetEditorData().scene);
-
-    layers.Focus();
 
     window.addEventListener("resize", () => SceneView.RecalcSize());
 };

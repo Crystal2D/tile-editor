@@ -1,14 +1,22 @@
 let enabled = false;
+let mini = false;
+let textLocked = false;
 
 let wrap = null;
 let content = null;
 let textElement = null
+
+function IsEnabled ()
+{
+    return enabled;
+}
 
 function Set ()
 {
     wrap = document.createElement("div");
     wrap.id = "loading-screen";
     wrap.setAttribute("enabled", 0);
+    wrap.setAttribute("mini", 0);
 
     content = document.createElement("div");
     content.classList.add("content");
@@ -38,9 +46,20 @@ function Enable ()
     enabled = true;
 }
 
+function EnableMini ()
+{
+    if (enabled) return;
+
+    wrap.setAttribute("enabled", 1);
+    wrap.setAttribute("mini", 1);
+
+    enabled = true;
+    mini = true;
+}
+
 function SetText (text)
 {
-    if (!enabled) return;
+    if (!enabled || textLocked) return;
 
     textElement.textContent = text;
 }
@@ -52,14 +71,33 @@ function Disable ()
     SetText("");
 
     wrap.setAttribute("enabled", 0);
-
     enabled = false;
+
+    if (mini)
+    {
+        wrap.setAttribute("mini", 0);
+        mini = false;
+    }
+}
+
+function LockText ()
+{
+    if (!textLocked) textLocked = true;
+}
+
+function UnlockText ()
+{
+    if (textLocked) textLocked = false;
 }
 
 
 module.exports = {
+    IsEnabled,
     Set,
     Enable,
+    EnableMini,
     SetText,
-    Disable
+    Disable,
+    LockText,
+    UnlockText
 };

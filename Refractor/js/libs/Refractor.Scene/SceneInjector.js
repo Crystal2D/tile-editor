@@ -68,6 +68,13 @@ class SceneInjector
         GameObject.Destroy(obj);
     }
 
+    static DestroyAll ()
+    {
+        const objs = SceneBank.RemoveAll();
+
+        for (let i = 0; i < objs.length; i++) GameObject.Destroy(objs[i]);
+    }
+
     static async Resources (...paths)
     {
         for (let i = 0; i < paths.length; i++)

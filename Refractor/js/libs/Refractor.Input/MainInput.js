@@ -48,6 +48,7 @@ class MainInput extends GameBehavior
         this.#preview = await SceneManager.CreateObject("GameObject", {
             name : "preview_tile",
             id : objID,
+            active: false,
             components : [this.#previewRenderer]
         });
 
@@ -90,8 +91,6 @@ class MainInput extends GameBehavior
 
     Update ()
     {
-        if (Input.GetKey(KeyCode.Ctrl) && Input.GetKey(KeyCode.D)) this.#inputHandler.CancelWalk();
-
         const grid = SceneModifier.focusedGrid;
         const tilemap = SceneModifier.focusedTilemap;
 
@@ -104,8 +103,6 @@ class MainInput extends GameBehavior
         }
 
         const gridPos = grid.WorldToCell(this.#inputHandler.mousePosSnapped);
-
-        if (Input.GetKey(KeyCode.Ctrl) && Input.GetKey(KeyCode.A)) this.#inputHandler.CancelWalk();
 
         switch (this.#action)
         {
@@ -125,6 +122,18 @@ class MainInput extends GameBehavior
         }
     }
 
+    ClearActions ()
+    {
+        if (this.#existingTiles.length > 0)
+        {
+            SceneModifier.focusedTilemap.AddTile(this.#existingTiles[0]);
+
+            this.#existingTiles = [];
+        }
+
+        this.Deselect();
+    }
+
     UseAction (index)
     {
         if (this.#action === index) return;
@@ -133,7 +142,12 @@ class MainInput extends GameBehavior
         {
             if (this.#preview != null && this.#preview.activeSelf) this.#preview.SetActive(false);
 
-            if (this.#existingTiles.length > 0) SceneModifier.focusedTilemap.AddTile(this.#existingTiles[0]);
+            if (this.#existingTiles.length > 0)
+            {
+                SceneModifier.focusedTilemap.AddTile(this.#existingTiles[0]);
+
+                this.#existingTiles = [];
+            }
         }
 
         if (this.#action === 4) this.Deselect();
@@ -318,15 +332,9 @@ class MainInput extends GameBehavior
 
         if (this.#transforming && InputManager.GetKeyUp("left")) this.#lastTransPos = null;
 
-        if (Input.GetKeyDown(KeyCode.Backspace)) this.DeleteSelection();
-        if (Input.GetKey(KeyCode.Ctrl) && Input.GetKeyDown(KeyCode.F)) this.FillSelection();
-
-        if (Input.GetKey(KeyCode.Ctrl) && Input.GetKey(KeyCode.Shift) && Input.GetKey(KeyCode.A))
-        {
-            this.#inputHandler.CancelWalk();
-
-            if (Input.GetKeyDown(KeyCode.A)) this.Deselect();
-        }
+        if (Input.GetKeyDown(KeyCode.Backspace) && !Input.GetKey(KeyCode.Ctrl) && !Input.GetKey(KeyCode.Shift)) this.DeleteSelection();
+        if (Input.GetKey(KeyCode.Ctrl) && Input.GetKeyDown(KeyCode.F) && !Input.GetKey(KeyCode.Shift)) this.FillSelection();
+        if (Input.GetKey(KeyCode.Ctrl) && Input.GetKey(KeyCode.Shift) && Input.GetKeyDown(KeyCode.A)) this.Deselect();
     }
 
     SelectAll ()

@@ -9,9 +9,12 @@ window.onload = async () => {
 
     const docsDir = await ipcRenderer.invoke("GetPath", "documents");
     importBtn.addEventListener("click", async () => {
-        const dir = await ipcRenderer.invoke("OpenFolder", docsDir);
+        const dir = await ipcRenderer.invoke("SelectFolder", docsDir, {
+            title: "Select Project Directory",
+            buttonLabel: "Import"
+        });
 
-        if (dir.cancelled) return;
+        if (dir.canceled) return;
 
         ProjectManager.Add(dir.path);
     });

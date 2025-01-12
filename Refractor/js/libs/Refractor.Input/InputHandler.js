@@ -146,7 +146,7 @@ class InputHandler extends GameBehavior
 
     WalkView ()
     {
-        if (this.#cancelWalk)
+        if (this.#cancelWalk || Input.GetKey(KeyCode.Ctrl) || Input.GetKey(KeyCode.Shift))
         {
             this.#cancelWalk = false;
 

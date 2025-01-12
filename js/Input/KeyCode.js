@@ -16,5 +16,6 @@ module.exports = {
     V: 14,
     N: 15,
     X: 16,
-    Delete: 17
+    Delete: 17,
+    O: 18
 };

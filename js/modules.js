@@ -1,4 +1,5 @@
 const FS = require("fs/promises");
+const HideFile = require("hidefile");
 const { ipcRenderer } = require("electron");
 
 const LoadingScreen = require("./js/LoadingScreen");

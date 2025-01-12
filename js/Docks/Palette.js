@@ -5,6 +5,7 @@ let paletteMaps = [];
 let actions = [];
 let paletteListItems = [];
 let listSearched = [];
+let resources = [];
 
 let paletteViewBase = null;
 let paletteViewWrap = null;
@@ -20,7 +21,22 @@ function PaletteView ()
     return paletteView;
 }
 
-function Init ()
+function CacheResources ()
+{
+    const res = palettes.map(item => item.textures).flat().map(item => item.src);
+    const reducedRes = [];
+
+    for (let i = 0; i < res.length; i++) if (!reducedRes.includes(res[i])) reducedRes.push(res[i]);
+
+    resources = reducedRes;
+}
+
+function GetResources ()
+{
+    return [...resources];
+}
+
+async function Init ()
 {
     palettes = ProjectManager.GetPalettes();
     paletteMaps = ProjectManager.GetEditorData().palettes;
@@ -31,7 +47,7 @@ function Init ()
 
     for (let i = 0; i < removingMaps.length; i++) paletteMaps.splice(paletteMaps.indexOf(removingMaps[i]), 1);
 
-    if (removingMaps.length > 0) ProjectManager.SaveEditorData();
+    if (removingMaps.length > 0) await ProjectManager.SaveEditorData();
 
     paletteViewBase = document.createElement("div");
     paletteViewBase.classList.add("palette-view-base");
@@ -91,6 +107,8 @@ function Init ()
 
     paletteList.append(...paletteListItems);
 
+    CacheResources();
+
     Dock.OnResize().Add(() => {
         if (!focused) return;
 
@@ -122,13 +140,13 @@ function Init ()
 
         tools.setAttribute("enabled", +hasSelection);
 
-        if (!hasSelection) return;
+        if (!hasSelection || LoadingScreen.IsEnabled()) return;
 
-        if (Input.GetKeyDown(KeyCode.B)) UseAction(0);
-        if (Input.GetKeyDown(KeyCode.E)) UseAction(+(currentAction !== 1));
-        if (Input.GetKeyDown(KeyCode.P)) UseAction(2);
-        if (Input.GetKey(KeyCode.Ctrl) && Input.GetKeyDown(KeyCode.R)) UseAction(3);
-        if (Input.GetKeyDown(KeyCode.T)) UseAction(4);
+        if (Input.GetKeyDown(KeyCode.B) && !Input.GetKey(KeyCode.Ctrl) && !Input.GetKey(KeyCode.Shift)) UseAction(0);
+        if (Input.GetKeyDown(KeyCode.E) && !Input.GetKey(KeyCode.Ctrl) && !Input.GetKey(KeyCode.Shift)) UseAction(+(currentAction !== 1));
+        if (Input.GetKeyDown(KeyCode.P) && !Input.GetKey(KeyCode.Ctrl) && !Input.GetKey(KeyCode.Shift)) UseAction(2);
+        if (Input.GetKey(KeyCode.Ctrl) && Input.GetKeyDown(KeyCode.R) && !Input.GetKey(KeyCode.Shift)) UseAction(3);
+        if (Input.GetKeyDown(KeyCode.T) && !Input.GetKey(KeyCode.Ctrl) && !Input.GetKey(KeyCode.Shift)) UseAction(4);
 
         if (Input.GetKey(KeyCode.Ctrl) && !Input.GetKey(KeyCode.Shift) && Input.GetKeyDown(KeyCode.A))
         {
@@ -401,7 +419,7 @@ async function LoadMap (name)
             }
         }
 
-        if (save) ProjectManager.SaveEditorData();
+        if (save) await ProjectManager.SaveEditorData();
     }
 
     currentMap = map;
@@ -454,7 +472,7 @@ async function GenerateMap (name)
 
     paletteMaps.push(map);
 
-    ProjectManager.SaveEditorData();
+    await ProjectManager.SaveEditorData();
 
     return map;
 }
@@ -634,5 +652,7 @@ module.exports = {
     OnClear,
     UseAction,
     LoadMap,
-    GetTilePos
+    GetTilePos,
+    CacheResources,
+    GetResources
 };

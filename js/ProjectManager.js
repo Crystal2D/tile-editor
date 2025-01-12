@@ -35,10 +35,9 @@ function FindResource (path)
     return resources.find(item => item.path === path);
 }
 
-async function Init ()
+async function Init (dir)
 {
-    const URLSearch = new URLSearchParams(window.location.search);
-    projectDir = decodeURIComponent(URLSearch.get("dir"));
+    projectDir = dir;
 
     let counter = 0;
 
@@ -82,7 +81,7 @@ async function Init ()
         }
         catch { }
 
-        if (editorData.scene == null) editorData.scene = "test";
+        if (editorData.scene == null) editorData.scene = "";
         if (editorData.palettes == null) editorData.palettes = [];
 
         counter++;

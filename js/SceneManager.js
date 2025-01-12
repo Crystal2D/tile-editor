@@ -2,6 +2,7 @@ let activeSceneSrc = null;
 let activeScene = null;
 
 let loaded = false;
+let unloaded = false;
 
 function GetActiveSceneSrc ()
 {
@@ -89,10 +90,6 @@ function NewGrid (data)
 
 async function NewLayer ()
 {
-    let objID = 0;
-
-    while (activeScene.gameObjects.find(item => item.id === objID) != null) objID++;
-
     const grid = {
         position: { x: 0, y: 0 },
         scale: { x: 1, y: 1 },
@@ -101,11 +98,17 @@ async function NewLayer ()
     };
     let gridData = SceneManager.FindGrid(grid) ?? SceneManager.NewGrid(grid);
 
+    await new Promise(resolve => requestAnimationFrame(resolve));
+
+    let objID = 0;
+    
+    while (activeScene.gameObjects.find(item => item.id === objID) != null) objID++;
+
     const tilemap = {
         name: "tile_Unnamed",
         id: objID,
         parent: gridData.id,
-        components: [ { type: "Tilemap" } ]
+        components: [{ type: "Tilemap" }]
     };
 
     activeScene.gameObjects.push(tilemap);
@@ -116,6 +119,8 @@ async function NewLayer ()
 
     const layer = new Layer(tilemap, gridData);
     dock.querySelector(".layers")?.append(layer.item);
+
+    if (activeScene.gameObjects.filter(item => item.name.startsWith("tile_")).length === 1) Layers.Redraw();
 
     layer.Focus();
 }
@@ -173,17 +178,45 @@ function RemoveTile (mapID, pos)
 
 async function Load (src)
 {
-    loaded = false;
+    if (!LoadingScreen.IsEnabled()) LoadingScreen.EnableMini();
+
+    try
+    {
+        const sceneRequest = await fetch(src);
+        activeScene = await sceneRequest.json();
+    }
+    catch
+    {
+        LoadingScreen.SetText("OPEN A SCENE OR WE'LL MAKE YOU A NEW ONE");
+
+        await OpenScene();
+
+        if (activeSceneSrc == null) await NewScene();
+
+        return;
+    }
+
+    if (loaded)
+    {
+        LoadingScreen.SetText("Clearing Scene");
+
+        Dock.Unfocus();
+
+        Layers.ClearLayers();
+
+        SceneView.Refract("SceneInjector.DestroyAll(); requestAnimationFrame(() => window.parent.RefractBack(\"SceneManager.MarkAsUnloaded()\"))");
+
+        await new Promise(resolve => Loop.Append(() => { if (unloaded) resolve(); }, null, () => unloaded));
+
+        requestAnimationFrame(() => SceneView.Refract("GameObject.Find(\"camera\").transform.position = Vector2.zero"));
+    }
 
     LoadingScreen.SetText(`Opening Scene: ${src}`);
 
-    activeSceneSrc = src;
+    activeSceneSrc = src.endsWith(".newscene") ? null : src;
 
-    ProjectManager.GetEditorData().scene = src;
-    ProjectManager.SaveEditorData();
-
-    const sceneRequest = await fetch(`${ProjectManager.ProjectDir()}\\data\\scenes\\${src}.json`);
-    activeScene = await sceneRequest.json();
+    ProjectManager.GetEditorData().scene = src.endsWith(".newscene") ? null : src;
+    await ProjectManager.SaveEditorData();
 
     document.title = `${ProjectManager.ProjectName()} - ${activeScene.name} - Crystal Tile Editor`;
 
@@ -199,18 +232,31 @@ async function Load (src)
         for (let j = localTilemaps.length - 1; j >= 0; j--) new Layer(localTilemaps[j], grids[i]);
     }
 
-    const loadCall = () => SceneView.Refract(`(async () => { await Resources.Load(...${JSON.stringify(activeScene.resources)}); await SceneInjector.Grid(...${JSON.stringify(grids)}); await SceneInjector.GameObject(...${JSON.stringify(tilemaps)}); requestAnimationFrame(() => window.parent.RefractBack("SceneManager.MarkAsLoaded()")) })()`);
+    const loadCall = () => SceneView.Refract(`(async () => { await SceneInjector.Grid(...${JSON.stringify(grids)}); await SceneInjector.GameObject(...${JSON.stringify(tilemaps)}); requestAnimationFrame(() => window.parent.RefractBack("SceneManager.MarkAsLoaded()")) })()`);
 
     if (SceneView.isLoaded) loadCall();
     else SceneView.onLoad.Add(() => loadCall());
 
     await new Promise(resolve => Loop.Append(() => { if (loaded) resolve(); }, null, () => loaded));
 
+    const sceneCam = activeScene.gameObjects.find(item => item.components.find(component => component.type === "Camera") != null).components.find(component => component.type === "Camera");
+
+    SceneView.Refract(`GameObject.FindComponents("Camera")[0].orthographicSize = ${(sceneCam.args?.orthographicSize ?? 9) + 1}; requestAnimationFrame(() => GameObject.FindComponents("InputHandler")[0].RecalcViewMatrix())`);
+
+    Dock.FocusByIndex(0);
+
     LoadingScreen.Disable();
 }
 
-async function Save ()
+async function SaveSceneAs (src)
 {
+    LoadingScreen.EnableMini();
+    LoadingScreen.SetText(`Saving Scene: ${src}`);
+
+    await new Promise(resolve => requestAnimationFrame(resolve));
+
+    let includedTextures = [];
+
     const grids = activeScene.gameObjects.filter(item => item.name.startsWith("tilegrid_"));
 
     for (let i = 0; i < grids.length; i++)
@@ -236,16 +282,22 @@ async function Save ()
 
     const ordering = Layers.GetOrdering();
     let lastOnOrder = grids[grids.length - 1];
+    let includedPalettes = [];
 
     for (let i = ordering.length - 1; i >= 0; i--)
     {
         const gameObject = tilemaps.find(item => item.id === ordering[i]);
-
         const tilemap = gameObject.components.find(item => item.type === "Tilemap");
 
-        if (tilemap?.args != null)
+        if (tilemap.args != null)
         {
-            if (tilemap.args.tiles?.length === 0) tilemap.args.tiles = undefined;
+            if (tilemap.args.tiles == null || tilemap.args.tiles?.length === 0) tilemap.args.tiles = undefined;
+            else for (let j = 0; j < tilemap.args.tiles.length; j++)
+            {
+                const palette = tilemap.args.tiles[j].palette;
+
+                if (!includedPalettes.includes(palette)) includedPalettes.push(palette);
+            }
 
             if (tilemap.args.color != null)
             {
@@ -275,9 +327,112 @@ async function Save ()
 
             if (gameObject.transform.position == null && gameObject.transform.scale == null) gameObject.transform = undefined;
         }
+
+        const spriteRenderer = gameObject.components.find(item => item.type === "SpriteRenderer")?.args;
+
+        if (spriteRenderer != null) includedTextures.push(spriteRenderer.sprite.texture);
     }
 
-    await FS.writeFile(`${ProjectManager.ProjectDir()}\\data\\scenes\\${activeSceneSrc}.json`, JSON.stringify(activeScene, null, 4));
+    const palettes = ProjectManager.GetPalettes();
+
+    for (let i = 0; i < includedPalettes.length; i++)
+    {
+        const palette = palettes.find(item => item.name === includedPalettes[i]);
+
+        if (palette != null) includedTextures.push(...palette.textures.map(item => item.src));
+    }
+
+    const paletteResources = Palette.GetResources().filter(item => !includedTextures.includes(item));
+
+    activeScene.resources = activeScene.resources.filter(item => includedTextures.includes(item) || !paletteResources.includes(item));
+
+    for (let i = 0; i < includedTextures.length; i++) if (!activeScene.resources.includes(includedTextures[i])) activeScene.resources.push(includedTextures[i]);
+
+    await FS.writeFile(src, JSON.stringify(activeScene, null, 4));
+
+    LoadingScreen.Disable();
+}
+
+async function NewScene ()
+{
+    if (!LoadingScreen.IsEnabled()) LoadingScreen.EnableMini();
+
+    LoadingScreen.SetText(`Creating New Scene`);
+
+    await FS.writeFile(`${ProjectManager.ProjectDir()}\\data\\scenes\\newscene`, JSON.stringify({
+        name: "New Scene",
+        resources: [],
+        gameObjects: [
+            {
+                name: "camera",
+                id: 0,
+                components: [{ type: "Camera" }]
+            },
+            {
+                name: "tilegrid_0",
+                id: 1,
+                components: [{ type: "Grid" }]
+            },
+            {
+                name: "tile_Hello! I'm a layer",
+                id: 2,
+                parent: 1,
+                components: [{ type: "Tilemap" }]
+            }
+        ]
+    }, null, 4));
+
+    await new Promise(resolve => HideFile.hide(`${ProjectManager.ProjectDir()}\\data\\scenes\\newscene`, resolve));
+
+    LoadingScreen.LockText();
+
+    await Load(`${ProjectManager.ProjectDir()}\\data\\scenes\\.newscene`);
+
+    await FS.unlink(`${ProjectManager.ProjectDir()}\\data\\scenes\\.newscene`);
+
+    LoadingScreen.UnlockText();
+}
+
+async function OpenScene ()
+{
+    const file = await ipcRenderer.invoke("SelectFile", `${ProjectManager.ProjectDir()}\\data\\scenes`, {
+        title: "Open Scene",
+        windowID: window.windowID,
+        filters: [{ name: "JSON", extensions: ["json"] }]
+    });
+
+    Input.RestateKeys();
+
+    if (file.canceled) return;
+
+    await Load(file.path);
+}
+
+async function Save ()
+{
+    if (activeSceneSrc != null) await SaveSceneAs(activeSceneSrc);
+    else await SaveAs();
+}
+
+async function SaveAs ()
+{
+    const file = await ipcRenderer.invoke("SelectFile", activeSceneSrc ?? `${ProjectManager.ProjectDir()}\\data\\scenes\\newscene.json`, {
+        title: "Save Scene",
+        windowID: window.windowID,
+        save: true,
+        filters: [{ name: "JSON", extensions: ["json"] }]
+    });
+
+    Input.RestateKeys();
+
+    if (file.canceled) return;
+
+    activeSceneSrc = file.path;
+
+    ProjectManager.GetEditorData().scene = file.path;
+    await ProjectManager.SaveEditorData();
+
+    await SaveSceneAs(file.path);
 }
 
 function IsLoaded ()
@@ -287,7 +442,14 @@ function IsLoaded ()
 
 function MarkAsLoaded ()
 {
+    unloaded = false;
     loaded = true;
+}
+
+function MarkAsUnloaded ()
+{
+    unloaded = true;
+    loaded = false;
 }
 
 
@@ -304,6 +466,10 @@ module.exports = {
     RemoveTile,
     Load,
     Save,
+    SaveAs,
     IsLoaded,
-    MarkAsLoaded
+    MarkAsLoaded,
+    MarkAsUnloaded,
+    OpenScene,
+    NewScene
 };

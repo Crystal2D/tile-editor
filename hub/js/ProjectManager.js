@@ -39,7 +39,18 @@ function ListItem (name, dir)
         selected = false;
 
         window.close();
-        await ipcRenderer.invoke("OpenProject", dir);
+
+        const projectsRequest = await fetch(`${userDataPath}\\projects.json`);
+        const projects = await projectsRequest.json();
+
+        projects.splice(projects.indexOf(dir), 1);
+        projects.unshift(dir);
+
+        await FS.writeFile(`${userDataPath}\\projects.json`, JSON.stringify(projects));
+
+        Refresh();
+
+        ipcRenderer.invoke("OpenProject", dir);
     });
 
     const text = document.createElement("div");
@@ -176,6 +187,8 @@ async function Refresh ()
         projects = await projectsRequest.json();
     }
     catch { await FS.writeFile(`${userDataPath}\\projects.json`, "[]"); }
+
+    ipcRenderer.invoke("RefreshTray");
 
     while (list.firstChild != null) list.firstChild.remove();
 

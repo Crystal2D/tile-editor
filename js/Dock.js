@@ -2,6 +2,7 @@ let resizing = false;
 let mouse = 0;
 let size = 400;
 let tree = [];
+let tabList = [];
 let onContext = () => { };
 let onClear = () => { };
 
@@ -174,13 +175,15 @@ function AddTab (label)
         Focus: () => {
             if (focused === tab) return;
 
-            Clear();
-
-            focused?.setAttribute("focused", 0);
+            Unfocus();
 
             focused = tab;
             focused.setAttribute("focused", 1);
             onFocus();
+        },
+        get isFocused ()
+        {
+            return focused === tab;
         }
     };
 
@@ -189,7 +192,22 @@ function AddTab (label)
     tab.append(label);
     tabs.append(tab);
 
+    tabList.push(output);
+
     return output;
+}
+
+function FocusByIndex (index)
+{
+    tabList[index].Focus();
+}
+
+function Unfocus ()
+{
+    Clear();
+
+    focused?.setAttribute("focused", 0);
+    focused = null;
 }
 
 function Clear ()
@@ -553,6 +571,8 @@ module.exports = {
     OnResizeEnd,
     Init,
     AddTab,
+    FocusByIndex,
+    Unfocus,
     Clear,
     AddContent,
     Label,

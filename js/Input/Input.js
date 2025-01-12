@@ -41,7 +41,8 @@ let keys = [
     new Key("v", "v", true),
     new Key("n", "n", true),
     new Key("x", "x", true),
-    new Key("del", "Delete")
+    new Key("del", "Delete"),
+    new Key("o", "o", true)
 ];
 
 function FindKey (name)
@@ -143,7 +144,7 @@ function Init ()
         
         keys[keyIndex].active = true;
 
-        if (SceneView?.isLoaded) SceneView.Refract(`Input.KeyDown("${event.key}")`);
+        if (SceneView?.isLoaded && !LoadingScreen?.IsEnabled()) SceneView.Refract(`Input.KeyDown("${event.key}")`);
     });
     document.addEventListener("keyup", event => {
         if (MenuManager.Enabled())
@@ -165,7 +166,7 @@ function Init ()
         
         keys[keyIndex].active = false;
 
-        if (SceneView?.isLoaded) SceneView.Refract(`Input.KeyUp("${event.key}")`);
+        if (SceneView?.isLoaded && !LoadingScreen?.IsEnabled()) SceneView.Refract(`Input.KeyUp("${event.key}")`);
     });
 
     body.setAttribute("cursor-locked", 0);
@@ -185,6 +186,8 @@ function End ()
 
             if (SceneView?.isLoaded) SceneView.Refract(`Input.KeyUp("${keys[i].code}")`);
         }
+
+        if (SceneView?.isLoaded && LoadingScreen?.IsEnabled() && !(["Control", "Shift"]).includes(keys[i].code)) SceneView.Refract(`Input.KeyUp("${keys[i].code}")`);
 
         keys[i].lastState = keys[i].active;
     }
@@ -240,6 +243,17 @@ function AvoidDrags (state)
     if (denyDrag !== state) denyDrag = state;
 }
 
+function RestateKeys ()
+{
+    for (let i = 0; i < keys.length; i++)
+    {
+        keys[i].active = false;
+        keys[i].lastState = keys[i].active;
+        
+        if (SceneView?.isLoaded) SceneView.Refract(`Input.KeyUp("${keys[i].code}")`);
+    }
+}
+
 
 module.exports = {
     MouseX,
@@ -253,5 +267,6 @@ module.exports = {
     GetKey,
     GetKeyDown,
     GetKeyUp,
-    AvoidDrags
+    AvoidDrags,
+    RestateKeys
 };

@@ -1,14 +1,19 @@
-#dock > .content > .layers
+.layers-wrap
 {
-    user-select: none;
     position: absolute;
-    left: 0;
     width: 100%;
-    min-height: calc(100% - 30px);
+    height: calc(100% - 30px);
     overflow-y: auto;
 }
 
-#dock > .content > .layers .item
+.layers
+{
+    user-select: none;
+    width: 100%;
+    height: 100%;
+}
+
+.layers .item
 {
     padding: 4px;
     padding-left: 24px;
@@ -17,18 +22,18 @@
     width: calc(100% - 28px);
 }
 
-#dock > .content > .layers .item[focused="1"]
+.layers .item[focused="1"]
 {
     background: rgb(120, 130, 170) !important;
     z-index: 1;
 }
 
-body[cursor-locked="0"] #dock > .content > .layers .item:hover
+[cursor-locked="0"] .layers .item:hover
 {
     background: rgb(68, 68, 68);
 }
 
-#dock > .content > .layers .label
+.layers .label
 {
     white-space: nowrap;
     text-overflow: ellipsis;
@@ -36,7 +41,7 @@ body[cursor-locked="0"] #dock > .content > .layers .item:hover
     width: calc(100% - 40px);
 }
 
-#dock > .content > .layers .visibility
+.layers .visibility
 {
     width: 18px;
     height: 18px;
@@ -47,7 +52,7 @@ body[cursor-locked="0"] #dock > .content > .layers .item:hover
     user-select: none;
 }
 
-body[cursor-locked="0"] #dock > .content > .layers .visibility:hover
+[cursor-locked="0"] .layers .visibility:hover
 {
     background: rgba(255, 255, 255, 0.2);
 }

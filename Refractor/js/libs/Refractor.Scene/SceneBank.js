@@ -30,6 +30,21 @@ class SceneBank
         return this.#objs.splice(index, 1)[0].gameObject;
     }
 
+    static RemoveAll ()
+    {
+        GameObject.FindComponents("MainInput")[0].ClearActions();
+
+        SceneModifier.UnfocusTilemap();
+        SceneModifier.UnfocusGrid();
+
+        const objs = this.#objs.map(item => item.gameObject);
+
+        this.#objs = [];
+        this.#ordered = [];
+
+        return objs;
+    }
+
     static SetOrdering (id, index)
     {
         const obj = this.#ordered.find(item => item.id === id);

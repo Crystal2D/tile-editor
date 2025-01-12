@@ -92,14 +92,26 @@
 {
     margin: auto;
     background: black;
+    color: white;
+    font-size: 16px;
+}
+
+#loading-screen[mini="0"] .content
+{
     width: 750px;
     height: 550px;
     border-radius: 12px;
     border: 1.5px solid rgb(170, 0, 255, 0.25);
     background: url("../img/loading.png");
     background-repeat: no-repeat;
-    color: white;
-    font-size: 16px;
+}
+
+#loading-screen[mini="1"] .content
+{
+    border-radius: 8px;
+    border: 1.5px solid rgb(255, 255, 255, 0.25);
+    padding: 20px;
+    max-width: 500px;
 }
 
 #loading-screen .title
@@ -117,8 +129,21 @@
     line-height: 20px;
 }
 
+#loading-screen[mini="1"] .title,
+#loading-screen[mini="1"] .version
+{
+    display: none;
+}
+
 #loading-screen .text
 {
-    margin-top: 40px;
-    margin-left: 50px;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    overflow: clip;
+}
+
+#loading-screen[mini="0"] .text
+{
+    margin: 40px 50px;
+    margin-bottom: 0;
 }

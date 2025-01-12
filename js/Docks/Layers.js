@@ -369,10 +369,9 @@ class Layer
     {
         if (focused === this) return;
 
-        focused?.item.setAttribute("focused", 0);
-        this.item.setAttribute("focused", 1);
+        Unfocus();
 
-        SceneView.Refract("GameObject.FindComponents(\"MainInput\")[0].Deselect()");
+        this.item.setAttribute("focused", 1);
 
         focused = this;
         SceneView.Refract(`SceneModifier.FocusGrid(${this.#gridData.id}); SceneModifier.FocusTilemap(${this.#data.id})`);
@@ -393,22 +392,72 @@ class Layer
         this.item.remove();
         layers.splice(this.index, 1);
 
-        if (focused === this) SceneView.Refract("SceneModifier.UnfocusGrid()");
+        if (focused === this) Unfocus();
 
         const onlyChild = SceneManager.GetGridChildren(this.#gridData.id).length === 1;
 
         SceneManager.DestroyObject(this.objID);
 
         if (onlyChild) SceneManager.DestroyObject(this.#gridData.id);
+
+        if (layers.length === 0)
+        {
+            onContext = null;
+
+            Redraw();
+        }
     }
 
     Copy ()
     {
         copyBuffer = {
-            layer: this,
-            data: this.#data,
+            grid: {
+                position: { x: this.position.x, y: this.position.y },
+                scale: { x: this.scale.x, y: this.scale.y },
+                cellSize: { x: this.cellSize.x, y: this.cellSize.y },
+                cellGap: { x: this.cellGap.x, y: this.cellGap.y }
+            },
+            data: { name: this.#data.name },
             clear: false
         };
+
+        const tilemapBase = this.#data.components.find(item => item.type === "Tilemap");
+
+        if (tilemapBase.args == null) tilemapBase.args = { };
+        if (tilemapBase.args.tiles == null) tilemapBase.args.tiles = [];
+
+        const colorBase = tilemapBase.args.color ?? { };
+
+        const tilemap = {
+            type: "Tilemap",
+            args: {
+                tiles: [],
+                color: {
+                    r: colorBase.r ?? 255,
+                    g: colorBase.g ?? 255,
+                    b: colorBase.b ?? 255,
+                    a: colorBase.a ?? 255
+                }
+            }
+        };
+
+        if (colorBase.trueA != null) tilemap.args.color.trueA = colorBase.trueA;
+
+        for (let i = 0; i < tilemapBase.args.tiles.length; i++)
+        {
+            const tile = tilemapBase.args.tiles[i];
+
+            tilemap.args.tiles.push({
+                palette: tile.palette,
+                spriteID: tile.spriteID,
+                position: {
+                    x: tile.position.x,
+                    y: tile.position.y
+                }
+            });
+        }
+
+        copyBuffer.data.tilemap = tilemap;
     }
 
     Cut ()
@@ -429,6 +478,8 @@ class Layer
     SetPosition (x, y)
     {
         if (x === this.position.x && y === this.position.y) return;
+
+        SceneView.Refract("GameObject.FindComponents(\"MainInput\")[0].Deselect()");
 
         const grid = this.#DupeGrid();
         grid.position = { x: x, y: y };
@@ -476,6 +527,8 @@ class Layer
     {
         if (x === this.scale.x && y === this.scale.y) return;
 
+        SceneView.Refract("GameObject.FindComponents(\"MainInput\")[0].Deselect()");
+
         const grid = this.#DupeGrid();
         grid.scale = { x: x, y: y };
 
@@ -522,6 +575,8 @@ class Layer
     {
         if (x === this.cellSize.x && y === this.cellSize.y) return;
 
+        SceneView.Refract("GameObject.FindComponents(\"MainInput\")[0].Deselect()");
+
         const grid = this.#DupeGrid();
         grid.cellSize = { x: x, y: y };
 
@@ -566,6 +621,8 @@ class Layer
     {
         if (x === this.cellGap.x && y === this.cellGap.y) return;
 
+        SceneView.Refract("GameObject.FindComponents(\"MainInput\")[0].Deselect()");
+        
         const grid = this.#DupeGrid();
         grid.cellGap = { x: x, y: y };
 
@@ -607,6 +664,19 @@ class Layer
     }
 }
 
+function Unfocus ()
+{
+    if (focused == null) return;
+
+    SceneView.Refract("GameObject.FindComponents(\"MainInput\")[0].ClearActions(); SceneModifier.UnfocusTilemap(); SceneModifier.UnfocusGrid()");
+
+    focused?.item.setAttribute("focused", 0);
+
+    focused = null;
+    dragging = null;
+    onDragDrop = () => { };
+}
+
 function Selection ()
 {
     return focused;
@@ -621,7 +691,7 @@ async function PasteLayer ()
 {
     if (copyBuffer == null) return;
 
-    const tilemapBase = copyBuffer.data.components.find(item => item.type === "Tilemap");
+    const tilemapBase = copyBuffer.data.tilemap;
 
     if (tilemapBase.args == null) tilemapBase.args = { };
     if (tilemapBase.args.tiles == null) tilemapBase.args.tiles = [];
@@ -657,11 +727,7 @@ async function PasteLayer ()
         });
     }
 
-    let objID = 0;
-
     const activeScene = SceneManager.GetActiveScene();
-    
-    while (activeScene.gameObjects.find(item => item.id === objID) != null) objID++;
 
     let objName = copyBuffer.data.name;
     let nameIndex = objName.match(/ \(\d+\)$/);
@@ -694,19 +760,19 @@ async function PasteLayer ()
         break;
     }
 
-    const grid = {
-        position: { x: copyBuffer.layer.position.x, y: copyBuffer.layer.position.y },
-        scale: { x: copyBuffer.layer.scale.x, y: copyBuffer.layer.scale.y },
-        cellSize: { x: copyBuffer.layer.cellSize.x, y: copyBuffer.layer.cellSize.y },
-        cellGap: { x: copyBuffer.layer.cellGap.x, y: copyBuffer.layer.cellGap.y }
-    };
-    let gridData = SceneManager.FindGrid(grid) ?? SceneManager.NewGrid(grid);
+    let gridData = SceneManager.FindGrid(copyBuffer.grid) ?? SceneManager.NewGrid(copyBuffer.grid);
+
+    await new Promise(resolve => requestAnimationFrame(resolve));
+
+    let objID = 0;
+
+    while (activeScene.gameObjects.find(item => item.id === objID) != null) objID++;
 
     const tilemap = {
         name: nameIndex === 0 ? objName : `${objName} (${nameIndex})`,
         id: objID,
         parent: gridData.id,
-        components: [ tilemapData ]
+        components: [tilemapData]
     };
 
     activeScene.gameObjects.push(tilemap);
@@ -717,6 +783,8 @@ async function PasteLayer ()
 
     const layer = new Layer(tilemap, gridData);
     dock.querySelector(".layers")?.append(layer.item);
+
+    if (layers.length === 1) Redraw();
 
     layer.Focus();
 
@@ -737,17 +805,21 @@ function Init ()
 function Update ()
 {
     if (!tabFocused) return;
-    
-    if (Input.GetKey(KeyCode.Ctrl) && Input.GetKey(KeyCode.Shift) && Input.GetKeyDown(KeyCode.N)) SceneManager.NewLayer();
-    if (Input.GetKey(KeyCode.Ctrl) && Input.GetKeyDown(KeyCode.V)) PasteLayer();
 
-    if (focused != null)
+    if (!LoadingScreen.IsEnabled())
     {
-        if (Input.GetKey(KeyCode.Ctrl) && Input.GetKeyDown(KeyCode.C)) focused.Copy();
-        if (Input.GetKey(KeyCode.Ctrl) && Input.GetKeyDown(KeyCode.X)) focused.Cut();
-        if (Input.GetKey(KeyCode.Ctrl) && Input.GetKeyDown(KeyCode.D)) focused.Duplicate();
-        if (Input.GetKeyDown(KeyCode.Delete)) focused.Delete();
+        if (Input.GetKey(KeyCode.Ctrl) && Input.GetKey(KeyCode.Shift) && Input.GetKeyDown(KeyCode.N)) SceneManager.NewLayer();
+        if (Input.GetKey(KeyCode.Ctrl) && Input.GetKeyDown(KeyCode.V) && !Input.GetKey(KeyCode.Shift)) PasteLayer();
+
+        if (focused != null)
+        {
+            if (Input.GetKey(KeyCode.Ctrl) && Input.GetKeyDown(KeyCode.C) && !Input.GetKey(KeyCode.Shift)) focused.Copy();
+            if (Input.GetKey(KeyCode.Ctrl) && Input.GetKeyDown(KeyCode.X) && !Input.GetKey(KeyCode.Shift)) focused.Cut();
+            if (Input.GetKey(KeyCode.Ctrl) && Input.GetKeyDown(KeyCode.D) && !Input.GetKey(KeyCode.Shift)) focused.Duplicate();
+            if (Input.GetKeyDown(KeyCode.Delete) && !Input.GetKey(KeyCode.Ctrl) && !Input.GetKey(KeyCode.Shift)) focused.Delete();
+        }
     }
+    else if (dragging != null) onDragDrop();
 
     if (dragging != null)
     {
@@ -812,10 +884,22 @@ function DrawUI ()
     sceneName.style.margin = "6px 12px";
     sceneName.style.marginBottom = "0";
 
-    content = Dock.ContainerStart();
-    content.classList.add("layers");
+    sceneName.addEventListener("mousedown", event => { if (event.button === 0) Unfocus(); });
 
-    for (let i = 0; i < layers.length; i++) Dock.AddContent(layers[i].item);
+    Dock.ContainerStart().classList.add("layers-wrap");
+
+    if (layers.length > 0)
+    {
+        content = Dock.ContainerStart();
+        content.classList.add("layers");
+
+        content.addEventListener("mousedown", event => { if (event.button === 0 && onContext == null) Unfocus(); });
+
+        for (let i = 0; i < layers.length; i++) Dock.AddContent(layers[i].item);
+
+        Dock.ContainerEnd();
+    }
+    else Dock.Info("You got no layers o~O", "Press Ctrl+Shift+N or right click to make one");
 
     Dock.ContainerEnd();
 }
@@ -864,6 +948,24 @@ function GetOrdering ()
     return layers.map(item => item.objID);
 }
 
+function ClearLayers ()
+{
+    Unfocus();
+    
+    scenename = null;
+    dragging = null;
+    layers = [];
+    onDragDrop = () => { };
+    onContext = null;
+}
+
+function Redraw ()
+{
+    if (!tabFocused) return;
+
+    Dock.Unfocus();
+    Dock.FocusByIndex(0);
+}
 
 module.exports = {
     Layer,
@@ -873,5 +975,8 @@ module.exports = {
     DrawUI,
     OnContext,
     OnClear,
-    GetOrdering
+    GetOrdering,
+    ClearLayers,
+    Unfocus,
+    Redraw
 };

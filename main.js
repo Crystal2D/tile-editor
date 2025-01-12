@@ -1,17 +1,45 @@
-const { app, BrowserWindow, ipcMain, dialog } = require("electron");
-// const store = new require("electron-store")();
+const { app, BrowserWindow, ipcMain, dialog, Menu, Tray } = require("electron");
+const FS = require("fs/promises");
+
+
+let closeHub = false;
+let windowList = [];
+let projectWindows = [];
 
 let hubWindow = null;
+let appTray = null;
+
+function FindWindow (id)
+{
+    return windowList.find(item => item.id === id)?.window;
+}
 
 async function main ()
 {
+    if (!app.requestSingleInstanceLock())
+    {
+        app.quit();
+
+        return;
+    }
+
     app.on("window-all-closed", () => { if (process.platform !== "darwin") app.quit(); });
 
     await app.whenReady();
 
     InitWindow();
 
-    app.on("activate", () => { if (BrowserWindow.getAllWindows().length === 0) InitWindow(); });
+    app.on("second-instance", () => {
+        if (closeHub)
+        {
+            InitWindow();
+
+            return;
+        }
+
+        hubWindow.show();
+        hubWindow.focus();
+    });
 }
 
 async function CreateWindow (data)
@@ -32,10 +60,23 @@ async function CreateWindow (data)
     });
 
     win.setMenuBarVisibility(false);
+
+    let winID = 0;
     
-    await win.loadFile(data.src, {
-        search: data.search ?? null
-    });
+    while (windowList.find(item => item.id === winID) != null) winID++;
+
+    let search = `windowID=${winID}`;
+    if (data.search != null) search += `&${data.search}`;
+
+    const winCache = {
+        id: winID,
+        window: win
+    };
+    windowList.push(winCache);
+
+    win.on("closed", () => windowList.splice(windowList.indexOf(winCache), 1));
+    
+    await win.loadFile(data.src, { search: search });
 
     win.show();
 
@@ -44,34 +85,65 @@ async function CreateWindow (data)
     return win;
 }
 
-async function OpenFolder (path)
+async function SelectFolder (path, data)
 {
-    const folder = await dialog.showOpenDialog({
+    if (data == null) data = { };
+
+    const folder = await dialog.showOpenDialog(FindWindow(data.windowID), {
         defaultPath: path,
-        properties: ["openDirectory"]
+        title: data.title,
+        buttonLabel: data.buttonLabel,
+        filters: data.filters,
+        properties: ["openDirectory", "showHiddenFiles"]
     });
 
     return {
-        cancelled: folder.canceled,
+        canceled: folder.canceled,
         path: folder.filePaths[0] ?? ""
+    };
+}
+
+async function SelectFile (path, data)
+{
+    if (data == null) data = { };
+
+    if (data.save)
+    {
+        const file = await dialog.showSaveDialog(FindWindow(data.windowID), {
+            defaultPath: path,
+            title: data.title,
+            buttonLabel: data.buttonLabel,
+            filters: data.filters,
+            properties: ["showHiddenFiles"]
+        });
+
+        return {
+            canceled: file.canceled,
+            path: file.filePath
+        };
+    }
+
+    const properties = ["openFile", "showHiddenFiles"];
+
+    if (data.promptToCreate) properties.push("promptToCreate");
+
+    const file = await dialog.showOpenDialog(FindWindow(data.windowID), {
+        defaultPath: path,
+        title: data.title,
+        buttonLabel: data.buttonLabel,
+        filters: data.filters,
+        properties: properties
+    });
+
+    return {
+        canceled: file.canceled,
+        path: file.filePaths[0] ?? ""
     };
 }
 
 async function InitWindow ()
 {
-    const projectWin = await CreateWindow({
-        title: "Crystal Tile Editor",
-        width: 1100,
-        height: 700,
-        src: "index.html",
-        search: "dir=C:\\Users\\marcp\\Documents\\GitHub\\crystal2d.github.io",
-        maximized: true
-    });
-    projectWin.setMinimumSize(1100, 700);
-    // projectWin.setMaximumSize(1100, 700);
-    projectWin.webContents.openDevTools({ mode: "detach" });
-
-    app.focus();
+    await OpenProject("C:\\Users\\marcp\\Documents\\GitHub\\crystal2d.github.io");
 
     return;
 
@@ -88,17 +160,83 @@ async function InitWindow ()
         }
     });
     hubWindow.setMinimumSize(900, 600);
-    hubWindow.webContents.openDevTools({ mode: "detach" });
+    // hubWindow.webContents.openDevTools({ mode: "detach" });
 
-    app.focus();
+    closeHub = false;
+
+    hubWindow.on("close", event => {
+        if (closeHub) return;
+
+        event.preventDefault();
+        hubWindow.hide();
+    });
+
+    appTray = new Tray(`${__dirname}/img/loading.png`);
+    appTray.setToolTip("Crystal Tile Editor");
+
+    hubWindow.focus();
 }
 
-main();
+async function RefreshTray ()
+{
+    const userDataPath = `${app.getPath("userData")}\\User Data`;
+    const projects = JSON.parse(await FS.readFile(`${userDataPath}\\projects.json`, "utf8"));
 
+    let template = [];
+    let projIndex = 0;
 
-ipcMain.handle("GetPath", (event, name) => app.getPath(name));
-ipcMain.handle("OpenFolder", async (event, path) => await OpenFolder(path));
-ipcMain.handle("OpenProject", async (event, dir) => {
+    while (template.length <= 5 && projIndex < projects.length)
+    {
+        try
+        {
+            const proj = projects[projIndex];
+            const manifestData = JSON.parse(await FS.readFile(`${proj}\\manifest.json`, "utf8"));
+
+            template.push({
+                label: manifestData.name,
+                click: () => OpenProject(proj)
+            });
+        }
+        catch { }
+
+        projIndex++;
+    }
+
+    if (template.length > 0) template.push({ type: "separator" });
+
+    template.push(
+        {
+            label: "Open Hub",
+            click: () => hubWindow.show()
+        },
+        {
+            label: "Quit Hub",
+            click: () => {
+                closeHub = true;
+                hubWindow.close();
+                appTray.destroy();
+            }
+        }
+    );
+
+    appTray.setContextMenu(Menu.buildFromTemplate(template));
+}
+
+async function OpenProject (dir)
+{
+    const existing = projectWindows.find(item => item.dir === dir);
+
+    if (existing != null)
+    {
+        const win = existing.window;
+
+        win.show();
+        win.maximize();
+        win.focus();
+
+        return;
+    }
+
     const projectWin = await CreateWindow({
         title: "Crystal Tile Editor",
         width: 1100,
@@ -110,5 +248,22 @@ ipcMain.handle("OpenProject", async (event, dir) => {
     projectWin.setMinimumSize(1100, 700);
     projectWin.webContents.openDevTools({ mode: "detach" });
 
-    app.focus();
-});
+    const winCache = {
+        dir: dir,
+        window: projectWin
+    };
+    projectWindows.push(winCache);
+
+    projectWin.on("closed", () => projectWindows.splice(projectWindows.indexOf(winCache), 1));
+
+    projectWin.focus();
+}
+
+main();
+
+
+ipcMain.handle("GetPath", (event, name) => app.getPath(name));
+ipcMain.handle("SelectFolder", async (event, path, data) => await SelectFolder(path, data));
+ipcMain.handle("SelectFile", async (event, path, data) => await SelectFile(path, data));
+ipcMain.handle("OpenProject", async (event, dir) => OpenProject(dir));
+ipcMain.handle("RefreshTray", () => RefreshTray());
