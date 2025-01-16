@@ -27,6 +27,11 @@ class DelegateEvent
     {
         for (let i = 0; i < this.#calls.length; i++) this.#calls[i](...params);
     }
+
+    InvokeReversed (...params)
+    {
+        for (let i = this.#calls.length - 1; i >= 0; i--) this.#calls[i](...params);
+    }
 }
 
 

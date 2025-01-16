@@ -1,6 +1,7 @@
 class MainInput extends GameBehavior
 {
     #transforming = false;
+    #recording = false;
     #action = 0;
     #existingTiles = [];
     #selection = [];
@@ -81,6 +82,24 @@ class MainInput extends GameBehavior
         else this.#previewRenderer.sprite = sprite;
     }
 
+    #StartRecording ()
+    {
+        if (this.#recording) return;
+
+        window.parent.RefractBack("ActionManager.StartRecording(\"Scene.TileModify\")");
+
+        this.#recording = true;
+    }
+
+    #StopRecording ()
+    {
+        if (!this.#recording) return;
+
+        window.parent.RefractBack("ActionManager.StopRecording(\"Scene.TileModify\")");
+
+        this.#recording = false;
+    }
+
     Start ()
     {
         this.#inputHandler = this.GetComponent("InputHandler");
@@ -137,6 +156,8 @@ class MainInput extends GameBehavior
     UseAction (index)
     {
         if (this.#action === index) return;
+        
+        this.#StopRecording();
 
         if (this.#action === 0)
         {
@@ -206,8 +227,12 @@ class MainInput extends GameBehavior
             this.#sceneListener.SortOrdering();
         }
 
+        if (InputManager.GetKeyUp("left")) this.#StopRecording();
+
         if (!InputManager.GetKey("left") || (hoveredTile?.palette === this.#tile.palette && hoveredTile?.spriteID === this.#tile.spriteID) || (this.#existingTiles[0]?.palette === this.#tile.palette && this.#existingTiles[0]?.spriteID === this.#tile.spriteID)) return;
-        
+
+        this.#StartRecording();
+
         tilemap.AddTile(new Tile(
             this.#tile.palette,
             this.#tile.spriteID,
@@ -234,7 +259,11 @@ class MainInput extends GameBehavior
 
         this.#selectionRect.transform.position = this.#inputHandler.mousePosSnapped;
 
+        if (InputManager.GetKeyUp("left")) this.#StopRecording();
+
         if (!InputManager.GetKey("left") || tilemap.GetTile(gridPos) == null) return;
+
+        this.#StartRecording();
 
         tilemap.RemoveTileByPosition(gridPos);
 

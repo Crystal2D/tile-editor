@@ -42,7 +42,8 @@ let keys = [
     new Key("n", "n", true),
     new Key("x", "x", true),
     new Key("del", "Delete"),
-    new Key("o", "o", true)
+    new Key("o", "o", true),
+    new Key("z", "z", true)
 ];
 
 function FindKey (name)
@@ -254,6 +255,55 @@ function RestateKeys ()
     }
 }
 
+function OnCtrl (key)
+{
+    let keyIndex = key;
+    
+    if (typeof key === "string")
+    {
+        keyIndex = FindKey(key);
+        
+        if (keyIndex == null) return false;
+    }
+    else if (key < 0 || key >= keys.length) return;
+
+    const ctrlIndex = FindKeyByCode("Control");
+
+    for (let i = 0; i < keys.length; i++)
+    {
+        if (i === keyIndex || i === ctrlIndex) continue;
+
+        if (keys[i].active) return false;
+    }
+
+    return keys[keyIndex].active && !keys[keyIndex].lastState && keys[ctrlIndex].active;
+}
+
+function OnCtrlShift (key)
+{
+    let keyIndex = key;
+    
+    if (typeof key === "string")
+    {
+        keyIndex = FindKey(key);
+        
+        if (keyIndex == null) return false;
+    }
+    else if (key < 0 || key >= keys.length) return;
+
+    const ctrlIndex = FindKeyByCode("Control");
+    const shiftIndex = FindKeyByCode("Shift");
+
+    for (let i = 0; i < keys.length; i++)
+    {
+        if (i === keyIndex || i === ctrlIndex || i === shiftIndex) continue;
+
+        if (keys[i].active) return false;
+    }
+
+    return keys[keyIndex].active && !keys[keyIndex].lastState && keys[ctrlIndex].active && keys[shiftIndex].active;
+}
+
 
 module.exports = {
     MouseX,
@@ -268,5 +318,7 @@ module.exports = {
     GetKeyDown,
     GetKeyUp,
     AvoidDrags,
-    RestateKeys
+    RestateKeys,
+    OnCtrl,
+    OnCtrlShift
 };

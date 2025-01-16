@@ -145,10 +145,10 @@ async function Init ()
         if (Input.GetKeyDown(KeyCode.B) && !Input.GetKey(KeyCode.Ctrl) && !Input.GetKey(KeyCode.Shift)) UseAction(0);
         if (Input.GetKeyDown(KeyCode.E) && !Input.GetKey(KeyCode.Ctrl) && !Input.GetKey(KeyCode.Shift)) UseAction(+(currentAction !== 1));
         if (Input.GetKeyDown(KeyCode.P) && !Input.GetKey(KeyCode.Ctrl) && !Input.GetKey(KeyCode.Shift)) UseAction(2);
-        if (Input.GetKey(KeyCode.Ctrl) && Input.GetKeyDown(KeyCode.R) && !Input.GetKey(KeyCode.Shift)) UseAction(3);
+        if (Input.OnCtrl(KeyCode.R)) UseAction(3);
         if (Input.GetKeyDown(KeyCode.T) && !Input.GetKey(KeyCode.Ctrl) && !Input.GetKey(KeyCode.Shift)) UseAction(4);
 
-        if (Input.GetKey(KeyCode.Ctrl) && !Input.GetKey(KeyCode.Shift) && Input.GetKeyDown(KeyCode.A))
+        if (Input.OnCtrl(KeyCode.A))
         {
             UseAction(3);
 
@@ -317,11 +317,6 @@ function UseAction (index)
     currentAction = index;
 }
 
-function OnContext ()
-{
-    
-}
-
 function OnClear ()
 {
     focused = false;
@@ -348,8 +343,36 @@ async function OnRefractorLoad ()
 
 async function LoadMap (name)
 {
-    if (currentPalette === name) return;
+    const lastPalette = currentPalette;
 
+    if (lastPalette === name) return;
+
+    if (lastPalette == null)
+    {
+        await LoadMapBase(name);
+
+        return;
+    }
+
+    let done = false;
+
+    ActionManager.StartRecording("Palette.MapLoad");
+    ActionManager.Record(
+        "Palette.MapLoad",
+        () => {
+            LoadMapBase(name);
+
+            if (!done) done = true;
+        },
+        () => LoadMapBase(lastPalette)
+    );
+    ActionManager.StopRecording("Palette.MapLoad");
+
+    await new Promise(resolve => Loop.Append(() => { if (done) resolve(); }, null, () => done));
+}
+
+async function LoadMapBase (name)
+{
     const lastPalette = currentPalette;
     currentPalette = name;
 
@@ -482,7 +505,7 @@ async function MapTexture (map, data, pos)
     await MapTextureByPos(map, data, pos);
 }
 
-async function MapTextureBySize (map, data, pos)
+async function MapTextureBySqrt (map, data, pos)
 {
     if (!map.textures.includes(data.src)) map.textures.push(data.src);
 
@@ -648,7 +671,6 @@ module.exports = {
     PaletteView,
     Init,
     DrawUI,
-    OnContext,
     OnClear,
     UseAction,
     LoadMap,

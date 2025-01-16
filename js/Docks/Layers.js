@@ -31,6 +31,24 @@ class Layer
 
     set index (value)
     {
+        const lastValue = this.#index;
+
+        if (lastValue === value) return;
+
+        ActionManager.Record(
+            "Layer.Sort",
+            () => this.indexNonManaged = value,
+            () => this.indexNonManaged = lastValue
+        );
+    }
+
+    get indexNonManaged ()
+    {
+        return this.#index;
+    }
+
+    set indexNonManaged (value)
+    {
         if (this.#index === value) return;
 
         this.#index = value;
@@ -50,9 +68,23 @@ class Layer
 
     set name (value)
     {
-        this.#data.name = `tile_${value}`;
+        const lastName = this.name;
 
-        this.#label.textContent = value;
+        if (lastName === value) return;
+
+        ActionManager.StartRecording("Layer.Rename");
+        ActionManager.Record(
+            "Layer.Rename",
+            () => {
+                this.#data.name = `tile_${value}`;
+                this.#label.textContent = value;
+            },
+            () => {
+                this.#data.name = `tile_${lastName}`;
+                this.#label.textContent = lastName;
+            }
+        );
+        ActionManager.StopRecording("Layer.Rename", () => Inspector.Redraw());
     }
 
     get active ()
@@ -62,9 +94,23 @@ class Layer
 
     set active (value)
     {
-        this.#data.active = value;
+        if (this.active === value) return;
 
-        SceneView.Refract(`SceneBank.FindByID(${this.#data.id}).SetActive(${value})`);
+        ActionManager.StartRecording("Layer.SetActive");
+        ActionManager.Record(
+            "Layer.SetActive",
+            () => {
+                this.#data.active = value;
+
+                SceneView.Refract(`SceneBank.FindByID(${this.#data.id}).SetActive(${value})`);
+            },
+            () => {
+                this.#data.active = !value;
+
+                SceneView.Refract(`SceneBank.FindByID(${this.#data.id}).SetActive(${!value})`);
+            }
+        );
+        ActionManager.StopRecording("Layer.SetActive", () => Inspector.Redraw());
     }
 
     get position ()
@@ -131,33 +177,43 @@ class Layer
 
         if ((tilemap.args?.color?.a === 0) === value) return;
 
-        this.#label.style.opacity = value ? 0.5 : 1;
-        this.#label.style.fontStyle = value ? "italic" : "";
-        this.#visibility.src = `img/eye/${value ? "hidden" : "shown"}.svg`;
+        const setHidden = value => {
+            this.#label.style.opacity = value ? 0.5 : 1;
+            this.#label.style.fontStyle = value ? "italic" : "";
+            this.#visibility.src = `img/eye/${value ? "hidden" : "shown"}.svg`;
 
-        if (tilemap.args == null) tilemap.args = { };
-        if (tilemap.args.color == null) tilemap.args.color = {
-            r: 255,
-            g: 255,
-            b: 255
+            if (tilemap.args == null) tilemap.args = { };
+            if (tilemap.args.color == null) tilemap.args.color = {
+                r: 255,
+                g: 255,
+                b: 255
+            };
+
+            if (tilemap.args.color.a == null) tilemap.args.color.a = 255;
+
+            if (value)
+            {
+                tilemap.args.color.trueA = tilemap.args.color.a;
+                tilemap.args.color.a = 0;
+
+                SceneView.Refract(`const tilemap = SceneBank.FindByID(${this.#data.id}).GetComponent("Tilemap"); tilemap.color = new Color(tilemap.color.r, tilemap.color.g, tilemap.color.b, 0)`);
+
+                return;
+            }
+
+            tilemap.args.color.a = tilemap.args.color.trueA;
+            tilemap.args.color.trueA = undefined;
+
+            SceneView.Refract(`const tilemap = SceneBank.FindByID(${this.#data.id}).GetComponent("Tilemap"); tilemap.color = new Color(tilemap.color.r, tilemap.color.g, tilemap.color.b, ${tilemap.args.color.a / 255})`);
         };
 
-        if (tilemap.args.color.a == null) tilemap.args.color.a = 255;
-
-        if (value)
-        {
-            tilemap.args.color.trueA = tilemap.args.color.a;
-            tilemap.args.color.a = 0;
-
-            SceneView.Refract(`const tilemap = SceneBank.FindByID(${this.#data.id}).GetComponent("Tilemap"); tilemap.color = new Color(tilemap.color.r, tilemap.color.g, tilemap.color.b, 0)`);
-
-            return;
-        }
-
-        tilemap.args.color.a = tilemap.args.color.trueA;
-        tilemap.args.color.trueA = undefined;
-
-        SceneView.Refract(`const tilemap = SceneBank.FindByID(${this.#data.id}).GetComponent("Tilemap"); tilemap.color = new Color(tilemap.color.r, tilemap.color.g, tilemap.color.b, ${tilemap.args.color.a / 255})`);
+        ActionManager.StartRecording("Layer.Hide");
+        ActionManager.Record(
+            "Layer.Hide",
+            () => setHidden(value),
+            () => setHidden(!value)
+        );
+        ActionManager.StopRecording("Layer.Hide", () => Inspector.Redraw());
     }
 
     get sortingLayer ()
@@ -170,14 +226,29 @@ class Layer
     set sortingLayer (value)
     {
         const tilemap = this.#data.components.find(item => item.type === "Tilemap");
+        const lastValue = tilemap.args?.sortingLayer ?? 0;
 
-        if ((tilemap.args?.sortingLayer ?? 0) === value) return;
+        if (lastValue === value) return;
 
-        if (tilemap.args == null) tile.args = { };
+        ActionManager.StartRecording("Layer.SortLayer");
+        ActionManager.Record(
+            "Layer.SortLayer",
+            () => {
+                if (tilemap.args == null) tile.args = { };
 
-        tilemap.args.sortingLayer = value;
+                tilemap.args.sortingLayer = value;
+                    
+                SceneView.Refract(`SceneBank.FindByID(${this.#data.id}).GetComponent("Tilemap").sortingLayer = ${value}`);
+            },
+            () => {
+                if (tilemap.args == null) tile.args = { };
 
-        SceneView.Refract(`SceneBank.FindByID(${this.#data.id}).GetComponent("Tilemap").sortingLayer = ${value}`);
+                tilemap.args.sortingLayer = lastValue;
+                    
+                SceneView.Refract(`SceneBank.FindByID(${this.#data.id}).GetComponent("Tilemap").sortingLayer = ${lastValue}`);
+            }
+        );
+        ActionManager.StopRecording("Layer.SortLayer", () => Inspector.Redraw());
     }
 
     get sortingOrder ()
@@ -190,14 +261,29 @@ class Layer
     set sortingOrder (value)
     {
         const tilemap = this.#data.components.find(item => item.type === "Tilemap");
+        const lastValue = tilemap.args?.sortingOrder ?? 0;
 
-        if ((tilemap.args?.sortingOrder ?? 0) === value) return;
+        if (lastValue === value) return;
 
-        if (tilemap.args == null) tile.args = { };
+        ActionManager.StartRecording("Layer.SortOrder");
+        ActionManager.Record(
+            "Layer.SortOrder",
+            () => {
+                if (tilemap.args == null) tile.args = { };
 
-        tilemap.args.sortingOrder = value;
+                tilemap.args.sortingOrder = value;
 
-        SceneView.Refract(`SceneBank.FindByID(${this.#data.id}).GetComponent("Tilemap").sortingOrder = ${value}`);
+                SceneView.Refract(`SceneBank.FindByID(${this.#data.id}).GetComponent("Tilemap").sortingOrder = ${value}`);
+            },
+            () => {
+                if (tilemap.args == null) tile.args = { };
+
+                tilemap.args.sortingOrder = lastValue;
+                    
+                SceneView.Refract(`SceneBank.FindByID(${this.#data.id}).GetComponent("Tilemap").sortingOrder = ${lastValue}`);
+            }
+        );
+        ActionManager.StopRecording("Layer.SortOrder", () => Inspector.Redraw());
     }
 
     constructor (data, gridData)
@@ -290,6 +376,8 @@ class Layer
                 return;
             }
 
+            ActionManager.StartRecording("Layer.Sort");
+
             mouse = Input.MouseY();
             Input.SetCursor("grabbing");
 
@@ -326,7 +414,7 @@ class Layer
 
         layers.push(this);
 
-        Loop.Append(() => { if (SceneManager.IsLoaded()) requestAnimationFrame(() => this.index = index); }, null, () => SceneManager.IsLoaded());
+        Loop.Append(() => { if (SceneManager.IsLoaded()) requestAnimationFrame(() => this.indexNonManaged = index); }, null, () => SceneManager.IsLoaded());
     }
 
     #OnDrop ()
@@ -365,34 +453,76 @@ class Layer
         };
     }
 
-    Focus ()
+    FocusBase ()
     {
-        if (focused === this) return;
-
-        Unfocus();
-
+        UnfocusBase();
+        
         this.item.setAttribute("focused", 1);
-
         focused = this;
+
         SceneView.Refract(`SceneModifier.FocusGrid(${this.#gridData.id}); SceneModifier.FocusTilemap(${this.#data.id})`);
 
         this.item.scrollIntoViewIfNeeded();
     }
 
-    Delete ()
+    Focus ()
     {
+        const lastFocused = focused;
+
+        if (lastFocused === this) return;
+
+        ActionManager.StartRecording("Layer.Focus");
+        ActionManager.Record(
+            "Layer.Focus",
+            () => this.FocusBase(),
+            () => lastFocused != null ? lastFocused.FocusBase() : UnfocusBase()
+        );
+        ActionManager.StopRecording("Layer.Focus");
+    }
+
+    DeleteBase ()
+    {
+        onDragDrop();
+
         const procedingLayers = layers.filter((item, index) => index > this.index);
 
-        for (let i = 0; i < procedingLayers.length; i++)
+        if (ActionManager.RecordExists("Layer.Sort"))
         {
-            procedingLayers[i].index--;
-            procedingLayers[i].dockPos = procedingLayers[i].index * 24;
+            for (let i = 0; i < procedingLayers.length; i++)
+            {
+                procedingLayers[i].index--;
+                procedingLayers[i].dockPos = procedingLayers[i].index * 24;
+            }
+    
+            ActionManager.StopRecording("Layer.Sort", () => {
+                layers.sort((a, b) => a.index - b.index);
+    
+                for (let i = 0; i < layers.length; i++) layers[i].dockPos = layers[i].index * 24;
+            });
+        }
+        else
+        {
+            for (let i = 0; i < procedingLayers.length; i++)
+            {
+                procedingLayers[i].indexNonManaged--;
+                procedingLayers[i].dockPos = procedingLayers[i].index * 24;
+            }
+
+            ActionManager.Record(
+                "Layer.Delete",
+                () => {
+                    layers.sort((a, b) => a.index - b.index);
+    
+                    for (let i = 0; i < layers.length; i++) layers[i].dockPos = layers[i].index * 24;
+                },
+                () => { }
+            );
         }
 
         this.item.remove();
         layers.splice(this.index, 1);
 
-        if (focused === this) Unfocus();
+        if (focused === this) UnfocusBase();
 
         const onlyChild = SceneManager.GetGridChildren(this.#gridData.id).length === 1;
 
@@ -406,6 +536,54 @@ class Layer
 
             Redraw();
         }
+    }
+
+    async UndeleteBase ()
+    {
+        const procedingLayers = layers.filter((item, index) => index >= this.index);
+
+        for (let i = 0; i < procedingLayers.length; i++)
+        {
+            procedingLayers[i].indexNonManaged++;
+            procedingLayers[i].dockPos = procedingLayers[i].index * 24;
+        }
+
+        layers.push(this);
+        layers.sort((a, b) => a.index - b.index);
+        
+        const gridBase = {
+            position: { x: this.position.x, y: this.position.y },
+            scale: { x: this.scale.x, y: this.scale.y },
+            cellSize: { x: this.cellSize.x, y: this.cellSize.y },
+            cellGap: { x: this.cellGap.x, y: this.cellGap.y }
+        };
+        const gridData = SceneManager.FindGrid(gridBase) ?? SceneManager.NewGrid(gridBase);
+
+        SceneManager.GetActiveScene().gameObjects.push(this.#data);
+
+        await new Promise(resolve => requestAnimationFrame(resolve));
+
+        this.#gridData = gridData;
+        this.#gridComponent = gridData.components.find(item => item.type === "Grid").args ?? { };
+
+        Redraw();
+
+        SceneView.Refract(`(async () => { await SceneInjector.Grid(${JSON.stringify(this.#gridData)}); SceneInjector.GameObject(${JSON.stringify(this.#data)})})();`);
+        
+        await new Promise(resolve => requestAnimationFrame(resolve));
+
+        this.FocusBase();
+    }
+
+    Delete ()
+    {
+        ActionManager.StartRecording("Layer.Delete");
+        ActionManager.Record(
+            "Layer.Delete",
+            () => this.DeleteBase(),
+            () => this.UndeleteBase()
+        );
+        ActionManager.StopRecording("Layer.Delete");
     }
 
     Copy ()
@@ -477,194 +655,257 @@ class Layer
 
     SetPosition (x, y)
     {
-        if (x === this.position.x && y === this.position.y) return;
+        const lastPos = { x: this.position.x, y: this.position.y };
 
-        SceneView.Refract("GameObject.FindComponents(\"MainInput\")[0].Deselect()");
+        if (x === lastPos.x && y === lastPos.y) return;
 
-        const grid = this.#DupeGrid();
-        grid.position = { x: x, y: y };
+        const setPosition = (x, y) => {
+            SceneView.Refract("GameObject.FindComponents(\"MainInput\")[0].Deselect()");
 
-        const gridData = SceneManager.FindGrid(grid);
+            const grid = this.#DupeGrid();
+            grid.position = { x: x, y: y };
 
-        if (gridData != null && gridData !== this.#gridData)
-        {
-            this.#data.parent = gridData.id;
+            const gridData = SceneManager.FindGrid(grid);
 
-            SceneView.Refract(`SceneModifier.ChangeParent(${this.#data.id}, ${gridData.id})`);
+            if (gridData != null && gridData !== this.#gridData)
+            {
+                this.#data.parent = gridData.id;
 
-            SceneManager.DestroyObject(this.#gridData.id);
+                SceneView.Refract(`SceneModifier.ChangeParent(${this.#data.id}, ${gridData.id})`);
 
-            this.#gridData = gridData;
+                SceneManager.DestroyObject(this.#gridData.id);
+
+                this.#gridData = gridData;
+                this.#gridComponent = this.#gridData.components.find(item => item.type === "Grid").args ?? { };
+
+                SceneView.Refract(`SceneModifier.FocusGrid(${this.#gridData.id})`);
+
+                return;
+            }
+
+            if (SceneManager.GetGridChildren(this.#gridData.id).length === 1)
+            {
+                if (this.#gridData.transform == null) this.#gridData.transform = { };
+            
+                this.#gridData.transform.position = {
+                    x: x,
+                    y: y
+                };
+
+                SceneView.Refract(`SceneBank.FindByID(${this.#gridData.id}).transform.position = new Vector2(${x}, ${y})`);
+
+                return;
+            }
+
+            this.#gridData = SceneManager.FindGrid(grid) ?? SceneManager.NewGrid(grid);
             this.#gridComponent = this.#gridData.components.find(item => item.type === "Grid").args ?? { };
+            this.#data.parent = this.#gridData.id;
 
-            SceneView.Refract(`SceneModifier.FocusGrid(${this.#gridData.id})`);
+            requestAnimationFrame(() => SceneView.Refract(`SceneModifier.ChangeParent(${this.#data.id}, ${this.#gridData.id}); SceneModifier.FocusGrid(${this.#gridData.id})`));
+        };
 
-            return;
-        }
-
-        if (SceneManager.GetGridChildren(this.#gridData.id).length === 1)
-        {
-            if (this.#gridData.transform == null) this.#gridData.transform = { };
-        
-            this.#gridData.transform.position = {
-                x: x,
-                y: y
-            };
-
-            SceneView.Refract(`SceneBank.FindByID(${this.#gridData.id}).transform.position = new Vector2(${x}, ${y})`);
-
-            return;
-        }
-
-        this.#gridData = SceneManager.FindGrid(grid) ?? SceneManager.NewGrid(grid);
-        this.#gridComponent = this.#gridData.components.find(item => item.type === "Grid").args ?? { };
-        this.#data.parent = this.#gridData.id;
-
-        requestAnimationFrame(() => SceneView.Refract(`SceneModifier.ChangeParent(${this.#data.id}, ${this.#gridData.id}); SceneModifier.FocusGrid(${this.#gridData.id})`));
+        ActionManager.StartRecording("Layer.SetPosition");
+        ActionManager.Record(
+            "Layer.SetPosition",
+            () => setPosition(x, y),
+            () => setPosition(lastPos.x, lastPos.y)
+        );
+        ActionManager.StopRecording("Layer.SetPosition", () => Inspector.Redraw());
     }
 
     SetScale (x, y)
     {
-        if (x === this.scale.x && y === this.scale.y) return;
+        const lastScale = { x: this.scale.x, y: this.scale.y };
 
-        SceneView.Refract("GameObject.FindComponents(\"MainInput\")[0].Deselect()");
+        if (x === lastScale.x && y === lastScale.y) return;
 
-        const grid = this.#DupeGrid();
-        grid.scale = { x: x, y: y };
+        const setScale = (x, y) => {
+            SceneView.Refract("GameObject.FindComponents(\"MainInput\")[0].Deselect()");
 
-        const gridData = SceneManager.FindGrid(grid);
+            const grid = this.#DupeGrid();
+            grid.scale = { x: x, y: y };
 
-        if (gridData != null && gridData !== this.#gridData)
-        {
-            this.#data.parent = gridData.id;
+            const gridData = SceneManager.FindGrid(grid);
 
-            SceneView.Refract(`SceneModifier.ChangeParent(${this.#data.id}, ${gridData.id})`);
+            if (gridData != null && gridData !== this.#gridData)
+            {
+                this.#data.parent = gridData.id;
 
-            SceneManager.DestroyObject(this.#gridData.id);
+                SceneView.Refract(`SceneModifier.ChangeParent(${this.#data.id}, ${gridData.id})`);
 
-            this.#gridData = gridData;
+                SceneManager.DestroyObject(this.#gridData.id);
+
+                this.#gridData = gridData;
+                this.#gridComponent = this.#gridData.components.find(item => item.type === "Grid").args ?? { };
+
+                SceneView.Refract(`SceneModifier.FocusGrid(${this.#gridData.id})`);
+
+                return;
+            }
+
+            if (SceneManager.GetGridChildren(this.#gridData.id).length === 1)
+            {
+                if (this.#gridData.transform == null) this.#gridData.transform = { };
+            
+                this.#gridData.transform.scale = {
+                    x: x,
+                    y: y
+                };
+
+                SceneView.Refract(`SceneBank.FindByID(${this.#gridData.id}).transform.scale = new Vector2(${x}, ${y})`);
+
+                return;
+            }
+
+            this.#gridData = SceneManager.FindGrid(grid) ?? SceneManager.NewGrid(grid);
             this.#gridComponent = this.#gridData.components.find(item => item.type === "Grid").args ?? { };
+            this.#data.parent = this.#gridData.id;
 
-            SceneView.Refract(`SceneModifier.FocusGrid(${this.#gridData.id})`);
+            requestAnimationFrame(() => SceneView.Refract(`SceneModifier.ChangeParent(${this.#data.id}, ${this.#gridData.id}); SceneModifier.FocusGrid(${this.#gridData.id})`));
+        };
 
-            return;
-        }
-
-        if (SceneManager.GetGridChildren(this.#gridData.id).length === 1)
-        {
-            if (this.#gridData.transform == null) this.#gridData.transform = { };
-        
-            this.#gridData.transform.scale = {
-                x: x,
-                y: y
-            };
-
-            SceneView.Refract(`SceneBank.FindByID(${this.#gridData.id}).transform.scale = new Vector2(${x}, ${y})`);
-
-            return;
-        }
-
-        this.#gridData = SceneManager.FindGrid(grid) ?? SceneManager.NewGrid(grid);
-        this.#gridComponent = this.#gridData.components.find(item => item.type === "Grid").args ?? { };
-        this.#data.parent = this.#gridData.id;
-        
-        requestAnimationFrame(() => SceneView.Refract(`SceneModifier.ChangeParent(${this.#data.id}, ${this.#gridData.id}); SceneModifier.FocusGrid(${this.#gridData.id})`));
+        ActionManager.StartRecording("Layer.SetScale");
+        ActionManager.Record(
+            "Layer.SetScale",
+            () => setScale(x, y),
+            () => setScale(lastScale.x, lastScale.y)
+        );
+        ActionManager.StopRecording("Layer.SetScale", () => Inspector.Redraw());
     }
 
     SetCellSize (x, y)
     {
-        if (x === this.cellSize.x && y === this.cellSize.y) return;
+        const lastCellSize = { x: this.cellSize.x, y: this.cellSize.y };
 
-        SceneView.Refract("GameObject.FindComponents(\"MainInput\")[0].Deselect()");
+        if (x === lastCellSize.x && y === lastCellSize.y) return;
 
-        const grid = this.#DupeGrid();
-        grid.cellSize = { x: x, y: y };
+        const setCellSize = (x, y) => {
+            SceneView.Refract("GameObject.FindComponents(\"MainInput\")[0].Deselect()");
 
-        const gridData = SceneManager.FindGrid(grid);
+            const grid = this.#DupeGrid();
+            grid.cellSize = { x: x, y: y };
 
-        if (gridData != null && gridData !== this.#gridData)
-        {
-            this.#data.parent = gridData.id;
+            const gridData = SceneManager.FindGrid(grid);
 
-            SceneView.Refract(`SceneModifier.ChangeParent(${this.#data.id}, ${gridData.id})`);
+            if (gridData != null && gridData !== this.#gridData)
+            {
+                this.#data.parent = gridData.id;
 
-            SceneManager.DestroyObject(this.#gridData.id);
+                SceneView.Refract(`SceneModifier.ChangeParent(${this.#data.id}, ${gridData.id})`);
 
-            this.#gridData = gridData;
+                SceneManager.DestroyObject(this.#gridData.id);
+
+                this.#gridData = gridData;
+                this.#gridComponent = this.#gridData.components.find(item => item.type === "Grid").args ?? { };
+
+                SceneView.Refract(`SceneModifier.FocusGrid(${this.#gridData.id})`);
+
+                return;
+            }
+
+            if (SceneManager.GetGridChildren(this.#gridData.id).length === 1)
+            {
+                this.#gridComponent.cellSize = {
+                    x: x,
+                    y: y
+                };
+
+                SceneView.Refract(`SceneBank.FindByID(${this.#gridData.id}).GetComponent("Grid").cellSize = new Vector2(${x}, ${y})`);
+
+                return;
+            }
+
+            this.#gridData = SceneManager.FindGrid(grid) ?? SceneManager.NewGrid(grid);
             this.#gridComponent = this.#gridData.components.find(item => item.type === "Grid").args ?? { };
+            this.#data.parent = this.#gridData.id;
 
-            SceneView.Refract(`SceneModifier.FocusGrid(${this.#gridData.id})`);
+            requestAnimationFrame(() => SceneView.Refract(`SceneModifier.ChangeParent(${this.#data.id}, ${this.#gridData.id}); SceneModifier.FocusGrid(${this.#gridData.id})`));
+        };
 
-            return;
-        }
-
-        if (SceneManager.GetGridChildren(this.#gridData.id).length === 1)
-        {
-            this.#gridComponent.cellSize = {
-                x: x,
-                y: y
-            };
-
-            SceneView.Refract(`SceneBank.FindByID(${this.#gridData.id}).GetComponent("Grid").cellSize = new Vector2(${x}, ${y})`);
-
-            return;
-        }
-
-        this.#gridData = SceneManager.FindGrid(grid) ?? SceneManager.NewGrid(grid);
-        this.#gridComponent = this.#gridData.components.find(item => item.type === "Grid").args ?? { };
-        this.#data.parent = this.#gridData.id;
-
-        requestAnimationFrame(() => SceneView.Refract(`SceneModifier.ChangeParent(${this.#data.id}, ${this.#gridData.id}); SceneModifier.FocusGrid(${this.#gridData.id})`));
+        ActionManager.StartRecording("Layer.SetCellSize");
+        ActionManager.Record(
+            "Layer.SetCellSize",
+            () => setCellSize(x, y),
+            () => setCellSize(lastCellSize.x, lastCellSize.y)
+        );
+        ActionManager.StopRecording("Layer.SetCellSize", () => Inspector.Redraw());
     }
 
     SetCellGap (x, y)
     {
-        if (x === this.cellGap.x && y === this.cellGap.y) return;
+        const lastCellGap = { x: this.cellGap.x, y: this.cellGap.y };
 
-        SceneView.Refract("GameObject.FindComponents(\"MainInput\")[0].Deselect()");
+        if (x === lastCellGap.x && y === lastCellGap.y) return;
+
+        const setCellGap = (x, y) => {
+            SceneView.Refract("GameObject.FindComponents(\"MainInput\")[0].Deselect()");
         
-        const grid = this.#DupeGrid();
-        grid.cellGap = { x: x, y: y };
+            const grid = this.#DupeGrid();
+            grid.cellGap = { x: x, y: y };
 
-        const gridData = SceneManager.FindGrid(grid);
+            const gridData = SceneManager.FindGrid(grid);
 
-        if (gridData != null && gridData !== this.#gridData)
-        {
-            this.#data.parent = gridData.id;
+            if (gridData != null && gridData !== this.#gridData)
+            {
+                this.#data.parent = gridData.id;
 
-            SceneView.Refract(`SceneModifier.ChangeParent(${this.#data.id}, ${gridData.id})`);
+                SceneView.Refract(`SceneModifier.ChangeParent(${this.#data.id}, ${gridData.id})`);
 
-            SceneManager.DestroyObject(this.#gridData.id);
+                SceneManager.DestroyObject(this.#gridData.id);
 
-            this.#gridData = gridData;
+                this.#gridData = gridData;
+                this.#gridComponent = this.#gridData.components.find(item => item.type === "Grid").args ?? { };
+
+                SceneView.Refract(`SceneModifier.FocusGrid(${this.#gridData.id})`);
+
+                return;
+            }
+
+            if (SceneManager.GetGridChildren(this.#gridData.id).length === 1)
+            {
+                this.#gridComponent.cellGap = {
+                    x: x,
+                    y: y
+                };
+
+                SceneView.Refract(`SceneBank.FindByID(${this.#gridData.id}).GetComponent("Grid").cellGap = new Vector2(${x}, ${y})`);
+
+                return;
+            }
+
+            this.#gridData = SceneManager.FindGrid(grid) ?? SceneManager.NewGrid(grid);
             this.#gridComponent = this.#gridData.components.find(item => item.type === "Grid").args ?? { };
+            this.#data.parent = this.#gridData.id;
 
-            SceneView.Refract(`SceneModifier.FocusGrid(${this.#gridData.id})`);
+            requestAnimationFrame(() => SceneView.Refract(`SceneModifier.ChangeParent(${this.#data.id}, ${this.#gridData.id}); SceneModifier.FocusGrid(${this.#gridData.id})`));
+        };
 
-            return;
-        }
-
-        if (SceneManager.GetGridChildren(this.#gridData.id).length === 1)
-        {
-            this.#gridComponent.cellGap = {
-                x: x,
-                y: y
-            };
-
-            SceneView.Refract(`SceneBank.FindByID(${this.#gridData.id}).GetComponent("Grid").cellGap = new Vector2(${x}, ${y})`);
-
-            return;
-        }
-
-        this.#gridData = SceneManager.FindGrid(grid) ?? SceneManager.NewGrid(grid);
-        this.#gridComponent = this.#gridData.components.find(item => item.type === "Grid").args ?? { };
-        this.#data.parent = this.#gridData.id;
-
-        requestAnimationFrame(() => SceneView.Refract(`SceneModifier.ChangeParent(${this.#data.id}, ${this.#gridData.id}); SceneModifier.FocusGrid(${this.#gridData.id})`));
+        ActionManager.StartRecording("Layer.SetCellGap");
+        ActionManager.Record(
+            "Layer.SetCellGap",
+            () => setCellGap(x, y),
+            () => setCellGap(lastCellGap.x, lastCellGap.y)
+        );
+        ActionManager.StopRecording("Layer.SetCellGap", () => Inspector.Redraw());
     }
 }
 
 function Unfocus ()
+{
+    const lastFocused = focused;
+
+    if (lastFocused == null) return;
+
+    ActionManager.StartRecording("Layers.Unfocus");
+    ActionManager.Record(
+        "Layers.Unfocus",
+        () => UnfocusBase(),
+        () => lastFocused.FocusBase()
+    );
+    ActionManager.StopRecording("Layers.Unfocus");
+}
+
+function UnfocusBase ()
 {
     if (focused == null) return;
 
@@ -687,7 +928,7 @@ function SetSceneName (name)
     scenename = name;
 }
 
-async function PasteLayer ()
+async function PasteLayerBase ()
 {
     if (copyBuffer == null) return;
 
@@ -786,16 +1027,42 @@ async function PasteLayer ()
 
     if (layers.length === 1) Redraw();
 
-    layer.Focus();
+    layer.FocusBase();
 
     if (copyBuffer.clear) copyBuffer = null;
+
+    return layer;
+}
+
+async function PasteLayer ()
+{
+    const layer = await PasteLayerBase();
+    let done = false;
+
+    ActionManager.StartRecording("Layers.Paste");
+    ActionManager.Record(
+        "Layers.Paste",
+        () => { if (done) layer.UndeleteBase(); },
+        () => layer.DeleteBase()
+    );
+    ActionManager.StopRecording("Layers.Paste");
+
+    done = true;
 }
 
 function Init ()
 {
     if (loaded) return;
 
-    Input.OnMouseUp().Add(() => onDragDrop());
+    Input.OnMouseUp().Add(() => {
+        onDragDrop();
+
+        ActionManager.StopRecording("Layer.Sort", () => {
+            layers.sort((a, b) => a.index - b.index);
+
+            for (let i = 0; i < layers.length; i++) layers[i].dockPos = layers[i].index * 24;
+        });
+    });
 
     Loop.Append(() => Update());
 
@@ -808,18 +1075,27 @@ function Update ()
 
     if (!LoadingScreen.IsEnabled())
     {
-        if (Input.GetKey(KeyCode.Ctrl) && Input.GetKey(KeyCode.Shift) && Input.GetKeyDown(KeyCode.N)) SceneManager.NewLayer();
-        if (Input.GetKey(KeyCode.Ctrl) && Input.GetKeyDown(KeyCode.V) && !Input.GetKey(KeyCode.Shift)) PasteLayer();
+        if (Input.OnCtrlShift(KeyCode.N)) SceneManager.NewLayer();
+        if (Input.OnCtrl(KeyCode.V)) PasteLayer();
 
         if (focused != null)
         {
-            if (Input.GetKey(KeyCode.Ctrl) && Input.GetKeyDown(KeyCode.C) && !Input.GetKey(KeyCode.Shift)) focused.Copy();
-            if (Input.GetKey(KeyCode.Ctrl) && Input.GetKeyDown(KeyCode.X) && !Input.GetKey(KeyCode.Shift)) focused.Cut();
-            if (Input.GetKey(KeyCode.Ctrl) && Input.GetKeyDown(KeyCode.D) && !Input.GetKey(KeyCode.Shift)) focused.Duplicate();
+            if (Input.OnCtrl(KeyCode.C)) focused.Copy();
+            if (Input.OnCtrl(KeyCode.X)) focused.Cut();
+            if (Input.OnCtrl(KeyCode.D)) focused.Duplicate();
             if (Input.GetKeyDown(KeyCode.Delete) && !Input.GetKey(KeyCode.Ctrl) && !Input.GetKey(KeyCode.Shift)) focused.Delete();
         }
     }
-    else if (dragging != null) onDragDrop();
+    else if (dragging != null)
+    {
+        onDragDrop();
+
+        ActionManager.StopRecording("Layer.Sort",() => {
+            layers.sort((a, b) => a.index - b.index);
+
+            for (let i = 0; i < layers.length; i++) layers[i].dockPos = layers[i].index * 24;
+        });
+    }
 
     if (dragging != null)
     {
@@ -827,10 +1103,10 @@ function Update ()
         {
             const switchee = layers[dragging.index - 1];
 
-            switchee.index++;
+            switchee.indexNonManaged++;
             switchee.dockPos = switchee.index * 24;
 
-            dragging.index--;
+            dragging.indexNonManaged--;
 
             layers.sort((a, b) => a.index - b.index);
         }
@@ -839,10 +1115,10 @@ function Update ()
         {
             const switchee = layers[dragging.index + 1];
 
-            switchee.index--;
+            switchee.indexNonManaged--;
             switchee.dockPos = switchee.index * 24;
 
-            dragging.index++;
+            dragging.indexNonManaged++;
 
             layers.sort((a, b) => a.index - b.index);
         }
@@ -950,7 +1226,7 @@ function GetOrdering ()
 
 function ClearLayers ()
 {
-    Unfocus();
+    UnfocusBase();
     
     scenename = null;
     dragging = null;

@@ -1,5 +1,9 @@
+let focused = false;
+
 function DrawUI ()
 {
+    focused = true;
+
     selection = Layers.Selection();
 
     if (selection == null)
@@ -108,13 +112,22 @@ function DrawUI ()
     Dock.SectionEnd();
 }
 
-function OnContext ()
+function OnClear ()
 {
+    focused = false;
+}
 
+function Redraw ()
+{
+    if (!focused || Layers.Selection() == null) return;
+
+    Dock.Unfocus();
+    Dock.FocusByIndex(1);
 }
 
 
 module.exports = {
     DrawUI,
-    OnContext
+    OnClear,
+    Redraw
 };

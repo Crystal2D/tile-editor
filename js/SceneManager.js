@@ -88,7 +88,7 @@ function NewGrid (data)
     return grid;
 }
 
-async function NewLayer ()
+async function NewLayerBase ()
 {
     const grid = {
         position: { x: 0, y: 0 },
@@ -122,7 +122,25 @@ async function NewLayer ()
 
     if (activeScene.gameObjects.filter(item => item.name.startsWith("tile_")).length === 1) Layers.Redraw();
 
-    layer.Focus();
+    layer.FocusBase();
+
+    return layer;
+}
+
+async function NewLayer ()
+{
+    const layer = await NewLayerBase();
+    let done = false;
+
+    ActionManager.StartRecording("Scene.CreateLayer");
+    ActionManager.Record(
+        "Scene.CreateLayer",
+        () => { if (done) layer.UndeleteBase(); },
+        () => layer.DeleteBase()
+    );
+    ActionManager.StopRecording("Scene.CreateLayer");
+
+    done = true;
 }
 
 function DestroyObject (id)
@@ -145,20 +163,16 @@ function GetGridChildren (id)
     return tilemaps.filter(item => item.parent === id);
 }
 
-function AddTile (mapID, data)
+function AddTileBase (tilemap, data)
 {
-    const tilemap = activeScene.gameObjects.find(item => item.id === mapID).components.find(item => item.type === "Tilemap");
-
     if (tilemap.args == null) tilemap.args = { };
     if (tilemap.args.tiles == null) tilemap.args.tiles = [];
 
     tilemap.args.tiles.push(data);
 }
 
-function RemoveTile (mapID, pos)
+function RemoveTileBase (tilemap, data)
 {
-    const tilemap = activeScene.gameObjects.find(item => item.id === mapID).components.find(item => item.type === "Tilemap");
-
     if (tilemap.args == null) tilemap.args = { };
     if (tilemap.args.tiles == null)
     {
@@ -167,13 +181,50 @@ function RemoveTile (mapID, pos)
         return;
     }
 
+    const index = tilemap.args.tiles.indexOf(data);
+
+    tilemap.args.tiles.splice(index, 1);
+}
+
+function AddTile (mapID, data)
+{
+    const tilemap = activeScene.gameObjects.find(item => item.id === mapID).components.find(item => item.type === "Tilemap");
+
+    ActionManager.Record(
+        "Scene.TileModify",
+        () => {
+            AddTileBase(tilemap, data);
+
+            SceneView.Refract(`SceneBank.FindByID(${mapID}).GetComponent("Tilemap").AddTile(new Tile("${data.palette}", ${data.spriteID}, new Vector2(${data.position.x}, ${data.position.y})))`);
+        },
+        () => {
+            RemoveTileBase(tilemap, data);
+
+            SceneView.Refract(`SceneBank.FindByID(${mapID}).GetComponent("Tilemap").RemoveTileByPosition(new Vector2(${data.position.x}, ${data.position.y}))`);
+        }
+    );
+}
+
+function RemoveTile (mapID, pos)
+{
+    const tilemap = activeScene.gameObjects.find(item => item.id === mapID).components.find(item => item.type === "Tilemap");
     const tile = tilemap.args.tiles.find(item => item.position.x === pos.x && item.position.y === pos.y);
 
     if (tile == null) return;
 
-    const index = tilemap.args.tiles.indexOf(tile);
+    ActionManager.Record(
+        "Scene.TileModify",
+        () => {
+            RemoveTileBase(tilemap, tile);
 
-    tilemap.args.tiles.splice(index, 1);
+            SceneView.Refract(`SceneBank.FindByID(${mapID}).GetComponent("Tilemap").RemoveTileByPosition(new Vector2(${tile.position.x}, ${tile.position.y}))`);
+        },
+        () => {
+            AddTileBase(tilemap, tile);
+
+            SceneView.Refract(`SceneBank.FindByID(${mapID}).GetComponent("Tilemap").AddTile(new Tile("${tile.palette}", ${tile.spriteID}, new Vector2(${tile.position.x}, ${tile.position.y})))`);
+        }
+    );
 }
 
 async function Load (src)

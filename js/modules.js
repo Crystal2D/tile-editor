@@ -3,6 +3,7 @@ const HideFile = require("hidefile");
 const { ipcRenderer } = require("electron");
 
 const LoadingScreen = require("./js/LoadingScreen");
+const ActionManager = require("./js/ActionManager");
 const ProjectManager = require("./js/ProjectManager");
 const SceneManager = require("./js/SceneManager");
 const DelegateEvent = require("./js/DelegateEvent");

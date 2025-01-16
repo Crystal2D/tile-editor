@@ -17,5 +17,6 @@ module.exports = {
     N: 15,
     X: 16,
     Delete: 17,
-    O: 18
+    O: 18,
+    Z: 19
 };

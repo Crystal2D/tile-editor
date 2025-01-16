@@ -68,10 +68,26 @@ window.onload = async () => {
         () => {
             MenuManager.CloseContextMenus();
 
+            const undo = new MenuShortcutItem("Undo", "Ctrl+Z", () => {
+                MenuManager.UnfocusBar();
+                MenuManager.CloseContextMenus();
+
+                ActionManager.Undo();
+            });
+            undo.enabled = ActionManager.IsUndoable();
+
+            const redo = new MenuShortcutItem("Redo", "Ctrl+Shift+Z", () => {
+                MenuManager.UnfocusBar();
+                MenuManager.CloseContextMenus();
+
+                ActionManager.Redo();
+            });
+            redo.enabled = ActionManager.IsRedoable();
+
             new ContextMenu(    
                 [
-                    new MenuShortcutItem("Undo", "Ctrl+Z"),
-                    new MenuShortcutItem("Redo", "Ctrl+Shift+Z")
+                    undo,
+                    redo   
                 ],
                 {
                     posX : 51,
@@ -151,20 +167,20 @@ window.onload = async () => {
     const palette = Dock.AddTab("Palette");
 
     layers.Bind(() => Layers.DrawUI(), () => Layers.OnContext(), () => Layers.OnClear());
-    inspector.Bind(() => Inspector.DrawUI(), () => Inspector.OnContext());
-    palette.Bind(() => Palette.DrawUI(), () => Palette.OnContext(), () => Palette.OnClear());
+    inspector.Bind(() => Inspector.DrawUI(), null, () => Inspector.OnClear());
+    palette.Bind(() => Palette.DrawUI(), null, () => Palette.OnClear());
 
     Loop.Append(() => {
         if (!SceneManager.IsLoaded() || LoadingScreen.IsEnabled()) return;
 
-        if (Input.GetKey(KeyCode.Ctrl) && Input.GetKeyDown(KeyCode.N) && !Input.GetKey(KeyCode.Shift)) SceneManager.NewScene();
-        if (Input.GetKey(KeyCode.Ctrl) && Input.GetKeyDown(KeyCode.O) && !Input.GetKey(KeyCode.Shift)) SceneManager.OpenScene();
+        if (Input.OnCtrl(KeyCode.Z)) ActionManager.Undo();
+        if (Input.OnCtrlShift(KeyCode.Z)) ActionManager.Redo();
 
-        if (Input.GetKey(KeyCode.Ctrl) && Input.GetKeyDown(KeyCode.S))
-        {
-            if (Input.GetKey(KeyCode.Shift)) SceneManager.SaveAs();
-            else SceneManager.Save();
-        }
+        if (Input.OnCtrl(KeyCode.N)) SceneManager.NewScene();
+        if (Input.OnCtrl(KeyCode.O)) SceneManager.OpenScene();
+
+        if (Input.OnCtrl(KeyCode.S)) SceneManager.Save();
+        if (Input.OnCtrlShift(KeyCode.S)) SceneManager.SaveAs();
     });
 
     const paletteResources = Palette.GetResources();

@@ -157,11 +157,13 @@ function AddTab (label)
     const tab = document.createElement("div");
     tab.setAttribute("draggable", false);
 
-    let onFocus = () => { };
+    const index = tabList.length;
 
     const output = {
+        element: tab,
+        onFocus: () => { },
         Bind: (callback, onCtx, onClr) => {
-            onFocus = () => {
+            output.onFocus = () => {
                 callback();
                 onContext = onCtx ?? (() => { });
                 onClear = onClr ?? (() => { });
@@ -173,13 +175,40 @@ function AddTab (label)
             output.Focus();
         },
         Focus: () => {
-            if (focused === tab) return;
+            const lastFocused = focused;
 
-            Unfocus();
+            if (lastFocused === tab) return;
 
-            focused = tab;
-            focused.setAttribute("focused", 1);
-            onFocus();
+            if (lastFocused == null)
+            {
+                Unfocus();
+
+                focused = index;
+                tab.setAttribute("focused", 1);
+                output.onFocus();
+                
+                return;
+            }
+
+            ActionManager.StartRecording("Dock.TabChange");
+            ActionManager.Record(
+                "Dock.TabChange",
+                () => {
+                    Unfocus();
+
+                    focused = index;
+                    tab.setAttribute("focused", 1);
+                    output.onFocus();
+                },
+                () => {
+                    Unfocus();
+
+                    focused = lastFocused;
+                    tabList[focused].element.setAttribute("focused", 1);
+                    tabList[focused].onFocus();
+                }
+            );
+            ActionManager.StopRecording("Dock.TabChange");
         },
         get isFocused ()
         {
@@ -204,9 +233,11 @@ function FocusByIndex (index)
 
 function Unfocus ()
 {
+    if (focused == null) return;
+
     Clear();
 
-    focused?.setAttribute("focused", 0);
+    tabList[focused].element.setAttribute("focused", 0);
     focused = null;
 }
 
