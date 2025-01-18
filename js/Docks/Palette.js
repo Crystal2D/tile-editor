@@ -6,6 +6,13 @@ let actions = [];
 let paletteListItems = [];
 let listSearched = [];
 let resources = [];
+let transformOnUndo = () => {
+    ActionManager.CancelUndo();
+
+    SceneView.Refract("const mainInput = GameObject.FindComponents(\"MainInput\")[0]; mainInput.Deselect(); mainInput.StopRecording()");
+
+    requestAnimationFrame(() => ActionManager.Undo());
+};
 
 let paletteViewBase = null;
 let paletteViewWrap = null;
@@ -13,6 +20,7 @@ let paletteView = null;
 let currentMap = null;
 let tools = null;
 let currentAction = null;
+let lastAction = null;
 let paletteList = null;
 let currentPalette = null;
 
@@ -134,7 +142,7 @@ async function Init ()
     });
 
     Loop.Append(() => {
-        if (currentAction == null && SceneView.isLoaded) UseAction(0);
+        if (currentAction == null && SceneView.isLoaded) UseActionBase(0);
 
         const hasSelection = Layers.Selection() != null;
 
@@ -304,7 +312,7 @@ function DrawUI ()
     paletteView.RecalcSize();
 }
 
-function UseAction (index)
+function UseActionBase (index)
 {
     if (currentAction === index) return;
 
@@ -315,6 +323,34 @@ function UseAction (index)
     requestAnimationFrame(() => SceneView.Refract(`GameObject.FindComponents("MainInput")[0].UseAction(${index})`));
 
     currentAction = index;
+}
+
+function UseAction (index)
+{
+    if (currentAction === index) return;
+
+    if (currentAction === 4) ActionManager.OnBeforeUndo().Remove(transformOnUndo);
+
+    if (index === 2 || index === 4)
+    {
+        UseActionBase(index);
+
+        if (index === 4) ActionManager.OnBeforeUndo().Add(transformOnUndo);
+
+        return;
+    }
+
+    if (currentAction !== 2 && currentAction !== 4) lastAction = currentAction;
+
+    const lAction = lastAction;
+
+    ActionManager.StartRecording("Palette.ChangeAction");
+    ActionManager.Record(
+        "Palette.ChangeAction",
+        () => UseActionBase(index),
+        () => UseActionBase(lAction)
+    );
+    ActionManager.StopRecording("Palette.ChangeAction");
 }
 
 function OnClear ()
@@ -357,18 +393,18 @@ async function LoadMap (name)
     let done = false;
 
     ActionManager.StartRecording("Palette.MapLoad");
+
+    await LoadMapBase(name);
+
     ActionManager.Record(
         "Palette.MapLoad",
-        () => {
-            LoadMapBase(name);
-
-            if (!done) done = true;
-        },
+        () => { if (done) LoadMapBase(name); },
         () => LoadMapBase(lastPalette)
     );
+    paletteView.Refract("GameObject.FindComponents(\"PaletteInput\")[0].Deselect(true);");
     ActionManager.StopRecording("Palette.MapLoad");
 
-    await new Promise(resolve => Loop.Append(() => { if (done) resolve(); }, null, () => done));
+    done = true;
 }
 
 async function LoadMapBase (name)
@@ -449,7 +485,7 @@ async function LoadMapBase (name)
 
     paletteView.Refract(`SceneBank.FindByID(0).GetComponent("Grid").cellSize = new Vector2(${map.cellSize.x}, ${map.cellSize.y})`);
 
-    if (lastPalette != null) paletteView.Refract(`GameObject.FindComponents(\"PaletteInput\")[0].Deselect(); SceneModifier.UnfocusTilemap(); SceneInjector.Destroy(1)`);
+    if (lastPalette != null) paletteView.Refract("SceneModifier.UnfocusTilemap(); SceneInjector.Destroy(1)");
 
     paletteView.Refract(`(async () => { await SceneInjector.GameObject(${JSON.stringify({
         name: "tiles",

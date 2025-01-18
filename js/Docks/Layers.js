@@ -333,7 +333,7 @@ class Layer
 
                         this.Duplicate();
                     }),
-                    new MenuShortcutItem("Delete", "Del", () => {
+                    new MenuItem("Delete", () => {
                         MenuManager.CloseContextMenus();
                         
                         this.Delete();
@@ -1083,7 +1083,6 @@ function Update ()
             if (Input.OnCtrl(KeyCode.C)) focused.Copy();
             if (Input.OnCtrl(KeyCode.X)) focused.Cut();
             if (Input.OnCtrl(KeyCode.D)) focused.Duplicate();
-            if (Input.GetKeyDown(KeyCode.Delete) && !Input.GetKey(KeyCode.Ctrl) && !Input.GetKey(KeyCode.Shift)) focused.Delete();
         }
     }
     else if (dragging != null)

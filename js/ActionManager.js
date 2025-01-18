@@ -1,4 +1,6 @@
+let cancelUndo = false;
 let records = [];
+let onBeforeUndo = new DelegateEvent();
 
 let previousAction = null;
 let nextAction = null;
@@ -53,7 +55,7 @@ function StopRecording (id, onChange)
     if (onChange != null) record.onChange = () => onChange();
 
     if (previousAction != null) previousAction.next = record;
-
+    
     previousAction = record;
 
     nextAction = null;
@@ -64,12 +66,22 @@ function StopRecording (id, onChange)
 
 function Undo ()
 {
-    if (!IsUndoable()) return;
+    onBeforeUndo.Invoke();
 
+    if (cancelUndo)
+    {
+        cancelUndo = false;
+    
+        return;
+    }
+    
+    if (!IsUndoable()) return;
+    
     previousAction.onUndo.InvokeReversed();
     previousAction.onChange();
     nextAction = previousAction;
     previousAction = previousAction.previous;
+    
 }
 
 function Redo ()
@@ -82,6 +94,16 @@ function Redo ()
     nextAction = nextAction.next;
 }
 
+function CancelUndo ()
+{
+    cancelUndo = true;
+}
+
+function OnBeforeUndo ()
+{
+    return onBeforeUndo;
+}
+
 module.exports = {
     IsUndoable,
     IsRedoable,
@@ -90,5 +112,7 @@ module.exports = {
     Record,
     StopRecording,
     Undo,
-    Redo
+    Redo,
+    CancelUndo,
+    OnBeforeUndo
 };

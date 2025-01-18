@@ -91,7 +91,7 @@ class MainInput extends GameBehavior
         this.#recording = true;
     }
 
-    #StopRecording ()
+    StopRecording ()
     {
         if (!this.#recording) return;
 
@@ -157,7 +157,7 @@ class MainInput extends GameBehavior
     {
         if (this.#action === index) return;
         
-        this.#StopRecording();
+        this.StopRecording();
 
         if (this.#action === 0)
         {
@@ -227,7 +227,7 @@ class MainInput extends GameBehavior
             this.#sceneListener.SortOrdering();
         }
 
-        if (InputManager.GetKeyUp("left")) this.#StopRecording();
+        if (InputManager.GetKeyUp("left")) this.StopRecording();
 
         if (!InputManager.GetKey("left") || (hoveredTile?.palette === this.#tile.palette && hoveredTile?.spriteID === this.#tile.spriteID) || (this.#existingTiles[0]?.palette === this.#tile.palette && this.#existingTiles[0]?.spriteID === this.#tile.spriteID)) return;
 
@@ -259,7 +259,7 @@ class MainInput extends GameBehavior
 
         this.#selectionRect.transform.position = this.#inputHandler.mousePosSnapped;
 
-        if (InputManager.GetKeyUp("left")) this.#StopRecording();
+        if (InputManager.GetKeyUp("left")) this.StopRecording();
 
         if (!InputManager.GetKey("left") || tilemap.GetTile(gridPos) == null) return;
 
@@ -361,9 +361,9 @@ class MainInput extends GameBehavior
 
         if (this.#transforming && InputManager.GetKeyUp("left")) this.#lastTransPos = null;
 
-        if (Input.GetKeyDown(KeyCode.Backspace) && !Input.GetKey(KeyCode.Ctrl) && !Input.GetKey(KeyCode.Shift)) this.DeleteSelection();
-        if (Input.GetKey(KeyCode.Ctrl) && Input.GetKeyDown(KeyCode.F) && !Input.GetKey(KeyCode.Shift)) this.FillSelection();
-        if (Input.GetKey(KeyCode.Ctrl) && Input.GetKey(KeyCode.Shift) && Input.GetKeyDown(KeyCode.A)) this.Deselect();
+        if ((Input.GetKeyDown(KeyCode.Backspace) || Input.GetKeyDown(KeyCode.Delete)) && !Input.GetKey(KeyCode.Ctrl) && !Input.GetKey(KeyCode.Shift)) this.DeleteSelection();
+        if (Input.OnCtrl(KeyCode.F)) this.FillSelection();
+        if (Input.OnCtrlShift(KeyCode.A)) this.Deselect();
     }
 
     SelectAll ()
@@ -457,6 +457,8 @@ class MainInput extends GameBehavior
     {
         if (this.#selectStart == null) return;
 
+        if (this.#selection.length > 0) this.#StartRecording();
+
         for (let i = 0; i < this.#selection.length; i++)
         {
             SceneModifier.focusedTilemap.RemoveTileByPosition(this.#selection[i].position);
@@ -466,8 +468,9 @@ class MainInput extends GameBehavior
 
         if (this.#selection.length > 0)
         {
-            this.Deselect();
+            this.StopRecording();
 
+            this.Deselect();
             this.#sceneListener.SortOrdering();
         }
     }
@@ -503,6 +506,8 @@ class MainInput extends GameBehavior
         const min = SceneModifier.focusedGrid.WorldToCell(rect.min);
         const max = SceneModifier.focusedGrid.WorldToCell(rect.max);
 
+        this.#StartRecording();
+
         for (let y = min.y; y <= max.y; y++)
         {
             for (let x = min.x; x <= max.x; x++)
@@ -530,14 +535,17 @@ class MainInput extends GameBehavior
             }
         }
 
-        this.Deselect();
+        this.StopRecording();
 
+        this.Deselect();
         this.#sceneListener.SortOrdering();
     }
 
     TransformSelection (dir)
     {
         if (this.#selectStart == null || dir.Equals(Vector2.zero)) return;
+
+        this.#StartRecording();
 
         for (let i = 0; i < this.#selection.length; i++)
         {

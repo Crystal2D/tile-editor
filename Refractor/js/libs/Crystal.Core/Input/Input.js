@@ -58,21 +58,21 @@ class Input
             new this.#Key("a", "a", true),
             new this.#Key("d", "d", true),
             new this.#Key("shift", "Shift"),
-            new this.#Key("f4", "F4"),
-            new this.#Key("f1", "F1"),
-            new this.#Key("f2", "F2"),
-            new this.#Key("f3", "F3"),
-            new this.#Key("f5", "F5"),
-            new this.#Key("f6", "F6"),
-            new this.#Key("f7", "F7"),
-            new this.#Key("f8", "F8"),
-            new this.#Key("f9", "F9"),
-            new this.#Key("f10", "F10"),
-            new this.#Key("f11", "F11"),
-            new this.#Key("f12", "F12"),
-            new this.#Key("ctrl", "Control"),
             new this.#Key("backspace", "Backspace"),
-            new this.#Key("f", "f", true)
+            new this.#Key("f", "f", true),
+            new this.#Key("t", "t", true),
+            new this.#Key("ctrl", "Control"),
+            new this.#Key("b", "b", true),
+            new this.#Key("e", "e", true),
+            new this.#Key("r", "r", true),
+            new this.#Key("p", "p", true),
+            new this.#Key("c", "c", true),
+            new this.#Key("v", "v", true),
+            new this.#Key("n", "n", true),
+            new this.#Key("x", "x", true),
+            new this.#Key("del", "Delete"),
+            new this.#Key("o", "o", true),
+            new this.#Key("z", "z", true)
         ];
     }
 
@@ -162,5 +162,54 @@ class Input
         else if (key < 0 || key >= this.#keys.length) return;
         
         return !this.#keys[keyIndex].active && this.#keys[keyIndex].lastState;
+    }
+
+    static OnCtrl (key)
+    {
+        let keyIndex = key;
+
+        if (typeof key === "string")
+        {
+            keyIndex = this.#FindKey(key);
+
+            if (keyIndex == null) return false;
+        }
+        else if (key < 0 || key >= this.#keys.length) return;
+
+        const ctrlIndex = this.#FindKeyByCode("Control");
+
+        for (let i = 0; i < this.#keys.length; i++)
+        {
+            if (i === keyIndex || i === ctrlIndex) continue;
+
+            if (this.#keys[i].active) return false;
+        }
+
+        return this.#keys[keyIndex].active && !this.#keys[keyIndex].lastState && this.#keys[ctrlIndex].active;
+    }
+
+    static OnCtrlShift (key)
+    {
+        let keyIndex = key;
+
+        if (typeof key === "string")
+        {
+            keyIndex = this.#FindKey(key);
+
+            if (keyIndex == null) return false;
+        }
+        else if (key < 0 || key >= this.#keys.length) return;
+
+        const ctrlIndex = this.#FindKeyByCode("Control");
+        const shiftIndex = this.#FindKeyByCode("Shift");
+
+        for (let i = 0; i < this.#keys.length; i++)
+        {
+            if (i === keyIndex || i === ctrlIndex || i === shiftIndex) continue;
+
+            if (this.#keys[i].active) return false;
+        }
+
+        return this.#keys[keyIndex].active && !this.#keys[keyIndex].lastState && this.#keys[ctrlIndex].active && this.#keys[shiftIndex].active;
     }
 }
