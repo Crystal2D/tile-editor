@@ -38,7 +38,17 @@ function DrawUI ()
         inputWrap.style.fontWeight = "bold";
         
         name.element.querySelector(".placehold").style.padding = "5px 7px";
-        name.element.querySelector(".input").style.padding = "5px 7px";
+
+        const input = name.element.querySelector(".input")
+        input.style.padding = "5px 7px";
+        
+        name.onBlur = () => {
+            const text = input.innerText.trim();
+
+            if (text.length > 0) return;
+
+            input.innerText = selection.name;
+        };
     })();
     name.SetText(selection.name);
     name.onUpdate = value => selection.name = value;

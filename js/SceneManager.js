@@ -1,8 +1,9 @@
-let activeSceneSrc = null;
-let activeScene = null;
-
 let loaded = false;
 let unloaded = false;
+let edited = false;
+
+let activeSceneSrc = null;
+let activeScene = null;
 
 function GetActiveSceneSrc ()
 {
@@ -90,6 +91,8 @@ function NewGrid (data)
 
 async function NewLayerBase ()
 {
+    SceneManager.MarkAsEdited();
+
     const grid = {
         position: { x: 0, y: 0 },
         scale: { x: 1, y: 1 },
@@ -165,6 +168,8 @@ function GetGridChildren (id)
 
 function AddTileBase (tilemap, data)
 {
+    SceneManager.MarkAsEdited();
+
     if (tilemap.args == null) tilemap.args = { };
     if (tilemap.args.tiles == null) tilemap.args.tiles = [];
 
@@ -173,6 +178,8 @@ function AddTileBase (tilemap, data)
 
 function RemoveTileBase (tilemap, data)
 {
+    SceneManager.MarkAsEdited();
+
     if (tilemap.args == null) tilemap.args = { };
     if (tilemap.args.tiles == null)
     {
@@ -258,6 +265,8 @@ async function Load (src)
         SceneView.Refract("SceneInjector.DestroyAll(); requestAnimationFrame(() => window.parent.RefractBack(\"SceneManager.MarkAsUnloaded()\"))");
 
         await new Promise(resolve => Loop.Append(() => { if (unloaded) resolve(); }, null, () => unloaded));
+
+        ActionManager.ClearActions();
 
         requestAnimationFrame(() => SceneView.Refract("GameObject.Find(\"camera\").transform.position = Vector2.zero"));
     }
@@ -503,6 +512,44 @@ function MarkAsUnloaded ()
     loaded = false;
 }
 
+function RenameScene (name)
+{
+    const lastName = activeScene.name;
+
+    if (lastName === name || name.length === 0) return;
+
+    const rename = name => {
+        activeScene.name = name;
+
+        Layers.SetSceneName(activeScene.name);
+        document.title = `${ProjectManager.ProjectName()} - ${activeScene.name} - Crystal Tile Editor*`;
+
+        MarkAsEdited();
+    };
+
+    ActionManager.StartRecording("Scene.Rename");
+    ActionManager.Record(
+        "Scene.Rename",
+        () => rename(name),
+        () => rename(lastName)
+    );
+    ActionManager.StopRecording("Scene.Rename");
+}
+
+function IsEdited ()
+{
+    return edited;
+}
+
+function MarkAsEdited ()
+{
+    if (edited) return;
+
+    edited = true;
+
+    document.title = `${ProjectManager.ProjectName()} - ${activeScene.name} - Crystal Tile Editor*`;
+}
+
 
 module.exports = {
     GetActiveSceneSrc,
@@ -522,5 +569,8 @@ module.exports = {
     MarkAsLoaded,
     MarkAsUnloaded,
     OpenScene,
-    NewScene
+    NewScene,
+    RenameScene,
+    IsEdited,
+    MarkAsEdited
 };

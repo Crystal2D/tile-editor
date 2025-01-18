@@ -11,7 +11,7 @@ function IsEnabled ()
     return enabled;
 }
 
-function Set ()
+function Set (projectName)
 {
     wrap = document.createElement("div");
     wrap.id = "loading-screen";
@@ -29,10 +29,14 @@ function Set ()
     version.classList.add("version");
     version.append(`Version ${ProjectManager.editorDisplayVersion}`, document.createElement("br"), "© 2025 Desert Lake & Contributors");
 
+    const project = document.createElement("div");
+    project.classList.add("project");
+    project.append(projectName);
+
     textElement = document.createElement("div");
     textElement.classList.add("text");
 
-    content.append(title, version, textElement);
+    content.append(title, version, project, textElement);
     wrap.append(content);
     document.body.append(wrap);
 }

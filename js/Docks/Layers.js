@@ -37,8 +37,16 @@ class Layer
 
         ActionManager.Record(
             "Layer.Sort",
-            () => this.indexNonManaged = value,
-            () => this.indexNonManaged = lastValue
+            () => {
+                SceneManager.MarkAsEdited();
+                
+                this.indexNonManaged = value;
+            },
+            () => {
+                SceneManager.MarkAsEdited();
+
+                this.indexNonManaged = lastValue;
+            }
         );
     }
 
@@ -76,10 +84,14 @@ class Layer
         ActionManager.Record(
             "Layer.Rename",
             () => {
+                SceneManager.MarkAsEdited();
+
                 this.#data.name = `tile_${value}`;
                 this.#label.textContent = value;
             },
             () => {
+                SceneManager.MarkAsEdited();
+                
                 this.#data.name = `tile_${lastName}`;
                 this.#label.textContent = lastName;
             }
@@ -100,13 +112,15 @@ class Layer
         ActionManager.Record(
             "Layer.SetActive",
             () => {
-                this.#data.active = value;
+                SceneManager.MarkAsEdited();
 
+                this.#data.active = value;
                 SceneView.Refract(`SceneBank.FindByID(${this.#data.id}).SetActive(${value})`);
             },
             () => {
-                this.#data.active = !value;
+                SceneManager.MarkAsEdited();
 
+                this.#data.active = !value;
                 SceneView.Refract(`SceneBank.FindByID(${this.#data.id}).SetActive(${!value})`);
             }
         );
@@ -178,6 +192,8 @@ class Layer
         if ((tilemap.args?.color?.a === 0) === value) return;
 
         const setHidden = value => {
+            SceneManager.MarkAsEdited();
+
             this.#label.style.opacity = value ? 0.5 : 1;
             this.#label.style.fontStyle = value ? "italic" : "";
             this.#visibility.src = `img/eye/${value ? "hidden" : "shown"}.svg`;
@@ -234,6 +250,8 @@ class Layer
         ActionManager.Record(
             "Layer.SortLayer",
             () => {
+                SceneManager.MarkAsEdited();
+
                 if (tilemap.args == null) tile.args = { };
 
                 tilemap.args.sortingLayer = value;
@@ -241,6 +259,8 @@ class Layer
                 SceneView.Refract(`SceneBank.FindByID(${this.#data.id}).GetComponent("Tilemap").sortingLayer = ${value}`);
             },
             () => {
+                SceneManager.MarkAsEdited();
+
                 if (tilemap.args == null) tile.args = { };
 
                 tilemap.args.sortingLayer = lastValue;
@@ -269,6 +289,8 @@ class Layer
         ActionManager.Record(
             "Layer.SortOrder",
             () => {
+                SceneManager.MarkAsEdited();
+                
                 if (tilemap.args == null) tile.args = { };
 
                 tilemap.args.sortingOrder = value;
@@ -276,6 +298,8 @@ class Layer
                 SceneView.Refract(`SceneBank.FindByID(${this.#data.id}).GetComponent("Tilemap").sortingOrder = ${value}`);
             },
             () => {
+                SceneManager.MarkAsEdited();
+
                 if (tilemap.args == null) tile.args = { };
 
                 tilemap.args.sortingOrder = lastValue;
@@ -482,6 +506,8 @@ class Layer
 
     DeleteBase ()
     {
+        SceneManager.MarkAsEdited();
+
         onDragDrop();
 
         const procedingLayers = layers.filter((item, index) => index > this.index);
@@ -540,6 +566,8 @@ class Layer
 
     async UndeleteBase ()
     {
+        SceneManager.MarkAsEdited();
+
         const procedingLayers = layers.filter((item, index) => index >= this.index);
 
         for (let i = 0; i < procedingLayers.length; i++)
@@ -660,6 +688,8 @@ class Layer
         if (x === lastPos.x && y === lastPos.y) return;
 
         const setPosition = (x, y) => {
+            SceneManager.MarkAsEdited();
+
             SceneView.Refract("GameObject.FindComponents(\"MainInput\")[0].Deselect()");
 
             const grid = this.#DupeGrid();
@@ -720,6 +750,8 @@ class Layer
         if (x === lastScale.x && y === lastScale.y) return;
 
         const setScale = (x, y) => {
+            SceneManager.MarkAsEdited();
+
             SceneView.Refract("GameObject.FindComponents(\"MainInput\")[0].Deselect()");
 
             const grid = this.#DupeGrid();
@@ -780,6 +812,8 @@ class Layer
         if (x === lastCellSize.x && y === lastCellSize.y) return;
 
         const setCellSize = (x, y) => {
+            SceneManager.MarkAsEdited();
+
             SceneView.Refract("GameObject.FindComponents(\"MainInput\")[0].Deselect()");
 
             const grid = this.#DupeGrid();
@@ -838,6 +872,8 @@ class Layer
         if (x === lastCellGap.x && y === lastCellGap.y) return;
 
         const setCellGap = (x, y) => {
+            SceneManager.MarkAsEdited();
+
             SceneView.Refract("GameObject.FindComponents(\"MainInput\")[0].Deselect()");
         
             const grid = this.#DupeGrid();
@@ -926,11 +962,17 @@ function Selection ()
 function SetSceneName (name)
 {
     scenename = name;
+
+    const sceneName = dock.querySelector(".layers-scene");
+
+    if (sceneName != null) sceneName.innerText = name;
 }
 
 async function PasteLayerBase ()
 {
     if (copyBuffer == null) return;
+
+    SceneManager.MarkAsEdited();
 
     const tilemapBase = copyBuffer.data.tilemap;
 
@@ -1148,20 +1190,36 @@ function DrawUI ()
 {
     tabFocused = true;
 
-    const sceneName = Dock.Label(scenename);
-    sceneName.style.fontWeight = "bold";
-    sceneName.style.fontSize = "14px";
-    sceneName.style.paddingBottom = "8px";
-    sceneName.style.color = "rgb(210, 210, 210)";
-    sceneName.style.whiteSpace = "nowrap";
-    sceneName.style.overflow = "clip";
-    sceneName.style.textOverflow = "ellipsis";
-    sceneName.style.margin = "6px 12px";
-    sceneName.style.marginBottom = "0";
+    const sceneName = document.createElement("div");
+    sceneName.setAttribute("spellcheck", false);
+    sceneName.classList.add("layers-scene");
+    sceneName.append(scenename);
+    Dock.AddContent(sceneName);
 
     sceneName.addEventListener("mousedown", event => { if (event.button === 0) Unfocus(); });
+    sceneName.addEventListener("mouseout", () => onContext = null);
+    sceneName.addEventListener("keydown", event => {
+        if (event.key !== "Enter") return;
 
-    Dock.ContainerStart().classList.add("layers-wrap");
+        event.preventDefault();
+
+        sceneName.blur();
+    })
+    sceneName.addEventListener("input", () => {
+        sceneName.textContent = sceneName.textContent.replace(/(?:\r\n|\r|\n)/g, "");
+    });
+    sceneName.addEventListener("focus", () => {
+        const range = document.createRange();
+        range.selectNodeContents(sceneName);
+        
+        const selection = window.getSelection();
+        selection.removeAllRanges();
+        selection.addRange(range);
+    });
+
+    const wrap = Dock.ContainerStart();
+    wrap.setAttribute("renaming-scene", 0);
+    wrap.classList.add("layers-wrap");
 
     if (layers.length > 0)
     {
@@ -1177,6 +1235,54 @@ function DrawUI ()
     else Dock.Info("You got no layers o~O", "Press Ctrl+Shift+N or right click to make one");
 
     Dock.ContainerEnd();
+
+    sceneName.addEventListener("mouseover", () => onContext = () => {
+        const paste = new MenuShortcutItem("Paste", "Ctrl+V", () => {
+            MenuManager.CloseContextMenus();
+            
+            PasteLayer();
+        });
+        paste.enabled = copyBuffer != null;
+
+        new ContextMenu(
+            [
+                new MenuItem("Rename Scene", () => {
+                    MenuManager.CloseContextMenus();
+
+                    sceneName.contentEditable = "plaintext-only";
+                    wrap.setAttribute("renaming-scene", 1);
+
+                    requestAnimationFrame(() => sceneName.focus());
+                }),
+                new MenuLine(),
+                paste,
+                new MenuShortcutItem("New Layer", "Ctrl+Shift+N", () => {
+                    MenuManager.CloseContextMenus();
+    
+                    SceneManager.NewLayer();
+                })
+            ],
+            {
+                posX: Input.MouseX(),
+                posY: Input.MouseY(),
+                width: 185
+            }
+        );
+    });
+    sceneName.addEventListener("blur", async () => {
+        let text = sceneName.innerText.trim();
+
+        if (text.length === 0) text = scenename;
+
+        sceneName.innerText = text;
+
+        sceneName.contentEditable = "false";
+        wrap.setAttribute("renaming-scene", 0);
+
+        if (text === scenename) return;
+
+        SceneManager.RenameScene(text);
+    });
 }
 
 function OnContext ()

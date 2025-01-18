@@ -1,9 +1,44 @@
+.layers-scene
+{
+    font-weight: bold;
+    font-size: 14px;
+    padding: 4px 12px;
+    color: rgb(210, 210, 210);
+    white-space: nowrap;
+    overflow: clip;
+    text-overflow: ellipsis;
+    margin-top: 2px;
+    margin-bottom: 4px;
+    user-select: none;
+}
+
+[cursor-locked="0"] .layers-scene:hover
+{
+    background: rgb(42, 42, 42);
+}
+
+.layers-scene[contenteditable="plaintext-only"]
+{
+    outline: none;
+    margin: 4px;
+    margin-top: 2px;
+    padding: 6px 10px;
+    border: 2px solid white;
+    white-space: pre-wrap;
+    background: rgb(32, 32, 32) !important;
+}
+
 .layers-wrap
 {
     position: absolute;
     width: 100%;
     height: calc(100% - 30px);
     overflow-y: auto;
+}
+
+.layers-wrap[renaming-scene="1"]
+{
+    height: calc(100% - 38px);
 }
 
 .layers

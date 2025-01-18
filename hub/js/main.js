@@ -1,4 +1,7 @@
 window.onload = async () => {
+    const URLSearch = new URLSearchParams(window.location.search);
+    const windowID = parseInt(decodeURIComponent(URLSearch.get("window-id")));
+
     MenuManager.Init();
     MenuManager.SetMinY(27);
 
@@ -11,7 +14,8 @@ window.onload = async () => {
     importBtn.addEventListener("click", async () => {
         const dir = await ipcRenderer.invoke("SelectFolder", docsDir, {
             title: "Select Project Directory",
-            buttonLabel: "Import"
+            buttonLabel: "Import",
+            windowID: windowID
         });
 
         if (dir.canceled) return;

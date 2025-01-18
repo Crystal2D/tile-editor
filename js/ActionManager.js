@@ -81,7 +81,6 @@ function Undo ()
     previousAction.onChange();
     nextAction = previousAction;
     previousAction = previousAction.previous;
-    
 }
 
 function Redo ()
@@ -104,6 +103,16 @@ function OnBeforeUndo ()
     return onBeforeUndo;
 }
 
+function ClearActions ()
+{
+    cancelUndo = false;
+    records = [];
+    previousAction = null;
+    nextAction = null;
+
+    onBeforeUndo.RemoveAll();
+}
+
 module.exports = {
     IsUndoable,
     IsRedoable,
@@ -114,5 +123,6 @@ module.exports = {
     Undo,
     Redo,
     CancelUndo,
-    OnBeforeUndo
+    OnBeforeUndo,
+    ClearActions
 };

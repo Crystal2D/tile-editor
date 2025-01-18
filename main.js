@@ -65,7 +65,7 @@ async function CreateWindow (data)
     
     while (windowList.find(item => item.id === winID) != null) winID++;
 
-    let search = `windowID=${winID}`;
+    let search = `window-id=${winID}`;
     if (data.search != null) search += `&${data.search}`;
 
     const winCache = {
@@ -237,12 +237,14 @@ async function OpenProject (dir)
         return;
     }
 
+    const manifestData = JSON.parse(await FS.readFile(`${dir}\\manifest.json`, "utf8"));
+
     const projectWin = await CreateWindow({
-        title: "Crystal Tile Editor",
+        name: `${manifestData.name} - Crystal Tile Editor`,
         width: 1100,
         height: 700,
         src: `index.html`,
-        search: `dir=${dir}`,
+        search: `dir=${dir}&project-name=${manifestData.name}`,
         maximized: true
     });
     projectWin.setMinimumSize(1100, 700);

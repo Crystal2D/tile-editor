@@ -76,20 +76,24 @@ function ListItem (name, dir)
     title.addEventListener("focus", () => {
         const range = document.createRange();
         range.selectNodeContents(title);
+
         const selection = window.getSelection();
         selection.removeAllRanges();
         selection.addRange(range);
     });
     title.addEventListener("blur", async () => {
-        title.innerText = title.innerText.trim();
-        const text = title.innerText;
+        let text = title.innerText.trim();
+
+        if (text.length === 0) text = currentName;
+
+        title.innerText = text;
 
         output.setAttribute("renaming", false);
         title.contentEditable = "false";
 
         stopClicks = false;
 
-        if (text.length === 0 || text === currentName) return;
+        if (text === currentName) return;
 
         currentName = text;
 

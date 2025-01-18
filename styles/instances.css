@@ -135,6 +135,13 @@
     display: none;
 }
 
+#loading-screen .project
+{
+    margin: 30px 50px;
+    margin-bottom: 0;
+    font-weight: 550;
+}
+
 #loading-screen .text
 {
     white-space: nowrap;
@@ -144,6 +151,6 @@
 
 #loading-screen[mini="0"] .text
 {
-    margin: 40px 50px;
+    margin: 5px 50px;
     margin-bottom: 0;
 }

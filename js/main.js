@@ -4,9 +4,9 @@ window.RefractBack = data => eval(data);
 
 window.onload = async () => {
     const URLSearch = new URLSearchParams(window.location.search);
-    window.windowID = parseInt(decodeURIComponent(URLSearch.get("windowID")));
+    window.windowID = parseInt(decodeURIComponent(URLSearch.get("window-id")));
 
-    LoadingScreen.Set();
+    LoadingScreen.Set(decodeURIComponent(URLSearch.get("project-name")));
     LoadingScreen.Enable();
     LoadingScreen.SetText("Fetching Data");
 
