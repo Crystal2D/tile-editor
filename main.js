@@ -5,6 +5,7 @@ const FS = require("fs/promises");
 let closeHub = false;
 let windowList = [];
 let projectWindows = [];
+let unsavedScenePrompts = [];
 
 let hubWindow = null;
 let appTray = null;
@@ -53,6 +54,8 @@ async function CreateWindow (data)
         fullscreenable : data.fullscreenable ?? false,
         titleBarStyle: data.titleBarStyle,
         titleBarOverlay: data.titleBarOverlay,
+        modal: data.modal,
+        parent: data.parent,
         webPreferences : {
             contextIsolation : false,
             nodeIntegration : true
@@ -143,6 +146,8 @@ async function SelectFile (path, data)
 
 async function InitWindow ()
 {
+    // await UnsavedScenePrompt();
+
     await OpenProject("C:\\Users\\marcp\\Documents\\GitHub\\crystal2d.github.io");
 
     return;
@@ -175,6 +180,44 @@ async function InitWindow ()
     appTray.setToolTip("Crystal Tile Editor");
 
     hubWindow.focus();
+}
+
+async function UnsavedScenePrompt (sceneName, windowID)
+{
+    const win = await CreateWindow({
+        name: "Scene has unsaved changes",
+        width: 400,
+        height: 180,
+        src: "unsaved-scene-prompt/index.html",
+        titleBarStyle: "hidden",
+        titleBarOverlay: {
+            height: 25,
+            color: "#202020",
+            symbolColor: "#aaaaaa",
+        },
+        search: `scene=${sceneName}&parent-id=${windowID}`,
+        modal: true,
+        parent: FindWindow(windowID)
+    });
+    win.maximizable = false;
+    win.resizable = false;
+
+    let output = 0;
+
+    const prompt = {
+        id: windowID,
+        doneCall: data => {
+            output = data;
+            unsavedScenePrompts.splice(unsavedScenePrompts.indexOf(prompt), 1);
+
+            win.close();
+        }
+    };
+    unsavedScenePrompts.push(prompt);
+
+    await new Promise(resolve => win.on("close", resolve));
+
+    return output;
 }
 
 async function RefreshTray ()
@@ -269,3 +312,5 @@ ipcMain.handle("SelectFolder", async (event, path, data) => await SelectFolder(p
 ipcMain.handle("SelectFile", async (event, path, data) => await SelectFile(path, data));
 ipcMain.handle("OpenProject", async (event, dir) => OpenProject(dir));
 ipcMain.handle("RefreshTray", () => RefreshTray());
+ipcMain.handle("UnsavedScenePrompt", async (data, sceneName, windowID) => await UnsavedScenePrompt(sceneName, windowID));
+ipcMain.handle("eval", (data, input) => eval(input));

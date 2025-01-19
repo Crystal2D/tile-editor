@@ -415,6 +415,14 @@ async function SaveSceneAs (src)
 
 async function NewScene ()
 {
+    if (edited)
+    {
+        const prompt = await ipcRenderer.invoke("UnsavedScenePrompt", activeScene.name, window.windowID);
+
+        if (prompt === 0) return;
+        else if (prompt === 1) await Save();
+    }
+
     if (!LoadingScreen.IsEnabled()) LoadingScreen.EnableMini();
 
     LoadingScreen.SetText(`Creating New Scene`);
@@ -464,6 +472,15 @@ async function OpenScene ()
     Input.RestateKeys();
 
     if (file.canceled) return;
+
+    if (edited)
+    {
+        const prompt = await ipcRenderer.invoke("UnsavedScenePrompt", activeScene.name, window.windowID);
+
+        if (prompt === 0) return;
+        else if (prompt === 1) await Save();
+    }
+    else if (file.path === activeSceneSrc) return;
 
     await Load(file.path);
 }
