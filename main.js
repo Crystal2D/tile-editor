@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain, dialog, Menu, Tray } = require("electron");
+const { app, BrowserWindow, ipcMain, dialog, Menu, Tray, globalShortcut } = require("electron");
 const FS = require("fs/promises");
 
 
@@ -27,6 +27,10 @@ async function main ()
     app.on("window-all-closed", () => { if (process.platform !== "darwin") app.quit(); });
 
     await app.whenReady();
+
+    globalShortcut.register("CommandOrControl+R", () => { });
+    globalShortcut.register("CommandOrControl+Shift+R", () => { });
+    globalShortcut.register("F5", () => { });
 
     InitWindow();
 
@@ -146,9 +150,9 @@ async function SelectFile (path, data)
 
 async function InitWindow ()
 {
-    // await UnsavedScenePrompt();
+    await OpenMini();
 
-    await OpenProject("C:\\Users\\marcp\\Documents\\GitHub\\crystal2d.github.io");
+    // await OpenProject("C:\\Users\\marcp\\Documents\\GitHub\\crystal2d.github.io");
 
     return;
 
@@ -286,7 +290,7 @@ async function OpenProject (dir)
         name: `${manifestData.name} - Crystal Tile Editor`,
         width: 1100,
         height: 700,
-        src: `index.html`,
+        src: "index.html",
         search: `dir=${dir}&project-name=${manifestData.name}`,
         maximized: true
     });
@@ -302,6 +306,19 @@ async function OpenProject (dir)
     projectWin.on("closed", () => projectWindows.splice(projectWindows.indexOf(winCache), 1));
 
     projectWin.focus();
+}
+
+async function OpenMini ()
+{
+    const win = await CreateWindow({
+        name: `AAAAAAAAAAAAAAAAAAAAAAAA`,
+        width: 900,
+        height: 600,
+        src: "mini/index.html"
+        // search: `dir=${dir}&project-name=${manifestData.name}`
+    });
+    win.setMinimumSize(900, 600);
+    win.webContents.openDevTools({ mode: "detach" });
 }
 
 main();
