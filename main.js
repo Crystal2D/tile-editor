@@ -1,11 +1,13 @@
 const { app, BrowserWindow, ipcMain, dialog, Menu, Tray, globalShortcut } = require("electron");
 const FS = require("fs/promises");
+const DelegateEvent = require("./js/DelegateEvent");
 
 
 let closeHub = false;
 let windowList = [];
 let projectWindows = [];
 let unsavedScenePrompts = [];
+let minis = [];
 
 let hubWindow = null;
 let appTray = null;
@@ -13,6 +15,11 @@ let appTray = null;
 function FindWindow (id)
 {
     return windowList.find(item => item.id === id)?.window;
+}
+
+function FindMini (parentID, miniID)
+{
+    return minis.find(item => item.parentID === parentID && item.id === miniID)?.window;
 }
 
 async function main ()
@@ -28,9 +35,9 @@ async function main ()
 
     await app.whenReady();
 
-    globalShortcut.register("CommandOrControl+R", () => { });
-    globalShortcut.register("CommandOrControl+Shift+R", () => { });
-    globalShortcut.register("F5", () => { });
+    // globalShortcut.register("CommandOrControl+R", () => { });
+    // globalShortcut.register("CommandOrControl+Shift+R", () => { });
+    // globalShortcut.register("F5", () => { });
 
     InitWindow();
 
@@ -77,11 +84,16 @@ async function CreateWindow (data)
 
     const winCache = {
         id: winID,
-        window: win
+        window: win,
+        onClose: new DelegateEvent()
     };
     windowList.push(winCache);
 
-    win.on("closed", () => windowList.splice(windowList.indexOf(winCache), 1));
+    win.on("closed", () => {
+        windowList.splice(windowList.indexOf(winCache), 1);
+    
+        winCache.onClose.Invoke();
+    });
     
     await win.loadFile(data.src, { search: search });
 
@@ -150,9 +162,7 @@ async function SelectFile (path, data)
 
 async function InitWindow ()
 {
-    await OpenMini();
-
-    // await OpenProject("C:\\Users\\marcp\\Documents\\GitHub\\crystal2d.github.io");
+    await OpenProject("C:\\Users\\marcp\\Documents\\GitHub\\crystal2d.github.io");
 
     return;
 
@@ -219,7 +229,7 @@ async function UnsavedScenePrompt (sceneName, windowID)
     };
     unsavedScenePrompts.push(prompt);
 
-    await new Promise(resolve => win.on("close", resolve));
+    await new Promise(resolve => win.on("closed", resolve));
 
     return output;
 }
@@ -308,17 +318,47 @@ async function OpenProject (dir)
     projectWin.focus();
 }
 
-async function OpenMini ()
+async function OpenMini (title, windowID, miniID, js, css, search)
 {
+    const existing = FindMini(windowID, miniID);
+
+    if (existing != null)
+    {
+        existing.show();
+        existing.focus();
+
+        return;
+    }
+
+    let searchData = `parent-id=${windowID}&js-src=${js}&css-src=${css}`;
+    if (search != null) searchData += `&${search}`;
+
     const win = await CreateWindow({
-        name: `AAAAAAAAAAAAAAAAAAAAAAAA`,
+        name: title,
         width: 900,
         height: 600,
-        src: "mini/index.html"
-        // search: `dir=${dir}&project-name=${manifestData.name}`
+        src: "mini/index.html",
+        search: searchData
     });
     win.setMinimumSize(900, 600);
     win.webContents.openDevTools({ mode: "detach" });
+
+    const parentWin = windowList.find(item => item.id === windowID);
+    const closeCall = () => win.close();
+    parentWin.onClose.Add(closeCall);
+
+    const winCache = {
+        parentID: windowID,
+        id: miniID,
+        window: win
+    };
+    minis.push(winCache);
+
+    win.on("closed", () => {
+        parentWin.onClose.Remove(closeCall);
+
+        minis.splice(minis.indexOf(winCache), 1);
+    });
 }
 
 main();
@@ -331,3 +371,4 @@ ipcMain.handle("OpenProject", async (event, dir) => OpenProject(dir));
 ipcMain.handle("RefreshTray", () => RefreshTray());
 ipcMain.handle("UnsavedScenePrompt", async (data, sceneName, windowID) => await UnsavedScenePrompt(sceneName, windowID));
 ipcMain.handle("eval", (data, input) => eval(input));
+ipcMain.handle("OpenMini", async (data, title, windowID, miniID, js, css, search) => await OpenMini (title, windowID, miniID, js, css, search));

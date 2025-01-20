@@ -1,28 +1,8 @@
-let resizing = false;
-let mouse = 0;
-let size = 400;
 let tree = [];
-let tabList = [];
 let onContext = () => { };
 let onClear = () => { };
 
-let sizer = null;
-let tabs = null;
 let content = null;
-let focused = null;
-
-const onResize = new DelegateEvent();
-const onResizeEnd = new DelegateEvent();
-
-function OnResize ()
-{
-    return onResize;
-}
-
-function OnResizeEnd ()
-{
-    return onResizeEnd;
-}
 
 function PlaceholdText (text)
 {
@@ -35,186 +15,9 @@ function PlaceholdText (text)
 
 function Init ()
 {
-    sizer = document.createElement("div");
-    sizer.classList.add("sizer");
-    sizer.addEventListener("mousedown", event => {
-        if (event.button !== 0 || resizing) return;
+    content = document.body;
 
-        resizing = true;
-
-        Input.AvoidDrags(true);
-        Input.SetCursor("w-resize");
-        mouse = Input.MouseX();
-    });
-
-    tabs = document.createElement("div");
-    tabs.classList.add("tabs");
-
-    content = document.createElement("div");
-    content.classList.add("content");
-
-    let mouseOver = false;
-    let contextDown = false;
-    let contextUp = false;
-
-    content.addEventListener("mouseover", () => mouseOver = true);
-    content.addEventListener("mouseout", () => mouseOver = false);
-    content.addEventListener("mouseup", event => {
-        const clicked = contextDown;
-        contextDown = false;
-
-        if (event.button === 2 && clicked) contextUp = true;
-    });
-
-    dock.append(tabs, content, sizer);
-
-    Input.OnMouseDown().Add(event => {
-        if (resizing)
-        {
-            event.preventDefault();
-
-            document.activeElement.blur();
-        }
-
-        requestAnimationFrame(() => { if (event.button === 2 && mouseOver) contextDown = true; })
-    });
-    Input.OnMouseUp().Add(() => {
-        if (resizing)
-        {
-            resizing = false;
-
-            Input.ResetCursor();
-            Input.AvoidDrags(false);
-
-            onResizeEnd.Invoke();
-        }
-
-        if (contextUp)
-        {
-            onContext();
-
-            contextUp = false;
-        }
-    });
-
-    Loop.Append(() => Update());
-}
-
-function Update ()
-{
-    if (!resizing)
-    {
-        const maxSize = window.innerWidth - 300;
-
-        if (size > maxSize)
-        {
-            size = maxSize;
-            main.style.setProperty("--dock-size", `${size}px`);
-            
-            onResize.Invoke();
-            onResizeEnd.Invoke();
-        }
-
-        return;
-    }
-
-    const mouseOld = mouse;
-    mouse = Math.max(Math.min(Input.MouseX(), window.innerWidth - 300), 300);
-    const delta = mouse - mouseOld;
-
-    size -= delta;
-    main.style.setProperty("--dock-size", `${size}px`);
-
-    if (delta !== 0) onResize.Invoke();
-}
-
-function AddTab (label)
-{
-    const tab = document.createElement("div");
-    tab.setAttribute("draggable", false);
-
-    const index = tabList.length;
-
-    const output = {
-        element: tab,
-        onFocus: () => { },
-        Bind: (callback, onCtx, onClr) => {
-            output.onFocus = () => {
-                callback();
-                onContext = onCtx ?? (() => { });
-                onClear = onClr ?? (() => { });
-            };
-
-            if (focused !== tab) return;
-
-            focused = null;
-            output.Focus();
-        },
-        Focus: () => {
-            const lastFocused = focused;
-
-            if (lastFocused === tab) return;
-
-            if (lastFocused == null)
-            {
-                Unfocus();
-
-                focused = index;
-                tab.setAttribute("focused", 1);
-                output.onFocus();
-                
-                return;
-            }
-
-            ActionManager.StartRecording("Dock.TabChange");
-            ActionManager.Record(
-                "Dock.TabChange",
-                () => {
-                    Unfocus();
-
-                    focused = index;
-                    tab.setAttribute("focused", 1);
-                    output.onFocus();
-                },
-                () => {
-                    Unfocus();
-
-                    focused = lastFocused;
-                    tabList[focused].element.setAttribute("focused", 1);
-                    tabList[focused].onFocus();
-                }
-            );
-            ActionManager.StopRecording("Dock.TabChange");
-        },
-        get isFocused ()
-        {
-            return focused === tab;
-        }
-    };
-
-    tab.addEventListener("mousedown", event => { if (event.button === 0) output.Focus(); });
-
-    tab.append(label);
-    tabs.append(tab);
-
-    tabList.push(output);
-
-    return output;
-}
-
-function FocusByIndex (index)
-{
-    tabList[index].Focus();
-}
-
-function Unfocus ()
-{
-    if (focused == null) return;
-
-    Clear();
-
-    tabList[focused].element.setAttribute("focused", 0);
-    focused = null;
+    content.addEventListener("contextmenu", () => onContext());
 }
 
 function Clear ()
@@ -274,11 +77,11 @@ function Checkbox (label)
 
     const checkedImg = document.createElement("img");
     checkedImg.classList.add("checked");
-    checkedImg.src = "img/checkmark/checked.svg";
+    checkedImg.src = "../img/checkmark/checked.svg";
 
     const kindaImg = document.createElement("img");
     kindaImg.classList.add("kinda");
-    kindaImg.src = "img/checkmark/kinda.svg";
+    kindaImg.src = "../img/checkmark/kinda.svg";
 
     box.append(checkedImg, kindaImg);
 
@@ -509,7 +312,7 @@ function SectionStart (label)
 
     const chevron = document.createElement("img");
     chevron.classList.add("chevron");
-    chevron.src = "img/chevron-small/down.svg";
+    chevron.src = "../img/chevron-small/down.svg";
 
     AddContent(chevron);
     AddContent(label);
@@ -531,7 +334,7 @@ function SectionStart (label)
         SetActive: (state) => {
             if (enabled === state) return;
 
-            chevron.src = `img/chevron-small/${state ? "down" : "right"}.svg`;
+            chevron.src = `../img/chevron-small/${state ? "down" : "right"}.svg`;
 
             sectionLabel.setAttribute("enabled", +state);
             sectionContent.setAttribute("enabled", +state);
@@ -563,7 +366,7 @@ function Info (title, description)
 
     const imgs = UIReferenceBank.infoImg;
 
-    img.src = `img/idk/${imgs[Math.floor(Math.random() * imgs.length)]}`;
+    img.src = `../img/idk/${imgs[Math.floor(Math.random() * imgs.length)]}`;
 
     AddContent(img);
 
@@ -575,12 +378,7 @@ function Info (title, description)
 
 
 module.exports = {
-    OnResize,
-    OnResizeEnd,
     Init,
-    AddTab,
-    FocusByIndex,
-    Unfocus,
     Clear,
     AddContent,
     Label,

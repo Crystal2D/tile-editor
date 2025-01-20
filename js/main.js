@@ -140,7 +140,29 @@ window.onload = async () => {
                         SceneManager.SaveAs();
                     }),
                     new MenuLine(),
-                    new MenuItem("Scene Settings")
+                    new MenuItem("Scene Settings", async () => {
+                        MenuManager.UnfocusBar();
+                        MenuManager.CloseContextMenus();
+
+                        if (SceneManager.AreSettingsOpen()) return;
+
+                        const buildRequest = await fetch(`${ProjectManager.ProjectDir()}\\data\\build.json`);
+                        const buildData = await buildRequest.json();
+
+                        await ipcRenderer.invoke(
+                            "OpenMini",
+                            "Scene Settings",
+                            window.windowID,
+                            "scene-settings",
+                            "ProjectSettings/main",
+                            "ProjectSettings/styles",
+                            `partioning-max-depth=${buildData.partioningMaxDepth}`
+                        );
+
+                        SceneManager.SetSettingsOpened(true);
+                        
+                        requestAnimationFrame(() => SceneManager.RedrawSettings());
+                    })
                 ],
                 {
                     posX : 85,
@@ -208,3 +230,6 @@ window.onload = async () => {
 
     window.addEventListener("resize", () => SceneView.RecalcSize());
 };
+
+
+ipcRenderer.on("eval", (event, data) => eval(data));

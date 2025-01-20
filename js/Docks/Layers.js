@@ -1281,7 +1281,21 @@ function DrawUI ()
 
         if (text === scenename) return;
 
-        SceneManager.RenameScene(text);
+        const lastName = scenename;
+        
+        ActionManager.StartRecording("Scene.Rename");
+        ActionManager.Record(
+            "Scene.Rename",
+            () => {
+                SceneManager.RenameScene(text);
+                SceneManager.MarkAsEdited();
+            },
+            () => {
+                SceneManager.RenameScene(lastName);
+                SceneManager.MarkAsEdited();
+            }
+        );
+        ActionManager.StopRecording("Scene.Rename");
     });
 }
 

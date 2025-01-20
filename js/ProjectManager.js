@@ -84,6 +84,11 @@ async function Init (dir)
         if (editorData.scene == null) editorData.scene = "";
         if (editorData.palettes == null) editorData.palettes = [];
 
+        if (editorData.inspector == null) editorData.inspector = { };
+        if (editorData.inspector.transformShown == null) editorData.inspector.transformShown = true;
+        if (editorData.inspector.gridShown == null) editorData.inspector.gridShown = true;
+        if (editorData.inspector.tilemapShown == null) editorData.inspector.tilemapShown = true;
+
         counter++;
     })();
 

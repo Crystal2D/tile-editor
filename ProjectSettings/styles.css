@@ -1,0 +1,18 @@
+#scene-name
+{
+    margin: 10px 20px;
+    margin-bottom: 0;
+}
+
+#scene-dir
+{
+    margin: 10px 20px;
+    margin-top: 0;
+    color: rgb(180, 180, 180);
+}
+
+#partioning-settings
+{
+    margin-top: 10px;
+    margin-left: 30px;
+}

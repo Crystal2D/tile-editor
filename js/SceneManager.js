@@ -1,6 +1,7 @@
 let loaded = false;
 let unloaded = false;
 let edited = false;
+let settingsOpened = false;
 
 let activeSceneSrc = null;
 let activeScene = null;
@@ -487,6 +488,9 @@ async function OpenScene ()
 
 async function Save ()
 {
+    edited = false;
+    document.title = `${ProjectManager.ProjectName()} - ${activeScene.name} - Crystal Tile Editor`;
+
     if (activeSceneSrc != null) await SaveSceneAs(activeSceneSrc);
     else await SaveAs();
 }
@@ -535,22 +539,10 @@ function RenameScene (name)
 
     if (lastName === name || name.length === 0) return;
 
-    const rename = name => {
-        activeScene.name = name;
+    activeScene.name = name;
 
-        Layers.SetSceneName(activeScene.name);
-        document.title = `${ProjectManager.ProjectName()} - ${activeScene.name} - Crystal Tile Editor*`;
-
-        MarkAsEdited();
-    };
-
-    ActionManager.StartRecording("Scene.Rename");
-    ActionManager.Record(
-        "Scene.Rename",
-        () => rename(name),
-        () => rename(lastName)
-    );
-    ActionManager.StopRecording("Scene.Rename");
+    Layers.SetSceneName(activeScene.name);
+    document.title = `${ProjectManager.ProjectName()} - ${activeScene.name} - Crystal Tile Editor`;
 }
 
 function IsEdited ()
@@ -560,11 +552,25 @@ function IsEdited ()
 
 function MarkAsEdited ()
 {
-    if (edited) return;
-
     edited = true;
-
     document.title = `${ProjectManager.ProjectName()} - ${activeScene.name} - Crystal Tile Editor*`;
+}
+
+function AreSettingsOpen ()
+{
+    return settingsOpened;
+}
+
+function SetSettingsOpened (state)
+{
+    if (state !== settingsOpened) settingsOpened = state;
+}
+
+function RedrawSettings ()
+{
+    if (!settingsOpened) return;
+
+    ipcRenderer.invoke("eval", `FindMini(${window.windowID}, "scene-settings").webContents.send("DrawUI", ${JSON.stringify(activeSceneSrc)})`);
 }
 
 
@@ -589,5 +595,8 @@ module.exports = {
     NewScene,
     RenameScene,
     IsEdited,
-    MarkAsEdited
+    MarkAsEdited,
+    AreSettingsOpen,
+    SetSettingsOpened,
+    RedrawSettings
 };

@@ -9,6 +9,7 @@ const DelegateEvent = require("./js/DelegateEvent");
 const ActionManager = require("./js/ActionManager");
 const MenuManager = require("./js/MenuManager");
 const { MenuItem, MenuLine, MenuShortcutItem, ContextMenu } = require("./js/MenuManager");
+const UIReferenceBank = require("./js/UIReferenceBank");
 const Dock = require("./js/Dock");
 const Refractor = require("./js/Refractor");
 

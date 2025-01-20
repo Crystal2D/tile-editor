@@ -25,7 +25,7 @@ function DrawUI ()
     active.element.style.marginTop = "6px";
     active.element.style.marginRight = "5px";
     active.value = +selection.active;
-    active.onUpdate = value => selection.active = value === 0 ? false : true;
+    active.onUpdate = value => selection.active = value === 1;
 
     const name = Dock.TextField();
     (() => {
@@ -66,12 +66,21 @@ function DrawUI ()
     const hidden = Dock.Checkbox("Hidden");
     hidden.element.style.marginTop = "6px";
     hidden.value = +selection.hidden;
-    hidden.onUpdate = value => selection.hidden = value === 0 ? false : true;
+    hidden.onUpdate = value => selection.hidden = value === 1;
 
     Dock.ContainerEnd();
 
 
-    Dock.SectionStart("Transform");
+    const inspectorData = ProjectManager.GetEditorData().inspector;
+
+
+    const transform = Dock.SectionStart("Transform");
+    transform.SetActive(inspectorData.transformShown);
+    transform.onUpdate = value => {
+        inspectorData.transformShown = value;
+
+        ProjectManager.SaveEditorData();
+    };
 
     const position = Dock.Vector2Field("Position");
     position.x = selection.position.x;
@@ -88,7 +97,13 @@ function DrawUI ()
     Dock.SectionEnd();
     
 
-    Dock.SectionStart("Grid");
+    const grid = Dock.SectionStart("Grid");
+    grid.SetActive(inspectorData.gridShown);
+    grid.onUpdate = value => {
+        inspectorData.gridShown = value;
+
+        ProjectManager.SaveEditorData();
+    };
 
     const cellSize = Dock.Vector2Field("Cell Size", 0.5, 0.5);
     cellSize.fieldX.min = 0.0001;
@@ -109,7 +124,13 @@ function DrawUI ()
     Dock.SectionEnd();
 
 
-    Dock.SectionStart("Tilemap");
+    const tilemap = Dock.SectionStart("Tilemap");
+    tilemap.SetActive(inspectorData.tilemapShown);
+    tilemap.onUpdate = value => {
+        inspectorData.tilemapShown = value;
+
+        ProjectManager.SaveEditorData();
+    };
 
     const sortingLayer = Dock.NumberField("Sorting Layer (ID)");
     sortingLayer.SetValue(selection.sortingLayer);
