@@ -160,8 +160,7 @@ window.onload = async () => {
                         );
 
                         SceneManager.SetSettingsOpened(true);
-                        
-                        requestAnimationFrame(() => SceneManager.RedrawSettings());
+                        SceneManager.RedrawSettings();
                     })
                 ],
                 {
@@ -171,8 +170,20 @@ window.onload = async () => {
             )
         }
     );
+    MenuManager.AddToBar(
+        "Sprite Viewer",
+        () => {
+            MenuManager.UnfocusBar();
+            MenuManager.CloseContextMenus();
+
+            console.log("aaaaaaaaaaaaaaaaaaaaaa");
+        },
+        () => MenuManager.CloseContextMenus()
+    );
 
     SceneView = new Refractor.Embed(scene);
+
+    window.addEventListener("resize", () => SceneView.RecalcSize());
 
     Dock.Init();
     Dock.OnResize().Add(() => {
@@ -228,7 +239,24 @@ window.onload = async () => {
 
     await SceneManager.Load(ProjectManager.GetEditorData().scene);
 
-    window.addEventListener("resize", () => SceneView.RecalcSize());
+    let forceClose = false;
+
+    window.addEventListener("beforeunload", async event => {
+        if (forceClose) return;
+
+        if (SceneManager.IsEdited())
+        {
+            event.preventDefault();
+
+            const prompt = await ipcRenderer.invoke("UnsavedScenePrompt", SceneManager.GetActiveScene().name, window.windowID);
+    
+            if (prompt === 0) return;
+            else if (prompt === 1) await SceneManager.Save();
+            
+            forceClose = true;
+            window.close();
+        }
+    });
 };
 
 

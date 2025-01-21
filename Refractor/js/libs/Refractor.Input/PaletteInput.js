@@ -47,8 +47,22 @@ class PaletteInput extends GameBehavior
 
         if (lastTilePos == null) return;
 
-        if (fromPaletteLoad) window.parent.RefractBack(`ActionManager.Record("Palette.MapLoad", () => Palette.PaletteView().Refract("GameObject.FindComponents(\\"PaletteInput\\")[0].DeselectBase()"), () => Palette.PaletteView().Refract("GameObject.FindComponents(\\"PaletteInput\\")[0].SelectTileByPosBase(new Vector2(${lastTilePos.x}, ${lastTilePos.y}))"))`);
-        else window.parent.RefractBack(`ActionManager.StartRecording(\"Palette.TileDeselect\"); ActionManager.Record("Palette.TileDeselect", () => Palette.PaletteView().Refract("GameObject.FindComponents(\\"PaletteInput\\")[0].DeselectBase()"), () => Palette.PaletteView().Refract("GameObject.FindComponents(\\"PaletteInput\\")[0].SelectTileByPosBase(new Vector2(${lastTilePos.x}, ${lastTilePos.y}))")); ActionManager.StopRecording(\"Palette.TileDeselect\")`);
+        if (fromPaletteLoad) window.parent.RefractBack(`
+            ActionManager.Record(
+                "Palette.MapLoad",
+                () => Palette.PaletteView().Refract("GameObject.FindComponents(\\"PaletteInput\\")[0].DeselectBase()"),
+                () => Palette.PaletteView().Refract("GameObject.FindComponents(\\"PaletteInput\\")[0].SelectTileByPosBase(new Vector2(${lastTilePos.x}, ${lastTilePos.y}))")
+            );
+        `);
+        else window.parent.RefractBack(`
+            ActionManager.StartRecording("Palette.TileDeselect");
+            ActionManager.Record(
+                "Palette.TileDeselect",
+                () => Palette.PaletteView().Refract("GameObject.FindComponents(\\"PaletteInput\\")[0].DeselectBase()"), 
+                () => Palette.PaletteView().Refract("GameObject.FindComponents(\\"PaletteInput\\")[0].SelectTileByPosBase(new Vector2(${lastTilePos.x}, ${lastTilePos.y}))")
+            );
+            ActionManager.StopRecording("Palette.TileDeselect");
+        `);
     }
 
     SelectTileByPosBase (pos)
@@ -80,8 +94,20 @@ class PaletteInput extends GameBehavior
 
         window.parent.RefractBack("ActionManager.StartRecording(\"Palette.TileSelect\")");
 
-        if (lastTilePos == null) window.parent.RefractBack(`ActionManager.Record("Palette.TileSelect", () => Palette.PaletteView().Refract("GameObject.FindComponents(\\"PaletteInput\\")[0].SelectTileByPosBase(new Vector2(${pos.x}, ${pos.y}))"), () => Palette.PaletteView().Refract("GameObject.FindComponents(\\"PaletteInput\\")[0].DeselectBase()"))`);
-        else window.parent.RefractBack(`ActionManager.Record("Palette.TileSelect", () => Palette.PaletteView().Refract("GameObject.FindComponents(\\"PaletteInput\\")[0].SelectTileByPosBase(new Vector2(${pos.x}, ${pos.y}))"), () => Palette.PaletteView().Refract("GameObject.FindComponents(\\"PaletteInput\\")[0].SelectTileByPosBase(new Vector2(${lastTilePos.x}, ${lastTilePos.y}))"))`);
+        if (lastTilePos == null) window.parent.RefractBack(`
+            ActionManager.Record(
+                "Palette.TileSelect",
+                () => Palette.PaletteView().Refract("GameObject.FindComponents(\\"PaletteInput\\")[0].SelectTileByPosBase(new Vector2(${pos.x}, ${pos.y}))"),
+                () => Palette.PaletteView().Refract("GameObject.FindComponents(\\"PaletteInput\\")[0].DeselectBase()")
+            );
+        `);
+        else window.parent.RefractBack(`
+            ActionManager.Record(
+                "Palette.TileSelect",
+                () => Palette.PaletteView().Refract("GameObject.FindComponents(\\"PaletteInput\\")[0].SelectTileByPosBase(new Vector2(${pos.x}, ${pos.y}))"),
+                () => Palette.PaletteView().Refract("GameObject.FindComponents(\\"PaletteInput\\")[0].SelectTileByPosBase(new Vector2(${lastTilePos.x}, ${lastTilePos.y}))")
+            );
+        `);
 
         window.parent.RefractBack("ActionManager.StopRecording(\"Palette.TileSelect\")");
     }

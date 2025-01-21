@@ -203,7 +203,15 @@ function AddTile (mapID, data)
         () => {
             AddTileBase(tilemap, data);
 
-            SceneView.Refract(`SceneBank.FindByID(${mapID}).GetComponent("Tilemap").AddTile(new Tile("${data.palette}", ${data.spriteID}, new Vector2(${data.position.x}, ${data.position.y})))`);
+            SceneView.Refract(`
+                SceneBank.FindByID(${mapID}).GetComponent("Tilemap").AddTile(
+                    new Tile(
+                        "${data.palette}",
+                        ${data.spriteID},
+                        new Vector2(${data.position.x}, ${data.position.y})
+                    )
+                );
+            `);
         },
         () => {
             RemoveTileBase(tilemap, data);
@@ -230,7 +238,15 @@ function RemoveTile (mapID, pos)
         () => {
             AddTileBase(tilemap, tile);
 
-            SceneView.Refract(`SceneBank.FindByID(${mapID}).GetComponent("Tilemap").AddTile(new Tile("${tile.palette}", ${tile.spriteID}, new Vector2(${tile.position.x}, ${tile.position.y})))`);
+            SceneView.Refract(`
+                SceneBank.FindByID(${mapID}).GetComponent("Tilemap").AddTile(
+                    new Tile(
+                        "${tile.palette}",
+                        ${tile.spriteID},
+                        new Vector2(${tile.position.x}, ${tile.position.y})
+                    )
+                );
+            `);
         }
     );
 }
@@ -293,7 +309,12 @@ async function Load (src)
         for (let j = localTilemaps.length - 1; j >= 0; j--) new Layer(localTilemaps[j], grids[i]);
     }
 
-    const loadCall = () => SceneView.Refract(`(async () => { await SceneInjector.Grid(...${JSON.stringify(grids)}); await SceneInjector.GameObject(...${JSON.stringify(tilemaps)}); requestAnimationFrame(() => window.parent.RefractBack("SceneManager.MarkAsLoaded()")) })()`);
+    const loadCall = () => SceneView.Refract(`(async () => {
+        await SceneInjector.Grid(...${JSON.stringify(grids)});
+        await SceneInjector.GameObject(...${JSON.stringify(tilemaps)});
+        
+        requestAnimationFrame(() => window.parent.RefractBack("SceneManager.MarkAsLoaded()"));
+    })()`);
 
     if (SceneView.isLoaded) loadCall();
     else SceneView.onLoad.Add(() => loadCall());
@@ -302,7 +323,11 @@ async function Load (src)
 
     const sceneCam = activeScene.gameObjects.find(item => item.components.find(component => component.type === "Camera") != null).components.find(component => component.type === "Camera");
 
-    SceneView.Refract(`GameObject.FindComponents("Camera")[0].orthographicSize = ${(sceneCam.args?.orthographicSize ?? 9) + 1}; requestAnimationFrame(() => GameObject.FindComponents("InputHandler")[0].RecalcViewMatrix())`);
+    SceneView.Refract(`
+        GameObject.FindComponents("Camera")[0].orthographicSize = ${(sceneCam.args?.orthographicSize ?? 9) + 1};
+        
+        requestAnimationFrame(() => GameObject.FindComponents("InputHandler")[0].RecalcViewMatrix());
+    `);
 
     Dock.FocusByIndex(0);
 
@@ -542,7 +567,7 @@ function RenameScene (name)
     activeScene.name = name;
 
     Layers.SetSceneName(activeScene.name);
-    document.title = `${ProjectManager.ProjectName()} - ${activeScene.name} - Crystal Tile Editor`;
+    document.title = `${ProjectManager.ProjectName()} - ${activeScene.name} - Crystal Tile Editor${edited ? "*" : ""}`;
 }
 
 function IsEdited ()
@@ -552,7 +577,10 @@ function IsEdited ()
 
 function MarkAsEdited ()
 {
+    if (edited) return;
+    
     edited = true;
+
     document.title = `${ProjectManager.ProjectName()} - ${activeScene.name} - Crystal Tile Editor*`;
 }
 

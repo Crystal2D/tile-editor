@@ -212,7 +212,10 @@ class Layer
                 tilemap.args.color.trueA = tilemap.args.color.a;
                 tilemap.args.color.a = 0;
 
-                SceneView.Refract(`const tilemap = SceneBank.FindByID(${this.#data.id}).GetComponent("Tilemap"); tilemap.color = new Color(tilemap.color.r, tilemap.color.g, tilemap.color.b, 0)`);
+                SceneView.Refract(`
+                    const tilemap = SceneBank.FindByID(${this.#data.id}).GetComponent("Tilemap");
+                    tilemap.color = new Color(tilemap.color.r, tilemap.color.g, tilemap.color.b, 0);
+                `);
 
                 return;
             }
@@ -220,7 +223,10 @@ class Layer
             tilemap.args.color.a = tilemap.args.color.trueA;
             tilemap.args.color.trueA = undefined;
 
-            SceneView.Refract(`const tilemap = SceneBank.FindByID(${this.#data.id}).GetComponent("Tilemap"); tilemap.color = new Color(tilemap.color.r, tilemap.color.g, tilemap.color.b, ${tilemap.args.color.a / 255})`);
+            SceneView.Refract(`
+                const tilemap = SceneBank.FindByID(${this.#data.id}).GetComponent("Tilemap");
+                tilemap.color = new Color(tilemap.color.r, tilemap.color.g, tilemap.color.b, ${tilemap.args.color.a / 255});
+            `);
         };
 
         ActionManager.StartRecording("Layer.Hide");
@@ -596,7 +602,10 @@ class Layer
 
         Redraw();
 
-        SceneView.Refract(`(async () => { await SceneInjector.Grid(${JSON.stringify(this.#gridData)}); SceneInjector.GameObject(${JSON.stringify(this.#data)})})();`);
+        SceneView.Refract(`(async () => {
+            await SceneInjector.Grid(${JSON.stringify(this.#gridData)});
+            SceneInjector.GameObject(${JSON.stringify(this.#data)});
+        })();`);
         
         await new Promise(resolve => requestAnimationFrame(resolve));
 
@@ -731,7 +740,10 @@ class Layer
             this.#gridComponent = this.#gridData.components.find(item => item.type === "Grid").args ?? { };
             this.#data.parent = this.#gridData.id;
 
-            requestAnimationFrame(() => SceneView.Refract(`SceneModifier.ChangeParent(${this.#data.id}, ${this.#gridData.id}); SceneModifier.FocusGrid(${this.#gridData.id})`));
+            requestAnimationFrame(() => SceneView.Refract(`
+                SceneModifier.ChangeParent(${this.#data.id}, ${this.#gridData.id});
+                SceneModifier.FocusGrid(${this.#gridData.id});
+            `));
         };
 
         ActionManager.StartRecording("Layer.SetPosition");
@@ -793,7 +805,10 @@ class Layer
             this.#gridComponent = this.#gridData.components.find(item => item.type === "Grid").args ?? { };
             this.#data.parent = this.#gridData.id;
 
-            requestAnimationFrame(() => SceneView.Refract(`SceneModifier.ChangeParent(${this.#data.id}, ${this.#gridData.id}); SceneModifier.FocusGrid(${this.#gridData.id})`));
+            requestAnimationFrame(() => SceneView.Refract(`
+                SceneModifier.ChangeParent(${this.#data.id}, ${this.#gridData.id});
+                SceneModifier.FocusGrid(${this.#gridData.id});
+            `));
         };
 
         ActionManager.StartRecording("Layer.SetScale");
@@ -853,7 +868,10 @@ class Layer
             this.#gridComponent = this.#gridData.components.find(item => item.type === "Grid").args ?? { };
             this.#data.parent = this.#gridData.id;
 
-            requestAnimationFrame(() => SceneView.Refract(`SceneModifier.ChangeParent(${this.#data.id}, ${this.#gridData.id}); SceneModifier.FocusGrid(${this.#gridData.id})`));
+            requestAnimationFrame(() => SceneView.Refract(`
+                SceneModifier.ChangeParent(${this.#data.id}, ${this.#gridData.id});
+                SceneModifier.FocusGrid(${this.#gridData.id});
+            `));
         };
 
         ActionManager.StartRecording("Layer.SetCellSize");
@@ -913,7 +931,10 @@ class Layer
             this.#gridComponent = this.#gridData.components.find(item => item.type === "Grid").args ?? { };
             this.#data.parent = this.#gridData.id;
 
-            requestAnimationFrame(() => SceneView.Refract(`SceneModifier.ChangeParent(${this.#data.id}, ${this.#gridData.id}); SceneModifier.FocusGrid(${this.#gridData.id})`));
+            requestAnimationFrame(() => SceneView.Refract(`
+                SceneModifier.ChangeParent(${this.#data.id}, ${this.#gridData.id});
+                SceneModifier.FocusGrid(${this.#gridData.id});
+            `));
         };
 
         ActionManager.StartRecording("Layer.SetCellGap");

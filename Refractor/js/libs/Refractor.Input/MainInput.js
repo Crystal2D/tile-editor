@@ -241,11 +241,31 @@ class MainInput extends GameBehavior
 
         this.#sceneListener.SortOrdering();
 
-        if (this.#existingTiles.length > 0) window.parent.RefractBack(`SceneManager.RemoveTile(${SceneModifier.focusedTilemapID}, { x: ${gridPos.x}, y: ${gridPos.y} })`);
+        if (this.#existingTiles.length > 0) window.parent.RefractBack(`
+            SceneManager.RemoveTile(
+                ${SceneModifier.focusedTilemapID},
+                {
+                    x: ${gridPos.x},
+                    y: ${gridPos.y}
+                }
+            );
+        `);
         
         this.#existingTiles = [];
 
-        window.parent.RefractBack(`SceneManager.AddTile(${SceneModifier.focusedTilemapID}, { palette: \"${this.#tile.palette}\", spriteID: ${this.#tile.spriteID}, position: { x: ${gridPos.x}, y: ${gridPos.y} } })`);
+        window.parent.RefractBack(`
+            SceneManager.AddTile(
+                ${SceneModifier.focusedTilemapID},
+                {
+                    palette: \"${this.#tile.palette}\",
+                    spriteID: ${this.#tile.spriteID},
+                    position: {
+                        x: ${gridPos.x},
+                        y: ${gridPos.y}
+                    }
+                }
+            );
+        `);
     }
 
     EraserAction (tilemap, grid, gridPos)
@@ -269,7 +289,15 @@ class MainInput extends GameBehavior
 
         this.#sceneListener.SortOrdering();
 
-        window.parent.RefractBack(`SceneManager.RemoveTile(${SceneModifier.focusedTilemapID}, { x: ${gridPos.x}, y: ${gridPos.y} })`);
+        window.parent.RefractBack(`
+            SceneManager.RemoveTile(
+                ${SceneModifier.focusedTilemapID},
+                {
+                    x: ${gridPos.x},
+                    y: ${gridPos.y}
+                }
+            );
+        `);
     }
 
     EyedropperAction (tilemap, grid, gridPos)
@@ -287,7 +315,15 @@ class MainInput extends GameBehavior
 
         const tile = tilemap.GetTile(gridPos)
 
-        if (tile != null) window.parent.RefractBack(`(async () => { await Palette.LoadMap("${tile.palette}"); const tilePos = Palette.GetTilePos(${tile.spriteID}); if (tilePos == null) return; Palette.PaletteView().Refract(\`requestAnimationFrame(() => GameObject.FindComponents("PaletteInput")[0].SelectTileByPos(new Vector2(\${tilePos.x}, \${tilePos.y})))\`) })()`);
+        if (tile != null) window.parent.RefractBack(`(async () => {
+            await Palette.LoadMap("${tile.palette}");
+            
+            const tilePos = Palette.GetTilePos(${tile.spriteID});
+            
+            if (tilePos == null) return;
+            
+            Palette.PaletteView().Refract(\`requestAnimationFrame(() => GameObject.FindComponents("PaletteInput")[0].SelectTileByPos(new Vector2(\${tilePos.x}, \${tilePos.y})))\`);
+        })()`);
         else window.parent.RefractBack("Palette.PaletteView().Refract(\"GameObject.FindComponents(\\\"PaletteInput\\\")[0].Deselect()\")");
 
         window.parent.RefractBack("Palette.UseAction(0)");
@@ -463,7 +499,15 @@ class MainInput extends GameBehavior
         {
             SceneModifier.focusedTilemap.RemoveTileByPosition(this.#selection[i].position);
 
-            window.parent.RefractBack(`SceneManager.RemoveTile(${SceneModifier.focusedTilemapID}, { x: ${this.#selection[i].position.x}, y: ${this.#selection[i].position.y} })`);
+            window.parent.RefractBack(`
+                SceneManager.RemoveTile(
+                    ${SceneModifier.focusedTilemapID},
+                    {
+                        x: ${this.#selection[i].position.x},
+                        y: ${this.#selection[i].position.y}
+                    }
+                );
+            `);
         }
 
         if (this.#selection.length > 0)
@@ -522,7 +566,15 @@ class MainInput extends GameBehavior
                 {
                     SceneModifier.focusedTilemap.RemoveTileByPosition(pos);
 
-                    window.parent.RefractBack(`SceneManager.RemoveTile(${SceneModifier.focusedTilemapID}, { x: ${x}, y: ${y} })`);
+                    window.parent.RefractBack(`
+                        SceneManager.RemoveTile(
+                            ${SceneModifier.focusedTilemapID},
+                            {
+                                x: ${x},
+                                y: ${y}
+                            }
+                        );
+                    `);
                 }
 
                 SceneModifier.focusedTilemap.AddTile(new Tile(
@@ -531,7 +583,19 @@ class MainInput extends GameBehavior
                     pos
                 ));
 
-                window.parent.RefractBack(`SceneManager.AddTile(${SceneModifier.focusedTilemapID}, { palette: \"${this.#tile.palette}\", spriteID: ${this.#tile.spriteID}, position: { x: ${x}, y: ${y} } })`);
+                window.parent.RefractBack(`
+                    SceneManager.AddTile(
+                        ${SceneModifier.focusedTilemapID},
+                        {
+                            palette: \"${this.#tile.palette}\",
+                            spriteID: ${this.#tile.spriteID},
+                            position: {
+                                x: ${x},
+                                y: ${y}
+                            }
+                        }
+                    );
+                `);
             }
         }
 
@@ -553,7 +617,15 @@ class MainInput extends GameBehavior
 
             this.#sceneListener.SortOrdering();
 
-            window.parent.RefractBack(`SceneManager.RemoveTile(${SceneModifier.focusedTilemapID}, { x: ${this.#selection[i].position.x}, y: ${this.#selection[i].position.y} })`);
+            window.parent.RefractBack(`
+                SceneManager.RemoveTile(
+                    ${SceneModifier.focusedTilemapID},
+                    {
+                        x: ${this.#selection[i].position.x},
+                        y: ${this.#selection[i].position.y}
+                    }
+                );
+            `);
         }
 
         for (let i = 0; i < this.#selection.length; i++)
@@ -570,7 +642,15 @@ class MainInput extends GameBehavior
 
                 this.#sceneListener.SortOrdering();
 
-                window.parent.RefractBack(`SceneManager.RemoveTile(${SceneModifier.focusedTilemapID}, { x: ${existingTile.position.x}, y: ${existingTile.position.y} })`);
+                window.parent.RefractBack(`
+                    SceneManager.RemoveTile(
+                        ${SceneModifier.focusedTilemapID},
+                        {
+                            x: ${existingTile.position.x},
+                            y: ${existingTile.position.y}
+                        }
+                    );
+                `);
             }
             
             this.#selection[i].position = newPos;
@@ -579,7 +659,19 @@ class MainInput extends GameBehavior
 
             this.#sceneListener.SortOrdering();
 
-            window.parent.RefractBack(`SceneManager.AddTile(${SceneModifier.focusedTilemapID}, { palette: \"${this.#selection[i].palette}\", spriteID: ${this.#selection[i].spriteID}, position: { x: ${this.#selection[i].position.x}, y: ${this.#selection[i].position.y} } })`);
+            window.parent.RefractBack(`
+                SceneManager.AddTile(
+                    ${SceneModifier.focusedTilemapID},
+                    {
+                        palette: \"${this.#selection[i].palette}\",
+                        spriteID: ${this.#selection[i].spriteID},
+                        position: {
+                            x: ${this.#selection[i].position.x},
+                            y: ${this.#selection[i].position.y}
+                        }
+                    }
+                );
+            `);
         }
 
         for (let i = 0; i < this.#existingTiles.length; i++)
@@ -590,7 +682,19 @@ class MainInput extends GameBehavior
 
             this.#sceneListener.SortOrdering();
 
-            window.parent.RefractBack(`SceneManager.AddTile(${SceneModifier.focusedTilemapID}, { palette: \"${this.#existingTiles[i].palette}\", spriteID: ${this.#existingTiles[i].spriteID}, position: { x: ${this.#existingTiles[i].position.x}, y: ${this.#existingTiles[i].position.y} } })`);
+            window.parent.RefractBack(`
+                SceneManager.AddTile(
+                    ${SceneModifier.focusedTilemapID},
+                    {
+                        palette: \"${this.#existingTiles[i].palette}\",
+                        spriteID: ${this.#existingTiles[i].spriteID},
+                        position: {
+                            x: ${this.#existingTiles[i].position.x},
+                            y: ${this.#existingTiles[i].position.y}
+                        }
+                    }
+                );
+            `);
         }
 
         this.#selectStart = Vector2.Add(this.#selectStart, dir);

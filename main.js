@@ -35,9 +35,9 @@ async function main ()
 
     await app.whenReady();
 
-    // globalShortcut.register("CommandOrControl+R", () => { });
-    // globalShortcut.register("CommandOrControl+Shift+R", () => { });
-    // globalShortcut.register("F5", () => { });
+    globalShortcut.register("CommandOrControl+R", () => { });
+    globalShortcut.register("CommandOrControl+Shift+R", () => { });
+    globalShortcut.register("F5", () => { });
 
     InitWindow();
 
@@ -222,7 +222,6 @@ async function UnsavedScenePrompt (sceneName, windowID)
         id: windowID,
         doneCall: data => {
             output = data;
-            unsavedScenePrompts.splice(unsavedScenePrompts.indexOf(prompt), 1);
 
             win.close();
         }
@@ -230,6 +229,8 @@ async function UnsavedScenePrompt (sceneName, windowID)
     unsavedScenePrompts.push(prompt);
 
     await new Promise(resolve => win.on("closed", resolve));
+
+    unsavedScenePrompts.splice(unsavedScenePrompts.indexOf(prompt), 1);
 
     return output;
 }
@@ -330,7 +331,7 @@ async function OpenMini (title, windowID, miniID, js, css, search)
         return;
     }
 
-    let searchData = `parent-id=${windowID}&js-src=${js}&css-src=${css}`;
+    let searchData = `parent-id=${windowID}&mini-id=${miniID}&js-src=${js}&css-src=${css}`;
     if (search != null) searchData += `&${search}`;
 
     const win = await CreateWindow({
@@ -350,7 +351,8 @@ async function OpenMini (title, windowID, miniID, js, css, search)
     const winCache = {
         parentID: windowID,
         id: miniID,
-        window: win
+        window: win,
+        loadCall: () => { }
     };
     minis.push(winCache);
 
@@ -359,6 +361,8 @@ async function OpenMini (title, windowID, miniID, js, css, search)
 
         minis.splice(minis.indexOf(winCache), 1);
     });
+
+    await new Promise(resolve => winCache.loadCall = resolve);
 }
 
 main();

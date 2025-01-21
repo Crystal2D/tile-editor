@@ -1,6 +1,10 @@
 function EvalToMain (data)
 {
-    ipcRenderer.invoke("eval", `FindWindow(${window.parentID}).webContents.send("eval", "${data}")`);
+    ipcRenderer.invoke("eval", `
+        const win = FindWindow(${window.parentID});
+        
+        if (win != null) win.webContents.send("eval", \`${data}\`);
+    `);
 }
 
 window.addEventListener("beforeunload", () => EvalToMain("SceneManager.SetSettingsOpened(false)"));
@@ -22,7 +26,7 @@ function Vector2 (value, xDefault, yDefault)
     return output;
 }
 
-async function Save ()
+async function Save (callback)
 {
     await new Promise(resolve => requestAnimationFrame(resolve));
 
@@ -38,7 +42,9 @@ async function Save ()
         if (scene.partioning.disabled == null && scene.partioning.size == null && scene.partioning.offset == null && scene.partioning.maxDepth == null) scene.partioning = undefined;
     }
 
-    await FS.writeFile(dir, JSON.stringify(scene, null, 4));
+    if (dir != null) await FS.writeFile(dir, JSON.stringify(scene, null, 4));
+
+    if (callback != null) callback();
 
     if (scene.partioning == null) scene.partioning = { };
     if (scene.partioning.disabled == null) scene.partioning.disabled = false;
@@ -53,12 +59,42 @@ async function Save ()
 
 function DrawUI ()
 {
-    UI.Clear();
-
     const sceneName = UI.TextField("Scene Name");
     sceneName.element.id = "scene-name";
+    (() => {
+        const input = sceneName.element.querySelector(".input");
+        
+        sceneName.onBlur = () => {
+            const text = input.innerText.trim();
+
+            if (text.length > 0) return;
+
+            input.innerText = scene.name;
+        };
+    })();
     sceneName.SetText(scene.name);
     sceneName.onUpdate = value => {
+        EvalToMain(`
+            let done = false;
+
+            ActionManager.StartRecording("Scene.Rename");
+            ActionManager.Record(
+                "Scene.Rename",
+                () => {
+                    SceneManager.RenameScene(${JSON.stringify(value)});
+
+                    if (done) SceneManager.MarkAsEdited();
+                },
+                () => {
+                    SceneManager.RenameScene(${JSON.stringify(scene.name)});
+                    SceneManager.MarkAsEdited();
+                }
+            );
+            ActionManager.StopRecording("Scene.Rename");
+
+            done = true;
+        `);
+
         scene.name = value;
 
         Save();
@@ -88,20 +124,45 @@ function DrawUI ()
             const size = UI.Vector2Field("Size", 1024, 1024);
             size.x = scene.partioning.size.x;
             size.y = scene.partioning.size.y;
+            size.fieldX.onUpdate = value => {
+                scene.partioning.size.x = value;
+
+                Save(() => EvalToMain(`SceneManager.GetActiveScene().partioning = ${JSON.stringify(scene.partioning)}`));
+            };
+            size.fieldY.onUpdate = value => {
+                scene.partioning.size.y = value;
+
+                Save(() => EvalToMain(`SceneManager.GetActiveScene().partioning = ${JSON.stringify(scene.partioning)}`));
+            };
 
             const offset = UI.Vector2Field("Offset");
             offset.x = scene.partioning.offset.x;
             offset.y = scene.partioning.offset.y;
+            offset.fieldX.onUpdate = value => {
+                scene.partioning.offset.x = value;
+
+                Save(() => EvalToMain(`SceneManager.GetActiveScene().partioning = ${JSON.stringify(scene.partioning)}`));
+            };
+            offset.fieldY.onUpdate = value => {
+                scene.partioning.offset.y = value;
+
+                Save(() => EvalToMain(`SceneManager.GetActiveScene().partioning = ${JSON.stringify(scene.partioning)}`));
+            };
 
             const maxDepth = UI.NumberField("Max Depth", partioningMaxDepth);
             maxDepth.SetValue(scene.partioning.maxDepth);
+            maxDepth.onUpdate = value => {
+                scene.partioning.maxDepth = value;
+
+                Save(() => EvalToMain(`SceneManager.GetActiveScene().partioning = ${JSON.stringify(scene.partioning)}`));
+            };
         UI.ContainerEnd();
 
         enabled.onUpdate = value => {
             settings.style.display = value === 0 ? "none" : "";
             scene.partioning.disabled = value === 0;
 
-            Save();
+            Save(() => EvalToMain(`SceneManager.GetActiveScene().partioning = ${JSON.stringify(scene.partioning)}`));
         };
     })(); UI.SectionEnd();
 
@@ -119,10 +180,15 @@ function DrawUI ()
 }
 
 ipcRenderer.on("DrawUI", async (event, src) => {
+    UI.Clear();
+
     dir = src;
 
-    const sceneRequest = await fetch(src);
-    scene = await sceneRequest.json();
+    if (src != null)
+    {
+        const sceneRequest = await fetch(src);
+        scene = await sceneRequest.json();
+    }
 
     DrawUI();
 });

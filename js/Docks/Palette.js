@@ -487,19 +487,33 @@ async function LoadMapBase (name)
 
     if (lastPalette != null) paletteView.Refract("SceneModifier.UnfocusTilemap(); SceneInjector.Destroy(1)");
 
-    paletteView.Refract(`(async () => { await SceneInjector.GameObject(${JSON.stringify({
-        name: "tiles",
-        id: 1,
-        parent: 0,
-        components: [
-            {
-                type: "Tilemap",
-                args: {
-                    tiles: map.tiles
+    paletteView.Refract(`(async () => {
+        await SceneInjector.GameObject(${JSON.stringify({
+            name: "tiles",
+            id: 1,
+            parent: 0,
+            components: [
+                {
+                    type: "Tilemap",
+                    args: {
+                        tiles: map.tiles
+                    }
                 }
-            }
-        ]
-    })}); SceneModifier.FocusTilemap(1); requestAnimationFrame(() => { const cam = GameObject.FindComponents("Camera")[0]; const bounds = GameObject.FindComponents("Tilemap")[0].bounds; cam.transform.position = new Vector2(bounds.center.x, bounds.center.y); cam.orthographicSize = Math.min(bounds.size.x, bounds.size.y) + 1; GameObject.FindComponents("InputHandler")[0].RecalcViewMatrix() }) })()`);
+            ]
+        })});
+        
+        SceneModifier.FocusTilemap(1);
+        
+        requestAnimationFrame(() => {
+            const cam = GameObject.FindComponents("Camera")[0];
+            const bounds = GameObject.FindComponents("Tilemap")[0].bounds;
+            
+            cam.transform.position = new Vector2(bounds.center.x, bounds.center.y);
+            cam.orthographicSize = Math.min(bounds.size.x, bounds.size.y) + 1;
+            
+            GameObject.FindComponents("InputHandler")[0].RecalcViewMatrix();
+        });
+    })()`);
 }
 
 async function GenerateMap (name)

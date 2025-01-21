@@ -192,9 +192,9 @@ async function Refresh ()
     }
     catch { await FS.writeFile(`${userDataPath}\\projects.json`, "[]"); }
 
-    ipcRenderer.invoke("RefreshTray");
-
     while (list.firstChild != null) list.firstChild.remove();
+
+    let removingProjects = [];
 
     for (let i = 0; i < projects.length; i++)
     {
@@ -205,8 +205,14 @@ async function Refresh ()
 
             ListItem(manifestData.name, projects[i]);
         }
-        catch { }
+        catch { removingProjects.push(projects[i]); }
     }
+
+    for (let i = 0; i < removingProjects.length; i++) projects.splice(projects.indexOf(removingProjects[i]), 1);
+
+    if (removingProjects.length > 0) await FS.writeFile(`${userDataPath}\\projects.json`, JSON.stringify(projects));
+
+    ipcRenderer.invoke("RefreshTray");
 }
 
 async function Init ()
