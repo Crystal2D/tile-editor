@@ -106,10 +106,23 @@ class MainInput extends GameBehavior
         this.#selectionRect = GameObject.Find("selection_rect");
         this.#selectionRenderer = this.#selectionRect.GetComponent("RectRenderer");
         this.#sceneListener = this.GetComponent("SceneListener");
+
+        const camera = GameObject.Find("camera").GetComponent("Camera");
+
+        this.#inputHandler.onRecalcMatrix.Add(() => {
+            const min = camera.bounds.min;
+            const max = camera.bounds.max;
+
+            window.parent.RefractBack(`Footer.FindItem("camera").text = "Min: (${min.x.toFixed(2)}, ${min.y.toFixed(2)}) Max: (${max.x.toFixed(2)}, ${max.y.toFixed(2)})"`);
+        });
+        InputManager.onMouseEnter.Add(() => window.parent.RefractBack("Footer.FindItem(\"cursor\").visible = true"));
+        InputManager.onMouseExit.Add(() => window.parent.RefractBack("Footer.FindItem(\"cursor\").visible = false"));
     }
 
     Update ()
     {
+        if (InputManager.isMouseOver) window.parent.RefractBack(`Footer.FindItem("cursor").text = "(${this.#inputHandler.mousePos.x.toFixed(2)}, ${this.#inputHandler.mousePos.y.toFixed(2)})"`);
+
         const grid = SceneModifier.focusedGrid;
         const tilemap = SceneModifier.focusedTilemap;
 
@@ -139,6 +152,16 @@ class MainInput extends GameBehavior
                 this.SelectAction(grid);
                 return;
         }
+    }
+
+    LateUpdate ()
+    {
+        window.parent.RefractBack(`
+            viewerFPS.main = ${(Application.targetFrameRate > 0 && Application.vSyncCount === 0) ? Math.min(
+                1 / (Time.deltaTime || Time.maximumDeltaTime),
+                Application.targetFrameRate
+            ) : 1 / (Time.deltaTime || Time.maximumDeltaTime)};
+        `);
     }
 
     ClearActions ()
@@ -171,7 +194,7 @@ class MainInput extends GameBehavior
             }
         }
 
-        if (this.#action === 4) this.Deselect();
+        if (this.#action === 4) this.Deselect(index !== 3);
 
         if (index === 4 && SceneModifier.focusedTilemap != null) { }
         else if (this.#action === 3) this.Deselect();
@@ -331,7 +354,12 @@ class MainInput extends GameBehavior
 
     SelectAction (grid)
     {
-        if (InputManager.GetKeyDown("left") && !this.#transforming) this.#selectStart = this.#inputHandler.mousePosSnapped;
+        if (InputManager.GetKeyDown("left") && !this.#transforming)
+        {
+            this.#selectStart = this.#inputHandler.mousePosSnapped;
+
+            window.parent.RefractBack("Footer.FindItem(\"rect\").visible = true");
+        }
 
         if (this.#selectStart == null)
         {
@@ -379,6 +407,16 @@ class MainInput extends GameBehavior
 
             this.#selectionRect.transform.position = rect.center;
             this.#selectionRect.transform.scale = Vector2.Add(rect.size, Vector2.Add(grid.cellSize, grid.cellGap));
+
+            const disSize = Vector2.Add(
+                Vector2.Subtract(
+                    grid.WorldToCell(rect.max),
+                    grid.WorldToCell(rect.min)
+                ),
+                1
+            );
+
+            window.parent.RefractBack(`Footer.FindItem("rect").text = "(${rect.center.x.toFixed(2)}, ${rect.center.y.toFixed(2)}) W: ${disSize.x} H: ${disSize.y}"`);
         }
 
         if (this.#transforming && !InputManager.GetKey("middle") && !InputManager.GetKey("right")) document.body.style.cursor = "move";
@@ -414,6 +452,8 @@ class MainInput extends GameBehavior
 
         const gridSizeOffset = Vector2.Scale(Vector2.Add(SceneModifier.focusedGrid.cellSize, SceneModifier.focusedGrid.cellGap), 0.5);  
 
+        if (this.#selectStart == null) window.parent.RefractBack("Footer.FindItem(\"rect\").visible = true");
+
         this.#selectStart = Vector2.Add(bounds.min, gridSizeOffset);
         this.#selectEnd = Vector2.Subtract(bounds.max, gridSizeOffset);
 
@@ -425,13 +465,25 @@ class MainInput extends GameBehavior
 
         this.#selectionRect.transform.position = rect.center;
         this.#selectionRect.transform.scale = Vector2.Add(rect.size, Vector2.Add(SceneModifier.focusedGrid.cellSize, SceneModifier.focusedGrid.cellGap));
+
+        const disSize = Vector2.Add(
+            Vector2.Subtract(
+                SceneModifier.focusedGrid.WorldToCell(rect.max),
+                SceneModifier.focusedGrid.WorldToCell(rect.min)
+            ),
+            1
+        );
+
+        window.parent.RefractBack(`Footer.FindItem("rect").text = "(${rect.center.x.toFixed(2)}, ${rect.center.y.toFixed(2)}) W: ${disSize.x} H: ${disSize.y}"`);
     }
 
-    Deselect ()
+    Deselect (ignoreTransform)
     {
         if (this.#selectStart == null) return;
 
-        if (this.#transforming) window.parent.RefractBack("Palette.UseAction(3)");
+        window.parent.RefractBack("Footer.FindItem(\"rect\").visible = false");
+
+        if (this.#transforming && !ignoreTransform) window.parent.RefractBack("Palette.UseAction(3)");
 
         this.#selectStart = null;
         this.#selectEnd = null;
@@ -512,7 +564,7 @@ class MainInput extends GameBehavior
 
         if (this.#selection.length > 0)
         {
-            this.StopRecording();
+            if (!this.#transforming) this.StopRecording();
 
             this.Deselect();
             this.#sceneListener.SortOrdering();
@@ -599,7 +651,7 @@ class MainInput extends GameBehavior
             }
         }
 
-        this.StopRecording();
+        if (!this.#transforming) this.StopRecording();
 
         this.Deselect();
         this.#sceneListener.SortOrdering();
@@ -729,5 +781,15 @@ class MainInput extends GameBehavior
             SceneModifier.focusedGrid.cellSize,
             SceneModifier.focusedGrid.cellGap
         ));
+
+        const disSize = Vector2.Add(
+            Vector2.Subtract(
+                SceneModifier.focusedGrid.WorldToCell(rect.max),
+                SceneModifier.focusedGrid.WorldToCell(rect.min)
+            ),
+            1
+        );
+
+        window.parent.RefractBack(`Footer.FindItem("rect").text = "(${rect.center.x.toFixed(2)}, ${rect.center.y.toFixed(2)}) W: ${disSize.x} H: ${disSize.y}"`);
     }
 }

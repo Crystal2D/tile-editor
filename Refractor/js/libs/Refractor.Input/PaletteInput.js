@@ -33,6 +33,16 @@ class PaletteInput extends GameBehavior
         }
     }
 
+    LateUpdate ()
+    {
+        window.parent.RefractBack(`
+            viewerFPS.palette = ${(Application.targetFrameRate > 0 && Application.vSyncCount === 0) ? Math.min(
+                1 / (Time.deltaTime || Time.maximumDeltaTime),
+                Application.targetFrameRate
+            ) : 1 / (Time.deltaTime || Time.maximumDeltaTime)};
+        `);
+    }
+
     DeselectBase ()
     {
         this.#focusedTile = null;

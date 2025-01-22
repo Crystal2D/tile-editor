@@ -2,6 +2,7 @@ let loaded = false;
 let unloaded = false;
 let edited = false;
 let settingsOpened = false;
+let tileCount = 0;
 
 let activeSceneSrc = null;
 let activeScene = null;
@@ -175,6 +176,9 @@ function AddTileBase (tilemap, data)
     if (tilemap.args.tiles == null) tilemap.args.tiles = [];
 
     tilemap.args.tiles.push(data);
+
+    tileCount++;
+    Footer.FindItem("tiles").text = `Tiles: ${tileCount}`;
 }
 
 function RemoveTileBase (tilemap, data)
@@ -192,6 +196,9 @@ function RemoveTileBase (tilemap, data)
     const index = tilemap.args.tiles.indexOf(data);
 
     tilemap.args.tiles.splice(index, 1);
+
+    tileCount--;
+    Footer.FindItem("tiles").text = `Tiles: ${tileCount}`;
 }
 
 function AddTile (mapID, data)
@@ -301,6 +308,10 @@ async function Load (src)
 
     const grids = activeScene.gameObjects.filter(item => item.name.startsWith("tilegrid_"));
     const tilemaps = activeScene.gameObjects.filter(item => item.name.startsWith("tile_"));
+
+    tileCount = tilemaps.map(item => item.components.find(component => component.type === "Tilemap").args?.tiles)?.flat()?.filter(item => item != null)?.length ?? 0;
+
+    Footer.FindItem("tiles").text = `Tiles: ${tileCount}`;
     
     for (let i = 0; i < grids.length; i++)
     {

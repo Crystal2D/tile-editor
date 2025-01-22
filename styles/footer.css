@@ -1,0 +1,44 @@
+#footer
+{
+    height: 20.5px;
+    background: rgb(42, 42, 42);
+    display: flex;
+    color: #aaaaaa;
+    overflow: clip;
+    padding: 0 2px;
+    padding-top: 1px;
+    padding-bottom: 2px;
+    user-select: none;
+    word-spacing: 2px;
+}
+
+#footer .left
+{
+    display: flex;
+    gap: 5px;
+    margin-right: auto;
+}
+
+#footer .right
+{
+    display: flex;
+    gap: 5px;
+}
+
+#footer > div div
+{
+    display: flex;
+    padding: 0 4px;
+}
+
+#footer > div div *
+{
+    margin-top: auto;
+    margin-bottom: auto;
+}
+
+#footer img
+{
+    height: 80%;
+    margin-right: 4px;
+}

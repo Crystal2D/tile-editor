@@ -16,6 +16,8 @@ class InputHandler extends GameBehavior
     #viewMat = null;
     #mousePos = null;
 
+    onRecalcMatrix = new DelegateEvent();
+
     get mousePos ()
     {
         return this.#mousePos;
@@ -91,6 +93,8 @@ class InputHandler extends GameBehavior
                 this.#cam.bounds.size
             );
             this.#recalcViewMat = false;
+
+            this.onRecalcMatrix.Invoke();
         }
 
         const mouseMat = Matrix3x3.Translate(new Vector2(

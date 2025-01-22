@@ -1,7 +1,10 @@
+let viewerFPS = {
+    main: 0,
+    palette: 0
+};
 let SceneView = null;
 
 window.RefractBack = data => eval(data);
-
 window.onload = async () => {
     const URLSearch = new URLSearchParams(window.location.search);
     window.windowID = parseInt(decodeURIComponent(URLSearch.get("window-id")));
@@ -172,14 +175,31 @@ window.onload = async () => {
     );
     MenuManager.AddToBar(
         "Sprite Viewer",
-        () => {
+        async () => {
             MenuManager.UnfocusBar();
             MenuManager.CloseContextMenus();
 
-            console.log("aaaaaaaaaaaaaaaaaaaaaa");
+            await ipcRenderer.invoke(
+                "OpenMini",
+                "Scene Settings",
+                window.windowID,
+                "scene-settings",
+                "SpriteViewer/main",
+                "SpriteViewer/styles",
+                `dir=${ProjectManager.ProjectDir()}`
+            );
         },
         () => MenuManager.CloseContextMenus()
     );
+
+    Footer.Set();
+
+    const footerCamera = new FooterItem("camera", false, "camera.svg");
+    new FooterItem("rect", false, "rect.svg");
+    new FooterItem("cursor", false, "cursor.svg");
+
+    const footerTiles = new FooterItem("tiles", true);
+    const footerFPS = new FooterItem("fps", true);
 
     SceneView = new Refractor.Embed(scene);
 
@@ -216,6 +236,17 @@ window.onload = async () => {
         if (Input.OnCtrlShift(KeyCode.S)) SceneManager.SaveAs();
     });
 
+    footerFPS.visible = true;
+
+    Loop.Append(() => {
+        const mainFPS = (Loop.targetFrameRate > 0 && Loop.vSyncCount === 0) ? Math.min(
+            1 / (Loop.deltaTime || Loop.maximumDeltaTime),
+            Loop.targetFrameRate
+        ) : 1 / (Loop.deltaTime || Loop.maximumDeltaTime)
+
+        footerFPS.text = `FPS: ${parseInt((mainFPS + viewerFPS.main + viewerFPS.palette) / 3)}`;
+    }, 0.5)
+
     const paletteResources = Palette.GetResources();
     let paletteCounterA = 0;
     let paletteCounterB = 0;
@@ -238,6 +269,11 @@ window.onload = async () => {
     }, null, () => paletteCounterA === paletteResources.length && paletteCounterB === paletteResources.length));
 
     await SceneManager.Load(ProjectManager.GetEditorData().scene);
+
+    footerCamera.visible = true;
+    footerTiles.visible = true;
+
+    return;
 
     let forceClose = false;
 

@@ -1257,6 +1257,8 @@ function DrawUI ()
 
     Dock.ContainerEnd();
 
+    if (focused != null) focused.item.scrollIntoViewIfNeeded();
+
     sceneName.addEventListener("mouseover", () => onContext = () => {
         const paste = new MenuShortcutItem("Paste", "Ctrl+V", () => {
             MenuManager.CloseContextMenus();

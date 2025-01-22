@@ -1,0 +1,26 @@
+add credits
+
+https://iconduck.com/sets/phosphor-icons/styles/fill
+    chevron
+    cursor
+    eraser
+    eyedropper
+    move
+    pencil
+
+https://iconduck.com/sets/mono-icons
+    eye
+
+https://iconduck.com/sets/majesticons-icons-set/styles/solid
+    chevron
+    footer-camera
+
+https://iconduck.com/sets/fluent-ui-system-icons/styles/regular
+    search
+
+https://iconduck.com/sets/fluent-ui-system-icons/styles/filled
+    footer-cursor
+    footer-rect
+
+https://iconduck.com/sets/instructure-ui-design-system-icons/styles/solid
+    checkmark

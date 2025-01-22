@@ -12,6 +12,8 @@ const { MenuItem, MenuLine, MenuShortcutItem, ContextMenu } = require("./js/Menu
 const UIReferenceBank = require("./js/UIReferenceBank");
 const Dock = require("./js/Dock");
 const Refractor = require("./js/Refractor");
+const Footer = require("./js/Footer");
+const { FooterItem } = require("./js/Footer");
 
 const Input = require("./js/Input/Input");
 const KeyCode = require("./js/Input/KeyCode");
