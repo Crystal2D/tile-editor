@@ -726,6 +726,8 @@ class MainInput extends GameBehavior
             `);
         }
 
+        let reexistingTiles = [];
+
         for (let i = 0; i < this.#existingTiles.length; i++)
         {
             if (this.#selection.find(item => item.position.Equals(this.#existingTiles[i].position)) != null) continue;
@@ -747,7 +749,11 @@ class MainInput extends GameBehavior
                     }
                 );
             `);
+
+            reexistingTiles.push(this.#existingTiles[i]);
         }
+
+        for (let i = 0; i < reexistingTiles.length; i++) this.#existingTiles.splice(this.#existingTiles.indexOf(reexistingTiles[i]), 1);
 
         this.#selectStart = Vector2.Add(this.#selectStart, dir);
         this.#selectEnd = Vector2.Add(this.#selectEnd, dir);

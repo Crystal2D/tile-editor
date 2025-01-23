@@ -12,4 +12,9 @@ function EvalToMain (data)
 const URLSearch = new URLSearchParams(window.location.search);
 const projectDir = decodeURIComponent(URLSearch.get("dir"));
 
-UI.Label(projectDir);
+let resources = [];
+
+(async () => {
+    const resRequest = await fetch(`${projectDir}\\data\\resources.json`);
+    resources = await resRequest.json();
+})();

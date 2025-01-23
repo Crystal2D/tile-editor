@@ -181,9 +181,9 @@ window.onload = async () => {
 
             await ipcRenderer.invoke(
                 "OpenMini",
-                "Scene Settings",
+                "Sprite Viewer",
                 window.windowID,
-                "scene-settings",
+                "sprite-viewer",
                 "SpriteViewer/main",
                 "SpriteViewer/styles",
                 `dir=${ProjectManager.ProjectDir()}`
