@@ -14,8 +14,10 @@ const projectDir = decodeURIComponent(URLSearch.get("dir"));
 
 let dockResizing = false;
 let keepFocus = false;
+let edited = false;
 let dockSize = 250;
 let sizerOffset = 0;
+let resources = [];
 let textures = [];
 let textureListItems = [];
 
@@ -26,13 +28,18 @@ let inspectorContent = null;
 let inspectorPath = null;
 let inspectorData = null;
 let inspectorPPU = null;
+let inspectorRevert = null;
 let inspectorApply = null;
 let inspectorPreview = null;
 let currentTexture = null;
+let textureRes = null;
+
+let currentPPU = null;
+let currentRegPath = null;
 
 (async () => {
     const resRequest = await fetch(`${projectDir}\\data\\resources.json`);
-    const resources = await resRequest.json();
+    resources = await resRequest.json();
 
     textures = resources.filter(item => item.type === "Texture");
 
@@ -144,18 +151,40 @@ let currentTexture = null;
 
     inspectorPath = UI.TextField("Registered Path");
     inspectorPath.element.id = "texture-path";
+    inspectorPath.onUpdate = value => {
+        if (currentRegPath === value) return;
+
+        textureRes.path = value;
+        currentTexture = value;
+
+        textureListItems.find(item => item.innerText === currentRegPath).innerText = value;
+
+        MarkAsEdited();
+    };
 
     inspectorData = UI.Label("");
     inspectorData.id = "texture-data";
 
-    inspectorPPU = UI.NumberField("Pixel Per Unit");
+    inspectorPPU = UI.NumberField("Pixel Per Unit", 16);
     inspectorPPU.element.id = "texture-ppu";
+    inspectorPPU.onUpdate = value => {
+        if (currentPPU === value) return;
+
+        textureRes.args.pixelPerUnit = value;
+
+        MarkAsEdited();
+    };
 
     const buttons = UI.ContainerStart();
     buttons.id = "buttons";
 
     UI.Button("Edit Mapping");
+
+    inspectorRevert = UI.Button("Revert");
+    inspectorRevert.onClick = () => Revert();
+
     inspectorApply = UI.Button("Apply");
+    inspectorApply.onClick = () => Save();
 
     UI.ContainerEnd();
 
@@ -188,6 +217,15 @@ let currentTexture = null;
     Loop.Append(() => Update());
 })();
 
+function MarkAsEdited ()
+{
+    edited = true;
+
+    document.title = `${currentTexture} - Texture Viewer*`;
+    inspectorRevert.SetActive(true);
+    inspectorApply.SetActive(true);
+}
+
 function Update ()
 {
     if (!dockResizing && dockSize > 400)
@@ -207,17 +245,72 @@ function Update ()
     inspectorPreview.element.style.height = `${window.innerHeight - inspectorPreview.element.previousElementSibling.getBoundingClientRect().bottom - 14}px`;
 }
 
+async function Save ()
+{
+    document.title = `${currentTexture} - Texture Viewer`;
+
+    inspectorRevert.SetActive(false);
+    inspectorApply.SetActive(false);
+
+    edited = false;
+
+    currentRegPath = currentTexture;
+    currentPPU = textureRes.args.pixelPerUnit;
+
+    await new Promise(resolve => requestAnimationFrame(resolve));
+
+    for (let i = 0; i < textures.length; i++)
+    {
+        if (textures[i].args.pixelPerUnit === 16) textures[i].args.pixelPerUnit = undefined;
+    }
+
+    await FS.writeFile(`${projectDir}\\data\\resources.json`, JSON.stringify(resources, null, 4));
+}
+
+async function Revert ()
+{
+    textureListItems.find(item => item.innerText === currentTexture).innerText = currentRegPath;
+
+    textureRes.path = currentRegPath;
+    currentTexture = currentRegPath;
+    
+    document.title = `${currentTexture} - Texture Viewer`;
+
+    textureRes.args.pixelPerUnit = currentPPU;
+
+    inspectorRevert.SetActive(false);
+    inspectorApply.SetActive(false);
+
+    edited = false;
+}
+
+async function UnsavedPrompt ()
+{
+    if (!edited) return true;
+
+    const prompt = await ipcRenderer.invoke("UnsavedPrompt", "Texture has unsaved changes", `"${currentTexture}"`, window.windowID); 
+
+    if (prompt === 0) return false;
+    else if (prompt === 1) await Save();
+    else Revert();
+
+    return true;
+}
+
 async function FocusTexture (path)
 {
-    if (currentTexture === path) return;
+    if (currentTexture === path || !(await UnsavedPrompt())) return;
     
     textureListItems.find(item => item.innerText === currentTexture)?.setAttribute("focused", 0);
     
     currentTexture = path;
+    document.title = `${path} - Texture Viewer`;
     textureListItems.find(item => item.innerText === path)?.setAttribute("focused", 1);
 
     const texture = textures.find(item => item.path === path);
+    textureRes = texture;
 
+    currentRegPath = path;
     inspectorPath.SetText(path);
 
     const src = `${projectDir}\\img\\${texture.args.src.replaceAll("/", "\\")}`;
@@ -228,7 +321,11 @@ async function FocusTexture (path)
     await new Promise(resolve => rawImage.onload = resolve);
 
     inspectorData.innerText = `${src}\n\nWidth: ${rawImage.width}\nHeight: ${rawImage.height}`;
-    inspectorPPU.SetValue(texture.args.pixelPerUnit ?? 16);
+
+    currentPPU = textureRes.args.pixelPerUnit ?? 16;
+    
+    inspectorPPU.SetValue(currentPPU);
+    inspectorRevert.SetActive(false);
     inspectorApply.SetActive(false);
 
     while (inspectorPreview.element.firstChild != null) inspectorPreview.element.firstChild.remove();
@@ -241,15 +338,13 @@ async function FocusTexture (path)
 
 async function Unfocus ()
 {
-    if (currentTexture == null) return;
+    if (currentTexture == null || !(await UnsavedPrompt())) return;
 
-    // const prompt = await ipcRenderer.invoke("UnsavedPrompt", "Texture has unsaved changes", `texture "${currentTexture}"`, window.windowID);
-    
-    // if (prompt === 0) return;
-    // else if (prompt === 1) await SceneManager.Save();
+    document.title = "Texture Viewer";
 
     textureListItems.find(item => item.innerText === currentTexture)?.setAttribute("focused", 0);
     currentTexture = null;
+    textureRes = null;
 
     inspectorContent.style.display = "none";
     inspectorInfo.style.display = "";
@@ -264,3 +359,20 @@ async function Import ()
         filters: [{ name: "Images", extensions: ["png", "jpeg", "jpg"] }]
     });
 }
+
+
+let forceClose = false;
+
+window.addEventListener("beforeunload", async event => {
+    if (forceClose) return;
+
+    if (edited)
+    {
+        event.preventDefault();
+
+        if (!(await UnsavedPrompt())) return;
+            
+        forceClose = true;
+        window.close();
+    }
+});
