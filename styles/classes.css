@@ -174,7 +174,7 @@ body > .context-menu div[enabled="0"] .tip
     width: 100%;
     border-radius: 6px;
     overflow: auto;
-    min-height: 62px;
+    min-height: 54px;
     user-select: all;
     border: 1.5px solid transparent;
 }
@@ -191,7 +191,7 @@ body > .context-menu div[enabled="0"] .tip
 
 .ui-textarea[type="field"] .input-wrap
 {
-    min-height: 34px;
+    min-height: 22px;
 }
 
 .ui-textarea[type="number"] .input-wrap
@@ -205,7 +205,7 @@ body > .context-menu div[enabled="0"] .tip
 
 .ui-textarea .placehold
 {
-    padding: 9px;
+    padding: 5px 7px;
     color: rgb(120, 120, 120);
     min-height: calc(100% - 18px);
     font-style: italic;
@@ -227,7 +227,7 @@ body > .context-menu div[enabled="0"] .tip
 
 .ui-textarea .input
 {
-    padding: 9px;
+    padding: 5px 7px;
     outline: 0;
     display: none;
     min-height: calc(100% - 18px);
@@ -331,7 +331,12 @@ body > .context-menu div[enabled="0"] .tip
 
 .ui-section-content[enabled="0"]
 {
-    display: none;
+    display: none !important;
+}
+
+[cursor-locked="0"] .ui-section-content .ui-checkbox[checked="0"]:hover .box
+{
+    background: rgb(62, 62, 62);
 }
 
 .ui-section-content > :last-child:not(.ui-section-content),

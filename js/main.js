@@ -157,8 +157,8 @@ window.onload = async () => {
                             "Scene Settings",
                             window.windowID,
                             "scene-settings",
-                            "ProjectSettings/main",
-                            "ProjectSettings/styles",
+                            "SceneSettings/main",
+                            "SceneSettings/styles",
                             `partioning-max-depth=${buildData.partioningMaxDepth}`
                         );
 
@@ -174,18 +174,18 @@ window.onload = async () => {
         }
     );
     MenuManager.AddToBar(
-        "Sprite Viewer",
+        "Texture Viewer",
         async () => {
             MenuManager.UnfocusBar();
             MenuManager.CloseContextMenus();
 
             await ipcRenderer.invoke(
                 "OpenMini",
-                "Sprite Viewer",
+                "Texture Viewer",
                 window.windowID,
-                "sprite-viewer",
-                "SpriteViewer/main",
-                "SpriteViewer/styles",
+                "texture-viewer",
+                "TextureViewer/main",
+                "TextureViewer/styles",
                 `dir=${ProjectManager.ProjectDir()}`
             );
         },

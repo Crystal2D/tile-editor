@@ -341,7 +341,7 @@ async function OpenMini (title, windowID, miniID, js, css, search)
         src: "mini/index.html",
         search: searchData
     });
-    win.setMinimumSize(900, 600);
+    win.setMinimumSize(600, 400);
     win.webContents.openDevTools({ mode: "detach" });
 
     const parentWin = windowList.find(item => item.id === windowID);

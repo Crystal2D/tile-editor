@@ -9,6 +9,7 @@
     margin: 10px 20px;
     margin-top: 0;
     color: rgb(180, 180, 180);
+    word-wrap: break-word;
 }
 
 #partioning-settings

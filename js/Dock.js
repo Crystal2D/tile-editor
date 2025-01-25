@@ -1,5 +1,5 @@
 let resizing = false;
-let mouse = 0;
+let sizerOffset = 0;
 let size = 400;
 let tree = [];
 let tabList = [];
@@ -44,7 +44,9 @@ function Init ()
 
         Input.AvoidDrags(true);
         Input.SetCursor("w-resize");
-        mouse = Input.MouseX();
+
+        const mouse = Math.max(Math.min(Input.MouseX(), window.innerWidth - 300), 300);
+        sizerOffset = dock.getBoundingClientRect().x - mouse;
     });
 
     tabs = document.createElement("div");
@@ -118,14 +120,13 @@ function Update ()
         return;
     }
 
-    const mouseOld = mouse;
-    mouse = Math.max(Math.min(Input.MouseX(), window.innerWidth - 300), 300);
-    const delta = mouse - mouseOld;
+    const mouse = Math.max(Math.min(Input.MouseX() + sizerOffset, window.innerWidth - 300), 300);
+    const newSize = window.innerWidth - mouse;
 
-    size -= delta;
+    size = newSize;
     main.style.setProperty("--dock-size", `${size}px`);
 
-    if (delta !== 0) onResize.Invoke();
+    onResize.Invoke();
 }
 
 function AddTab (label)

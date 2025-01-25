@@ -30,7 +30,6 @@
     width: 5px;
     height: 100%;
     position: absolute;
-    opacity: 0.3;
     left: -2.5px;
     cursor: w-resize;
 }

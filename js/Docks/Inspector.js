@@ -34,14 +34,9 @@ function DrawUI ()
 
         const inputWrap = name.element.querySelector(".input-wrap");
         inputWrap.style.borderRadius = "4px";
-        inputWrap.style.minHeight = "22px";
         inputWrap.style.fontWeight = "bold";
-        
-        name.element.querySelector(".placehold").style.padding = "5px 7px";
 
         const input = name.element.querySelector(".input")
-        input.style.padding = "5px 7px";
-        
         name.onBlur = () => {
             const text = input.innerText.trim();
 
