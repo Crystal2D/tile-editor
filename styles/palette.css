@@ -78,56 +78,6 @@
     padding: 6px 10px;
     border-top: 2px solid rgb(32, 32, 32);
     border-bottom: 1.5px solid rgb(32, 32, 32);
-    display: flex;
-}
-
-.palette-search img
-{
-    border-top-left-radius: 4px;
-    border-bottom-left-radius: 4px;
-    background: rgb(32, 32, 32);
-    padding-left: 3px;
-    user-select: none;
-    border: 1.5px solid transparent;
-    border-right: none !important;
-}
-
-[cursor-locked="0"] .palette-search img
-{
-    cursor: text;
-}
-
-.palette-search[focused="1"] img
-{
-    border: 1.5px solid rgb(232, 232, 232);
-}
-
-.palette-search .ui-textarea
-{
-    width: 100%;
-    padding: 0 !important;
-}
-
-.palette-search .input-wrap
-{
-    border-radius: 4px;
-    border-top-left-radius: 0;
-    border-bottom-left-radius: 0;
-    min-height: 22px !important;
-    border: 1.5px solid transparent !important;
-    border-left: none !important;
-}
-
-.palette-search[focused="1"] .input-wrap
-{
-    border: 1.5px solid rgb(232, 232, 232) !important;
-    border-left: none !important;
-}
-
-.palette-search .placehold,
-.palette-search .input
-{
-    padding: 5px 7px;
 }
 
 .palette-list

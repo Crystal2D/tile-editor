@@ -25,11 +25,19 @@ body
     cursor: e-resize;
 }
 
-#dock > .content
+#dock > .content,
+#list-wrap
 {
+    display: flex;
+    flex-direction: column;
     height: 100%;
     overflow: auto;
     position: relative;
+}
+
+#list-wrap
+{
+    margin-right: 2.5px;
 }
 
 #texture-list .item
@@ -47,7 +55,6 @@ body
 {
     background: rgb(120, 130, 170) !important;
     z-index: 1;
-    pointer-events: none;
 }
 
 [cursor-locked="0"] #texture-list .item:hover
@@ -59,6 +66,7 @@ body
 {
     width: calc(100% - var(--dock-size));
     height: 100%;
+    overflow: clip;
 }
 
 #texture-path
@@ -77,18 +85,46 @@ body
 
 #texture-ppu
 {
+    margin: 0 20px;
+}
+
+#buttons
+{
     margin: 10px 20px;
+    margin-top: 5px;
+    display: flex;
+    justify-content: end;
+    gap: 4px;
 }
 
 #texture-preview[enabled="1"]
 {
     display: flex;
-    object-fit: contain;
 }
 
 #texture-preview img
 {
+    object-fit: contain;
     image-rendering: pixelated;
     margin: auto;
     height: 100%;
+    width: 100%;
+    user-select: none;
+}
+
+#search
+{
+    padding-bottom: 4px;
+}
+
+#search img,
+#search .input-wrap
+{
+    border-radius: 0;
+}
+
+#import
+{
+    line-height: 30px;
+    border-radius: 0;
 }

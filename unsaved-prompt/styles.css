@@ -42,3 +42,8 @@ body
     border-radius: 3px;
     cursor: pointer;
 }
+
+#buttons div:hover
+{
+    background: rgb(64, 64, 64);
+}

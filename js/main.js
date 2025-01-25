@@ -284,7 +284,7 @@ window.onload = async () => {
         {
             event.preventDefault();
 
-            const prompt = await ipcRenderer.invoke("UnsavedScenePrompt", SceneManager.GetActiveScene().name, window.windowID);
+            const prompt = await ipcRenderer.invoke("UnsavedPrompt", "Scene has unsaved changes", `scene "${SceneManager.GetActiveScene().name}"`, window.windowID);
     
             if (prompt === 0) return;
             else if (prompt === 1) await SceneManager.Save();

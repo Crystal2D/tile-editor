@@ -6,7 +6,7 @@ const DelegateEvent = require("./js/DelegateEvent");
 let closeHub = false;
 let windowList = [];
 let projectWindows = [];
-let unsavedScenePrompts = [];
+let unsavedPrompts = [];
 let minis = [];
 
 let hubWindow = null;
@@ -196,20 +196,20 @@ async function InitWindow ()
     hubWindow.focus();
 }
 
-async function UnsavedScenePrompt (sceneName, windowID)
+async function UnsavedPrompt (title, content, windowID)
 {
     const win = await CreateWindow({
-        name: "Scene has unsaved changes",
+        name: title,
         width: 400,
         height: 180,
-        src: "unsaved-scene-prompt/index.html",
+        src: "unsaved-prompt/index.html",
         titleBarStyle: "hidden",
         titleBarOverlay: {
             height: 25,
             color: "#202020",
             symbolColor: "#aaaaaa",
         },
-        search: `scene=${sceneName}&parent-id=${windowID}`,
+        search: `content=${content}&parent-id=${windowID}`,
         modal: true,
         parent: FindWindow(windowID)
     });
@@ -226,11 +226,11 @@ async function UnsavedScenePrompt (sceneName, windowID)
             win.close();
         }
     };
-    unsavedScenePrompts.push(prompt);
+    unsavedPrompts.push(prompt);
 
     await new Promise(resolve => win.on("closed", resolve));
 
-    unsavedScenePrompts.splice(unsavedScenePrompts.indexOf(prompt), 1);
+    unsavedPrompts.splice(unsavedPrompts.indexOf(prompt), 1);
 
     return output;
 }
@@ -373,6 +373,6 @@ ipcMain.handle("SelectFolder", async (event, path, data) => await SelectFolder(p
 ipcMain.handle("SelectFile", async (event, path, data) => await SelectFile(path, data));
 ipcMain.handle("OpenProject", async (event, dir) => OpenProject(dir));
 ipcMain.handle("RefreshTray", () => RefreshTray());
-ipcMain.handle("UnsavedScenePrompt", async (data, sceneName, windowID) => await UnsavedScenePrompt(sceneName, windowID));
+ipcMain.handle("UnsavedPrompt", async (data, title, sceneName, windowID) => await UnsavedPrompt(title, sceneName, windowID));
 ipcMain.handle("eval", (data, input) => eval(input));
 ipcMain.handle("OpenMini", async (data, title, windowID, miniID, js, css, search) => await OpenMini (title, windowID, miniID, js, css, search));

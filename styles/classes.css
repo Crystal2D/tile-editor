@@ -368,6 +368,7 @@ body > .context-menu div[enabled="0"] .tip
     margin: 0 auto;
     font-weight: bold;
     font-size: 17px;
+    text-align: center;
 }
 
 .ui-info .description
@@ -375,4 +376,84 @@ body > .context-menu div[enabled="0"] .tip
     margin: auto;
     margin-top: 0;
     font-size: 14px;
+    text-align: center;
+}
+
+.ui-button
+{
+    background: rgb(232, 232, 232);
+    color: rgb(32, 32, 32);
+    padding: 3px 8px;
+    min-width: 30px;
+    text-align: center;
+    border-radius: 3px;
+    cursor: pointer;
+    display: inline-block;
+    user-select: none;
+}
+
+.ui-button[enabled="0"]
+{
+    pointer-events: none;
+    background: rgb(100, 100, 100);
+    color: rgb(42, 42, 42);
+}
+
+[cursor-locked="0"] .ui-button[enabled="1"]:hover
+{
+    background: rgb(180, 180, 180);
+}
+
+.ui-search
+{
+    display: flex;
+}
+
+.ui-search img
+{
+    border-top-left-radius: 4px;
+    border-bottom-left-radius: 4px;
+    background: rgb(32, 32, 32);
+    padding-left: 3px;
+    user-select: none;
+    border: 1.5px solid transparent;
+    border-right: none !important;
+}
+
+[cursor-locked="0"] .ui-search img
+{
+    cursor: text;
+}
+
+.ui-search[focused="1"] img
+{
+    border: 1.5px solid rgb(232, 232, 232);
+}
+
+.ui-search .ui-textarea
+{
+    width: 100%;
+    padding: 0 !important;
+}
+
+.ui-search .input-wrap
+{
+    border-radius: 4px;
+    border-top-left-radius: 0;
+    border-bottom-left-radius: 0;
+    min-height: 22px !important;
+    border: 1.5px solid transparent !important;
+    border-left: none !important;
+}
+
+.ui-search[focused="1"] .input-wrap
+{
+    border: 1.5px solid rgb(232, 232, 232) !important;
+    border-left: none !important;
+}
+
+.ui-search .placehold,
+.ui-search .input
+{
+    padding: 5px 7px;
 }

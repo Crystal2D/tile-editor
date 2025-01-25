@@ -64,7 +64,7 @@ body[cursor-locked="0"] > nav span:hover
 
 body > main
 {
-    --dock-size: 400px;
+    --dock-size: 0;
 
     flex: 1;
     overflow: clip;

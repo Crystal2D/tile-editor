@@ -1,6 +1,6 @@
 let resizing = false;
 let sizerOffset = 0;
-let size = 400;
+let size = 0;
 let tree = [];
 let tabList = [];
 let onContext = () => { };
@@ -35,6 +35,9 @@ function PlaceholdText (text)
 
 function Init ()
 {
+    size = ProjectManager.GetEditorData().dockSize;
+    main.style.setProperty("--dock-size", `${size}px`);
+
     sizer = document.createElement("div");
     sizer.classList.add("sizer");
     sizer.addEventListener("mousedown", event => {
@@ -112,6 +115,9 @@ function Update ()
         {
             size = maxSize;
             main.style.setProperty("--dock-size", `${size}px`);
+
+            ProjectManager.GetEditorData().dockSize = size;
+            ProjectManager.SaveEditorData();
             
             onResize.Invoke();
             onResizeEnd.Invoke();
@@ -125,6 +131,9 @@ function Update ()
 
     size = newSize;
     main.style.setProperty("--dock-size", `${size}px`);
+
+    ProjectManager.GetEditorData().dockSize = size;
+    ProjectManager.SaveEditorData();
 
     onResize.Invoke();
 }
@@ -574,6 +583,109 @@ function Info (title, description)
     return ContainerEnd();
 }
 
+function Button (label)
+{
+    const element = document.createElement("div");
+    element.classList.add("ui-button");
+    element.append(label);
+
+    let enabled = false;
+
+    const output = {
+        element: element,
+        get enabled ()
+        {
+            return enabled;
+        },
+        onClick: () => { },
+        SetActive: (state) => {
+            if (enabled === state) return;
+
+            element.setAttribute("enabled", +state);
+
+            enabled = state;
+        }
+    };
+
+    element.addEventListener("click", () => output.onClick());
+
+    output.SetActive(true);
+
+    AddContent(element);
+
+    return output;
+}
+
+function SearchBar ()
+{
+    const search = ContainerStart();
+    search.classList.add("ui-search");
+
+    let searchFocused = false;
+    let searchFocusedLocked = false;
+
+    const setSearchHover = state => {
+        if (searchFocused === state || searchFocusedLocked) return;
+            
+        search.setAttribute("focused", +state);
+
+        searchFocused = state;
+    };
+
+    const searchImg = document.createElement("img");
+    searchImg.src = "img/search.svg";
+    searchImg.addEventListener("dragstart", event => event.preventDefault());
+    searchImg.addEventListener("mouseover", () => setSearchHover(true));
+    searchImg.addEventListener("mouseout", () => setSearchHover(false));
+    AddContent(searchImg);
+
+    const searchbar = TextField();
+    searchbar.element.addEventListener("mouseover", () => setSearchHover(true));
+    searchbar.element.addEventListener("mouseout", () => setSearchHover(false));
+
+    const placehold = searchbar.element.querySelector(".placehold");
+    const input = searchbar.element.querySelector(".input");
+
+    placehold.textContent = "Search...";
+    
+    input.addEventListener("focus", () => {
+        setSearchHover(true);
+
+        searchFocusedLocked = true;
+    });
+    input.addEventListener("blur", () => {
+        searchFocusedLocked = false;
+
+        setSearchHover(false);
+    });
+
+    searchImg.addEventListener("mousedown", event => {
+        if (event.button !== 0) return;
+
+        event.preventDefault();
+
+        placehold.style.display = "none";
+        input.style.display = "block";
+
+        requestAnimationFrame(() => {
+            input.focus();
+
+            const range = document.createRange();
+            range.selectNodeContents(input);
+            
+            const selection = window.getSelection();
+            selection.removeAllRanges();
+            selection.addRange(range);
+        });
+    });
+
+    ContainerEnd();
+
+    searchbar.container = search;
+
+    return searchbar;
+}
+
 
 module.exports = {
     OnResize,
@@ -594,5 +706,7 @@ module.exports = {
     Vector2Field,
     SectionStart,
     SectionEnd,
-    Info
+    Info,
+    Button,
+    SearchBar
 };

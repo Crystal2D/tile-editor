@@ -195,70 +195,9 @@ function DrawUI ()
 
     Dock.ContainerStart().classList.add("palette-explorer");
 
-    const search = Dock.ContainerStart();
-    search.classList.add("palette-search");
-
-    let searchFocused = false;
-    let searchFocusedLocked = false;
-
-    const setSearchHover = state => {
-        if (searchFocused === state || searchFocusedLocked) return;
-            
-        search.setAttribute("focused", +state);
-
-        searchFocused = state;
-    };
-
-    const searchImg = document.createElement("img");
-    searchImg.src = "img/search.svg";
-    searchImg.addEventListener("dragstart", event => event.preventDefault());
-    searchImg.addEventListener("mouseover", () => setSearchHover(true));
-    searchImg.addEventListener("mouseout", () => setSearchHover(false));
-    Dock.AddContent(searchImg);
-
-    const searchbar = Dock.TextField();
-    searchbar.SetText(listSearch);
-    searchbar.element.addEventListener("mouseover", () => setSearchHover(true));
-    searchbar.element.addEventListener("mouseout", () => setSearchHover(false));
-    (() => {
-        const placehold = searchbar.element.querySelector(".placehold");
-        const input = searchbar.element.querySelector(".input");
-
-        placehold.textContent = "Search...";
-        
-        input.addEventListener("focus", () => {
-            setSearchHover(true);
-
-            searchFocusedLocked = true;
-        });
-        input.addEventListener("blur", () => {
-            searchFocusedLocked = false;
-
-            setSearchHover(false);
-        });
-
-        searchImg.addEventListener("mousedown", event => {
-            if (event.button !== 0) return;
-
-            event.preventDefault();
-
-            placehold.style.display = "none";
-            input.style.display = "block";
-
-            requestAnimationFrame(() => {
-                input.focus();
-
-                const range = document.createRange();
-                range.selectNodeContents(input);
-                
-                const selection = window.getSelection();
-                selection.removeAllRanges();
-                selection.addRange(range);
-            });
-        });
-    })();
-
-    Dock.ContainerEnd();
+    const search = Dock.SearchBar();
+    search.container.classList.add("palette-search");
+    search.SetText(listSearch);
 
     let searchInfo = null;
 
@@ -275,7 +214,7 @@ function DrawUI ()
 
     Dock.ContainerEnd();
 
-    searchbar.onUpdate = text => {
+    search.onUpdate = text => {
         if (listSearch === text || palettes.length === 0) return;
 
         listSearched = text.length === 0 ? [] : paletteListItems.filter(item => item.innerText.toLowerCase().includes(text));
