@@ -14,6 +14,7 @@ const Dock = require("./js/Dock");
 const Refractor = require("./js/Refractor");
 const Footer = require("./js/Footer");
 const { FooterItem } = require("./js/Footer");
+const TextureManager = require("./js/TextureManager");
 
 const Input = require("./js/Input/Input");
 const KeyCode = require("./js/Input/KeyCode");

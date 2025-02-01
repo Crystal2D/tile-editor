@@ -24,3 +24,6 @@ https://iconduck.com/sets/fluent-ui-system-icons/styles/filled
 
 https://iconduck.com/sets/instructure-ui-design-system-icons/styles/solid
     checkmark
+
+https://iconduck.com/sets/elementary-icon-set
+    warning

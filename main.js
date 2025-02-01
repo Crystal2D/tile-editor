@@ -6,7 +6,7 @@ const DelegateEvent = require("./js/DelegateEvent");
 let closeHub = false;
 let windowList = [];
 let projectWindows = [];
-let unsavedPrompts = [];
+let modalDialogs = [];
 let minis = [];
 
 let hubWindow = null;
@@ -196,13 +196,13 @@ async function InitWindow ()
     hubWindow.focus();
 }
 
-async function UnsavedPrompt (title, content, windowID)
+async function ModalDialog (src, title, content, windowID)
 {
     const win = await CreateWindow({
         name: title,
         width: 400,
         height: 180,
-        src: "unsaved-prompt/index.html",
+        src: `${src}/index.html`,
         titleBarStyle: "hidden",
         titleBarOverlay: {
             height: 25,
@@ -213,12 +213,13 @@ async function UnsavedPrompt (title, content, windowID)
         modal: true,
         parent: FindWindow(windowID)
     });
+    win.minimizable = false;
     win.maximizable = false;
     win.resizable = false;
 
     let output = 0;
 
-    const prompt = {
+    const modalDialog = {
         id: windowID,
         doneCall: data => {
             output = data;
@@ -226,13 +227,23 @@ async function UnsavedPrompt (title, content, windowID)
             win.close();
         }
     };
-    unsavedPrompts.push(prompt);
+    modalDialogs.push(modalDialog);
 
     await new Promise(resolve => win.on("closed", resolve));
 
-    unsavedPrompts.splice(unsavedPrompts.indexOf(prompt), 1);
+    modalDialogs.splice(modalDialogs.indexOf(modalDialog), 1);
 
     return output;
+}
+
+async function UnsavedPrompt (title, content, windowID)
+{
+    return await ModalDialog("unsaved-prompt", title, content, windowID);
+}
+
+async function WarningDialog (title, content, windowID)
+{
+    return await ModalDialog("warning-dialog", title, content, windowID);
 }
 
 async function RefreshTray ()
@@ -373,6 +384,7 @@ ipcMain.handle("SelectFolder", async (event, path, data) => await SelectFolder(p
 ipcMain.handle("SelectFile", async (event, path, data) => await SelectFile(path, data));
 ipcMain.handle("OpenProject", async (event, dir) => OpenProject(dir));
 ipcMain.handle("RefreshTray", () => RefreshTray());
-ipcMain.handle("UnsavedPrompt", async (data, title, sceneName, windowID) => await UnsavedPrompt(title, sceneName, windowID));
+ipcMain.handle("UnsavedPrompt", async (data, title, content, windowID) => await UnsavedPrompt(title, content, windowID));
+ipcMain.handle("WarningDialog", async (data, title, content, windowID) => await WarningDialog(title, content, windowID));
 ipcMain.handle("eval", (data, input) => eval(input));
 ipcMain.handle("OpenMini", async (data, title, windowID, miniID, js, css, search) => await OpenMini (title, windowID, miniID, js, css, search));

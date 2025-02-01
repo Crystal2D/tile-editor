@@ -7,8 +7,6 @@ function EvalToMain (data)
     `);
 }
 
-// window.addEventListener("beforeunload", () => EvalToMain("SceneManager.SetSettingsOpened(false)"));
-
 const URLSearch = new URLSearchParams(window.location.search);
 const projectDir = decodeURIComponent(URLSearch.get("dir"));
 
@@ -152,7 +150,7 @@ let currentRegPath = null;
     inspectorPath = UI.TextField("Registered Path");
     inspectorPath.element.id = "texture-path";
     inspectorPath.onUpdate = value => {
-        if (currentRegPath === value) return;
+        if (currentTexture == null || currentRegPath === value) return;
 
         textureRes.path = value;
         currentTexture = value;
@@ -168,7 +166,7 @@ let currentRegPath = null;
     inspectorPPU = UI.NumberField("Pixel Per Unit", 16);
     inspectorPPU.element.id = "texture-ppu";
     inspectorPPU.onUpdate = value => {
-        if (currentPPU === value) return;
+        if (currentTexture == null || currentPPU === value) return;
 
         textureRes.args.pixelPerUnit = value;
 
@@ -245,24 +243,39 @@ function Update ()
     inspectorPreview.element.style.height = `${window.innerHeight - inspectorPreview.element.previousElementSibling.getBoundingClientRect().bottom - 14}px`;
 }
 
-async function Save ()
+async function ProcessTextureData ()
 {
+    if (textureRes == null) return;
+
     document.title = `${currentTexture} - Texture Viewer`;
 
+    if (currentPPU !== textureRes.args.pixelPerUnit)
+    {
+        if (textureRes.args.pixelPerUnit === 16) textureRes.args.pixelPerUnit = undefined;
+
+        EvalToMain(`TextureManager.UpdatePPU("${currentRegPath}", ${textureRes.args.pixelPerUnit})`);
+
+        currentPPU = textureRes.args.pixelPerUnit;
+    }
+
+    if (currentRegPath !== currentTexture)
+    {
+        EvalToMain(`TextureManager.ChangePath("${currentRegPath}", "${currentTexture}")`);
+
+        currentRegPath = currentTexture;
+    }    
+}
+
+async function Save ()
+{
     inspectorRevert.SetActive(false);
     inspectorApply.SetActive(false);
 
     edited = false;
 
-    currentRegPath = currentTexture;
-    currentPPU = textureRes.args.pixelPerUnit;
-
     await new Promise(resolve => requestAnimationFrame(resolve));
 
-    for (let i = 0; i < textures.length; i++)
-    {
-        if (textures[i].args.pixelPerUnit === 16) textures[i].args.pixelPerUnit = undefined;
-    }
+    ProcessTextureData();
 
     await FS.writeFile(`${projectDir}\\data\\resources.json`, JSON.stringify(resources, null, 4));
 }
@@ -282,6 +295,9 @@ async function Revert ()
     inspectorApply.SetActive(false);
 
     edited = false;
+    currentTexture = null;
+
+    await FocusTexture(currentRegPath);
 }
 
 async function UnsavedPrompt ()
@@ -350,6 +366,34 @@ async function Unfocus ()
     inspectorInfo.style.display = "";
 }
 
+async function NewTexture (path, src)
+{
+    const texture = {
+        path: path,
+        type: "Texture",
+        args: { src: src }
+    };
+
+    resources.push(texture);
+    textures.push(texture);
+
+    await Save();
+
+    const item = document.createElement("div");
+    item.classList.add("item");
+    item.setAttribute("focused", 0);
+    item.append(path);
+    
+    item.addEventListener("click", () => FocusTexture(path));
+    item.addEventListener("mouseover", () => keepFocus = true);
+    item.addEventListener("mouseout", () => keepFocus = false);
+
+    textureListItems.push(item);
+    textureList.append(item);
+
+    await FocusTexture(path);
+}
+
 async function Import ()
 {
     const file = await ipcRenderer.invoke("SelectFile", `${projectDir}\\img`, {
@@ -358,6 +402,25 @@ async function Import ()
         windowID: window.windowID,
         filters: [{ name: "Images", extensions: ["png", "jpeg", "jpg"] }]
     });
+
+    if (file.canceled) return;
+
+    if (!file.path.startsWith(`${projectDir}\\img\\`))
+    {
+        await ipcRenderer.invoke("WarningDialog", "Can't use image", `Image must be found at ${projectDir}\\img`, window.windowID);
+
+        return;
+    }
+
+    if (!(await UnsavedPrompt())) return;
+
+    const src = file.path.slice((`${projectDir}\\img\\`).length);
+    let path = src.split(".");
+    path.pop();
+    path.join(".");
+    path = path[0];
+
+    await NewTexture(path, src);
 }
 
 

@@ -79,6 +79,11 @@ class Resources
     {
         this.#resources = [];
     }
+
+    static FindUnloaded (path)
+    {
+        return this.#unloadedRes.find(item => item.path === path);
+    }
     
     static Find (path)
     {
@@ -86,12 +91,21 @@ class Resources
         
         return res != null ? res.obj : { };
     }
+
+    static ChangePath (oldPath, newPath)
+    {
+        this.FindUnloaded(oldPath).path = newPath;
+
+        const res = this.#resources.find(item => item.path === oldPath);
+        res.path = newPath;
+        res.obj.name = newPath.split("/").slice(-1)[0];
+    }
     
     static async Load (...path)
     {
         for (let i = 0; i < path.length; i++)
         {
-            const data = this.#unloadedRes.find(item => item.path === path[i]);
+            const data = this.FindUnloaded(path[i]);
 
             if (data == null || this.#resources.find(item => item.path === path) != null) continue;
 
