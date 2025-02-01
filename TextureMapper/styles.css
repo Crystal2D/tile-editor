@@ -1,0 +1,10 @@
+body
+{
+    overflow: clip;
+    height: 100%;
+}
+
+#view-wrap
+{
+    height: 100%;
+}

@@ -63,6 +63,15 @@ function UpdatePPU (path, ppu)
 
         for (let i = 0; i < tilemaps.length; i++) SceneBank.FindByID(tilemaps[i]).GetComponent("Tilemap").ForceMeshUpdate();
     `);
+
+    Palette.PaletteView().Refract(`
+        Resources.FindUnloaded(${JSON.stringify(path)}).pixelPerUnit = ${ppu};
+        Resources.Find(${JSON.stringify(path)}).pixelPerUnit = ${ppu ?? 16};
+
+        const tilemaps = ${JSON.stringify(tilemaps)};
+
+        for (let i = 0; i < tilemaps.length; i++) SceneBank.FindByID(tilemaps[i]).GetComponent("Tilemap").ForceMeshUpdate();
+    `);
 }
 
 async function ChangePath (oldPath, newPath)
@@ -99,6 +108,17 @@ async function ChangePath (oldPath, newPath)
     }
 
     SceneView.Refract(`Resources.ChangePath(${JSON.stringify(oldPath)}, ${JSON.stringify(newPath)})`);
+    Palette.PaletteView().Refract(`Resources.ChangePath(${JSON.stringify(oldPath)}, ${JSON.stringify(newPath)})`);
+
+    ipcRenderer.invoke("eval", `
+        const win = minis.find(item => item.parentID === ${window.windowID} && item.id === ${JSON.stringify(`texture-mapper:${oldPath}`)});
+
+        if (win != null)
+        {
+            win.id = ${JSON.stringify(`texture-mapper:${newPath}`)};
+            win.window.webContents.send("OnChangePath", ${JSON.stringify(newPath)});
+        }
+    `);
     
     LoadingScreen.Disable();
 }

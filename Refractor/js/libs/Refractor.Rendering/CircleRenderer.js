@@ -1,4 +1,4 @@
-class RectRenderer extends Renderer
+class CircleRenderer extends Renderer
 {
     #loaded = false;
     #bounds = new Bounds();
@@ -7,8 +7,7 @@ class RectRenderer extends Renderer
 
     uColorID = 0;
     uFillColorID = 0;
-    uMinID = 0;
-    uMaxID = 0;
+    uPositionID = 0;
     uThicknessID = 0;
     thickness = 3;
     color = new Color(0, 0, 0, 0);
@@ -39,8 +38,8 @@ class RectRenderer extends Renderer
         super();
 
         this.#material = new Material(
-            Shader.Find("Refractor/Rect", "VERTEX"),
-            Shader.Find("Refractor/Rect", "FRAGMENT")
+            Shader.Find("Refractor/Circle", "VERTEX"),
+            Shader.Find("Refractor/Circle", "FRAGMENT")
         );
 
         let layerID = SortingLayer.layers.find(item => item.name === "Refractor Priority")?.id;
@@ -53,7 +52,7 @@ class RectRenderer extends Renderer
         }
 
         this.sortingLayer = layerID;
-        this.sortingOrder = 1;
+        this.sortingOrder = 2;
 
         this.Reload();
     }
@@ -64,9 +63,8 @@ class RectRenderer extends Renderer
         
         this.uColorID = this.material.GetPropertyNameID("uColor");
         this.uFillColorID = this.material.GetPropertyNameID("uFillColor");
-        this.uMinID = this.material.GetPropertyNameID("uMin");
-        this.uMaxID = this.material.GetPropertyNameID("uMax");
-        this.uThicknessID = this.material.GetPropertyNameID("uThickness");
+        this.uPositionID = this.material.GetPropertyNameID("uPosition");
+        // this.uThicknessID = this.material.GetPropertyNameID("uThickness");
 
         this.geometryBufferID = this.material.AddBuffer("geometry", null, 2);
         this.aVertexPosID = this.material.GetAttributeNameID("aVertexPos");
@@ -124,20 +122,13 @@ class RectRenderer extends Renderer
 
         const renderMatrix = this.renderMatrix;
 
-        const renderRect = new Rect();
-        renderRect.size = new Vector2(
-            Math.abs(renderMatrix.GetValue(0, 0)) * 0.5 * Interface.width,
-            Math.abs(renderMatrix.GetValue(1, 1)) * 0.5 * Interface.height
-        );
-        renderRect.center = new Vector2(
+        const position = new Vector2(
             (renderMatrix.GetValue(2, 0) + 1) * Interface.width * 0.5,
             (renderMatrix.GetValue(2, 1) + 1) * Interface.height * 0.5
         );
 
-        this.material.SetVector(this.uMinID, renderRect.xMin, renderRect.yMin);
-        this.material.SetVector(this.uMaxID, renderRect.xMax, renderRect.yMax);
-
-        this.material.SetFloat(this.uThicknessID, this.thickness);
+        this.material.SetVector(this.uPositionID, position.x, position.y);
+        // this.material.SetFloat(this.uThicknessID, this.thickness);
 
         this.material.SetAttribute(this.aVertexPosID, this.geometryBufferID);
         

@@ -1,12 +1,3 @@
-function EvalToMain (data)
-{
-    ipcRenderer.invoke("eval", `
-        const win = FindWindow(${window.parentID});
-        
-        if (win != null) win.webContents.send("eval", \`${data}\`);
-    `);
-}
-
 const URLSearch = new URLSearchParams(window.location.search);
 const projectDir = decodeURIComponent(URLSearch.get("dir"));
 
@@ -152,10 +143,10 @@ let currentRegPath = null;
     inspectorPath.onUpdate = value => {
         if (currentTexture == null || currentRegPath === value) return;
 
+        textureListItems.find(item => item.innerText === currentTexture).innerText = value;
+
         textureRes.path = value;
         currentTexture = value;
-
-        textureListItems.find(item => item.innerText === currentRegPath).innerText = value;
 
         MarkAsEdited();
     };
@@ -176,8 +167,16 @@ let currentRegPath = null;
     const buttons = UI.ContainerStart();
     buttons.id = "buttons";
 
-    UI.Button("Edit Mapping");
-
+    UI.Button("Edit Mapping").onClick = () => ipcRenderer.invoke(
+        "OpenMini",
+        "Texture Mapper",
+        window.parentID,
+        `texture-mapper:${currentTexture}`,
+        "TextureMapper/main",
+        "TextureMapper/styles",
+        `dir=${projectDir}&path=${currentTexture}`
+    );
+    
     inspectorRevert = UI.Button("Revert");
     inspectorRevert.onClick = () => Revert();
 

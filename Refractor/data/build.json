@@ -11,13 +11,16 @@
     ],
     "scenes" : [
         "main",
-        "palette"
+        "palette",
+        "mapper"
     ],
     "shaders" : [
         "grid/vertex",
         "grid/fragment",
         "rect/vertex",
-        "rect/fragment"
+        "rect/fragment",
+        "circle/vertex",
+        "circle/fragment"
     ],
     "targetFrameRate" : -1,
     "vSyncCount" : 1,

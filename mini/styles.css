@@ -36,11 +36,28 @@ body
     position: relative;
 }
 
+iframe
+{
+    border: none;
+    user-select: none;
+}
+
 [contenteditable="true"]::selection,
 [contenteditable="plaintext-only"]::selection
 {
     color: black;
     background: white;
+}
+
+#context-menu-backdrop
+{
+    display: none;
+    position: fixed;
+    z-index: 69420;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
 }
 
 .ui-label

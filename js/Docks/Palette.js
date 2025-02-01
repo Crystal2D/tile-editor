@@ -301,15 +301,17 @@ function OnClear ()
 
 async function OnRefractorLoad ()
 {
-    paletteView.Refract(`SceneInjector.Grid(${JSON.stringify({
-        name: "tilegrid",
-        id: 0,
-        components: [
-            {
-                type: "Grid"
-            }
-        ]
-    })})`);
+    paletteView.Refract(`
+        SceneInjector.Grid(${JSON.stringify({
+            name: "tilegrid",
+            id: 0,
+            components: [
+                {
+                    type: "Grid"
+                }
+            ]
+        })});
+    `);
 
     await new Promise(resolve => requestAnimationFrame(resolve));
 

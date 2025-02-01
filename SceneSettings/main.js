@@ -1,12 +1,3 @@
-function EvalToMain (data)
-{
-    ipcRenderer.invoke("eval", `
-        const win = FindWindow(${window.parentID});
-        
-        if (win != null) win.webContents.send("eval", \`${data}\`);
-    `);
-}
-
 window.addEventListener("beforeunload", () => EvalToMain("SceneManager.SetSettingsOpened(false)"));
 
 const URLSearch = new URLSearchParams(window.location.search);
@@ -178,6 +169,7 @@ function DrawUI ()
     //     UI.SectionEnd();
     // })(); UI.SectionEnd();
 }
+
 
 ipcRenderer.on("DrawUI", async (event, src) => {
     UI.Clear();

@@ -3,7 +3,8 @@
     "description": "",
     "scripts": [
         "GridRenderer",
-        "RectRenderer"
+        "RectRenderer",
+        "CircleRenderer"
     ],
     "classes": [
         {
@@ -17,6 +18,14 @@
                 {
                     "name" : "thickness",
                     "type" : "number"
+                },
+                {
+                    "name" : "sortingLayer",
+                    "type" : "number"
+                },
+                {
+                    "name" : "sortingOrder",
+                    "type" : "number"
                 }
             ]
         },
@@ -29,7 +38,45 @@
                     "type" : "Color"
                 },
                 {
+                    "name" : "fillColor",
+                    "type" : "Color"
+                },
+                {
                     "name" : "thickness",
+                    "type" : "number"
+                },
+                {
+                    "name" : "sortingLayer",
+                    "type" : "number"
+                },
+                {
+                    "name" : "sortingOrder",
+                    "type" : "number"
+                }
+            ]
+        },
+        {
+            "name": "CircleRenderer",
+            "type": 0,
+            "args": [
+                {
+                    "name" : "color",
+                    "type" : "Color"
+                },
+                {
+                    "name" : "fillColor",
+                    "type" : "Color"
+                },
+                {
+                    "name" : "thickness",
+                    "type" : "number"
+                },
+                {
+                    "name" : "sortingLayer",
+                    "type" : "number"
+                },
+                {
+                    "name" : "sortingOrder",
                     "type" : "number"
                 }
             ]

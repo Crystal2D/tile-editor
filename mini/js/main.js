@@ -1,3 +1,4 @@
+window.RefractBack = data => eval(data);
 window.onload = async () => {
     const URLSearch = new URLSearchParams(window.location.search);
     window.windowID = parseInt(decodeURIComponent(URLSearch.get("window-id")));
@@ -20,15 +21,29 @@ window.onload = async () => {
 
     await new Promise(resolve => style.addEventListener("load", () => requestAnimationFrame(resolve)));
 
+    await LoadScript(decodeURIComponent(URLSearch.get("js-src")));
+
+    ipcRenderer.invoke("eval", `minis.find(item => item.parentID === ${window.parentID} && item.id === ${JSON.stringify(window.miniID)}).loadCall()`);
+};
+
+async function LoadScript (src)
+{
     const script = document.createElement("script");
             
-    script.src = `../${decodeURIComponent(URLSearch.get("js-src"))}.js`;
+    script.src = `../${src}.js`;
     script.type = "text/javascript";
     script.async = true;
     
     document.body.append(script);
 
     await new Promise(resolve => script.addEventListener("load", () => requestAnimationFrame(resolve)));
+}
 
-    ipcRenderer.invoke("eval", `minis.find(item => item.parentID === ${window.parentID} && item.id === ${JSON.stringify(window.miniID)}).loadCall()`);
-};
+function EvalToMain (data)
+{
+    ipcRenderer.invoke("eval", `
+        const win = FindWindow(${window.parentID});
+        
+        if (win != null) win.webContents.send("eval", \`${data}\`);
+    `);
+}

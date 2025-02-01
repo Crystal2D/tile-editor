@@ -1,3 +1,4 @@
+let dir = "";
 let embeds = [];
 
 class Embed
@@ -22,12 +23,12 @@ class Embed
         return this.#index;
     }
 
-    constructor (wrapper)
+    constructor (wrapper, projectDir)
     {
         this.#wrap = wrapper;
         
         this.content = document.createElement("iframe");
-        this.content.src = `Refractor/index.html?dir=${ProjectManager.ProjectDir()}`;
+        this.content.src = `${dir}Refractor/index.html?dir=${projectDir ?? ProjectManager.ProjectDir()}`;
 
         wrapper.append(this.content);
 
@@ -64,6 +65,11 @@ class Embed
     }
 }
 
+function SetDirectory (directory)
+{
+    dir = directory;
+}
+
 function FindEmbed (id)
 {
     return embeds.find(item => item.id === id);
@@ -72,5 +78,6 @@ function FindEmbed (id)
 
 module.exports = {
     Embed,
+    SetDirectory,
     FindEmbed
 };

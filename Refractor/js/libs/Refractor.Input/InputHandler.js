@@ -33,7 +33,7 @@ class InputHandler extends GameBehavior
         this.#docBody = document.body;
         this.#cam = GameObject.Find("camera").GetComponent("Camera");
 
-        // FPSMeter.SetActive(true);
+        FPSMeter.SetActive(true);
     }
 
     OnEnable ()
@@ -114,7 +114,7 @@ class InputHandler extends GameBehavior
     {
         this.WalkView();
 
-        // FPSMeter.Update();
+        FPSMeter.Update();
     }
 
     DragView ()

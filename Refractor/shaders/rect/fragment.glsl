@@ -8,6 +8,7 @@
 precision mediump float;
 
 uniform vec4 uColor;
+uniform vec4 uFillColor;
 uniform vec2 uMin;
 uniform vec2 uMax;
 uniform float uThickness;
@@ -20,10 +21,12 @@ void main ()
 
     if (gl_FragCoord.x >= uMin.x - thicknessOffset && gl_FragCoord.x <= uMax.x + thicknessOffset)
     {
+        if (gl_FragCoord.y >= uMin.y - thicknessOffset && gl_FragCoord.y <= uMax.y + thicknessOffset) fragColor = uFillColor;
+        
         if (gl_FragCoord.y >= uMin.y - thicknessOffset && gl_FragCoord.y <= uMin.y + thicknessOffset) fragColor = uColor;
         if (gl_FragCoord.y >= uMax.y - thicknessOffset && gl_FragCoord.y <= uMax.y + thicknessOffset) fragColor = uColor;
     }
-
+    
     if (gl_FragCoord.y >= uMin.y - thicknessOffset && gl_FragCoord.y <= uMax.y + thicknessOffset)
     {
         if (gl_FragCoord.x >= uMin.x - thicknessOffset && gl_FragCoord.x <= uMin.x + thicknessOffset) fragColor = uColor;

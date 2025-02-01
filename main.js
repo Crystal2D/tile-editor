@@ -332,7 +332,7 @@ async function OpenProject (dir)
 
 async function OpenMini (title, windowID, miniID, js, css, search)
 {
-    const existing = FindMini(windowID, miniID);
+    let existing = FindMini(windowID, miniID);
 
     if (existing != null)
     {
@@ -354,6 +354,18 @@ async function OpenMini (title, windowID, miniID, js, css, search)
     });
     win.setMinimumSize(600, 400);
     win.webContents.openDevTools({ mode: "detach" });
+
+    existing = FindMini(windowID, miniID);
+
+    if (existing != null)
+    {
+        win.close();
+
+        existing.show();
+        existing.focus();
+
+        return;
+    }
 
     const parentWin = windowList.find(item => item.id === windowID);
     const closeCall = () => win.close();
