@@ -4,7 +4,6 @@ class PaletteInput extends GameBehavior
 
     #inputHandler = null;
     #focusedTile = null;
-    #lastFocusedTile = null;
     #selectionRect = null;
     #selectionRenderer = null;
 
@@ -87,7 +86,6 @@ class PaletteInput extends GameBehavior
         this.#selectionRenderer.color = new Color(0, 1, 1);
 
         this.#focusedTile = tile;
-        this.#lastFocusedTile = tile;
 
         window.parent.RefractBack(`SceneView.Refract("GameObject.FindComponents(\\"MainInput\\")[0].tile = { palette: \\"${tile.palette}\\", spriteID: ${tile.spriteID} }")`);
     }

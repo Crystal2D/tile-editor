@@ -17,15 +17,15 @@ out vec4 fragColor;
 
 void main ()
 {
-    // float thicknessOffset = uThickness * 0.5;
+    float thicknessOffset = uThickness * 0.5;
 
     float distance = distance(vec2(gl_FragCoord), uPosition);
 
-    fragColor = vec4(vec3(uColor), uColor.a - distance + 10.0 + 2.0);
+    fragColor = vec4(vec3(uColor), uColor.a - distance + uRadius + thicknessOffset);
     
-    if (distance < 8.0)
+    if (distance < uRadius - thicknessOffset)
     {
-        float factor = 1.0 - (10.0 - 2.0) + distance;
+        float factor = 1.0 - (uRadius - thicknessOffset) + distance;
         
         if (factor < 0.0) factor = 0.0;
 

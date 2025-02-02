@@ -5,7 +5,8 @@
         "InputManager",
         "InputHandler",
         "MainInput",
-        "PaletteInput"
+        "PaletteInput",
+        "MapperInput"
     ],
     "classes": [
         {
@@ -18,6 +19,10 @@
         },
         {
             "name" : "PaletteInput",
+            "type" : 0
+        },
+        {
+            "name" : "MapperInput",
             "type" : 0
         }
     ]

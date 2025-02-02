@@ -1,6 +1,8 @@
 class RectRenderer extends Renderer
 {
     #loaded = false;
+    #meshChanged = true;
+    #thickness = 3;
     #bounds = new Bounds();
 
     #material = null;
@@ -10,7 +12,6 @@ class RectRenderer extends Renderer
     uMinID = 0;
     uMaxID = 0;
     uThicknessID = 0;
-    thickness = 3;
     color = new Color(0, 0, 0, 0);
     fillColor = new Color(0, 0, 0, 0);
 
@@ -32,6 +33,23 @@ class RectRenderer extends Renderer
     get localToWorldMatrix ()
     {
         return this.transform.localToWorldMatrix;
+    }
+
+    get meshChanged ()
+    {
+        return this.#meshChanged;
+    }
+
+    get thickness ()
+    {
+        return this.#thickness;
+    }
+
+    set thickness (value)
+    {
+        this.#thickness = value;
+
+        this.#meshChanged = true;
     }
     
     constructor ()
@@ -91,13 +109,17 @@ class RectRenderer extends Renderer
                 this.transform.position.x,
                 this.transform.position.y
             ),
-            new Vector2(
-                this.transform.scale.x,
-                this.transform.scale.y
-            ),
+            Vector2.Add(this.transform.scale, this.#thickness * 0.5),
         );
 
         super.RecalcBounds();
+    }
+
+    ForceMeshUpdate ()
+    {
+        this.RecalcBounds();
+
+        this.#meshChanged = false;
     }
 
     Render ()

@@ -18,6 +18,9 @@ class InputHandler extends GameBehavior
 
     onRecalcMatrix = new DelegateEvent();
 
+    maxZoom = null;
+    bounds = null;
+
     get mousePos ()
     {
         return this.#mousePos;
@@ -40,10 +43,13 @@ class InputHandler extends GameBehavior
     {
         this.#onWheel = InputManager.onWheel.Add(delta => {
             const zoomOld = this.#cam.orthographicSize;
+            let nextZoom = zoomOld + zoomOld * delta;
             
-            if (zoomOld + zoomOld * delta < 0) return;
+            if (nextZoom < 0) return;
 
-            this.#cam.orthographicSize += zoomOld * delta;
+            if (this.maxZoom != null && nextZoom > this.maxZoom) nextZoom = this.maxZoom;
+
+            this.#cam.orthographicSize = nextZoom;
 
             this.#cam.transform.position = Vector2.Add(
                 this.#cam.transform.position,
@@ -54,6 +60,12 @@ class InputHandler extends GameBehavior
                     ),
                     (zoomOld - this.#cam.orthographicSize) / zoomOld
                 )
+            );
+
+            if (this.bounds != null) this.#cam.transform.position = Vector2.Clamp(
+                this.#cam.transform.position,
+                this.bounds.min,
+                this.bounds.max
             );
 
             this.RecalcViewMatrix();
@@ -99,7 +111,7 @@ class InputHandler extends GameBehavior
 
         const mouseMat = Matrix3x3.Translate(new Vector2(
             (this.#mouseX / Interface.width) - 0.5,
-            (this.#mouseY / Interface.height) - 0.5,
+            (this.#mouseY / Interface.height) - 0.5
         ));
         const targetMat = Matrix3x3.Multiply(this.#viewMat, mouseMat);
 
@@ -135,6 +147,12 @@ class InputHandler extends GameBehavior
             deltaY * (camSize.y / Interface.height)
         ));
 
+        if (this.bounds != null) this.#cam.transform.position = Vector2.Clamp(
+            this.#cam.transform.position,
+            this.bounds.min,
+            this.bounds.max
+        );
+
         this.RecalcViewMatrix();
     }
 
@@ -166,7 +184,16 @@ class InputHandler extends GameBehavior
 
         this.#cam.transform.position = Vector2.Add(
             this.#cam.transform.position,
-            Vector2.Scale(input.normalized, this.#cam.orthographicSize * Time.deltaTime * (Input.GetKey(KeyCode.Shift) ? 2 : 1.25))
+            Vector2.Scale(
+                input.normalized,
+                this.#cam.orthographicSize * Time.deltaTime * (Input.GetKey(KeyCode.Shift) ? 2 : 1.25)
+            )
+        );
+
+        if (this.bounds != null) this.#cam.transform.position = Vector2.Clamp(
+            this.#cam.transform.position,
+            this.bounds.min,
+            this.bounds.max
         );
         
         this.RecalcViewMatrix();

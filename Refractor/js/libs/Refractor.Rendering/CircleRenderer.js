@@ -1,6 +1,9 @@
 class CircleRenderer extends Renderer
 {
     #loaded = false;
+    #meshChanged = true;
+    #radius = 8;
+    #thickness = 2;
     #bounds = new Bounds();
 
     #material = null;
@@ -8,8 +11,8 @@ class CircleRenderer extends Renderer
     uColorID = 0;
     uFillColorID = 0;
     uPositionID = 0;
+    uRadiusID = 0;
     uThicknessID = 0;
-    thickness = 3;
     color = new Color(0, 0, 0, 0);
     fillColor = new Color(0, 0, 0, 0);
 
@@ -31,6 +34,35 @@ class CircleRenderer extends Renderer
     get localToWorldMatrix ()
     {
         return this.transform.localToWorldMatrix;
+    }
+
+    get meshChanged ()
+    {
+        return this.#meshChanged;
+    }
+
+    get radius ()
+    {
+        return this.#radius;
+    }
+
+    set radius (value)
+    {
+        this.#radius = value;
+
+        this.#meshChanged = true;
+    }
+
+    get thickness ()
+    {
+        return this.#thickness;
+    }
+
+    set thickness (value)
+    {
+        this.#thickness = value;
+
+        this.#meshChanged = true;
     }
     
     constructor ()
@@ -64,7 +96,8 @@ class CircleRenderer extends Renderer
         this.uColorID = this.material.GetPropertyNameID("uColor");
         this.uFillColorID = this.material.GetPropertyNameID("uFillColor");
         this.uPositionID = this.material.GetPropertyNameID("uPosition");
-        // this.uThicknessID = this.material.GetPropertyNameID("uThickness");
+        this.uRadiusID = this.material.GetPropertyNameID("uRadius");
+        this.uThicknessID = this.material.GetPropertyNameID("uThickness");
 
         this.geometryBufferID = this.material.AddBuffer("geometry", null, 2);
         this.aVertexPosID = this.material.GetAttributeNameID("aVertexPos");
@@ -89,13 +122,17 @@ class CircleRenderer extends Renderer
                 this.transform.position.x,
                 this.transform.position.y
             ),
-            new Vector2(
-                this.transform.scale.x,
-                this.transform.scale.y
-            ),
+            Vector2.Scale(Vector2.one, this.#radius + this.#thickness * 0.5)
         );
 
         super.RecalcBounds();
+    }
+
+    ForceMeshUpdate ()
+    {
+        this.RecalcBounds();
+
+        this.#meshChanged = false;
     }
 
     Render ()
@@ -128,7 +165,9 @@ class CircleRenderer extends Renderer
         );
 
         this.material.SetVector(this.uPositionID, position.x, position.y);
-        // this.material.SetFloat(this.uThicknessID, this.thickness);
+
+        this.material.SetFloat(this.uRadiusID, this.radius);
+        this.material.SetFloat(this.uThicknessID, this.thickness);
 
         this.material.SetAttribute(this.aVertexPosID, this.geometryBufferID);
         

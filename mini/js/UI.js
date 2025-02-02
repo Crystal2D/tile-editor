@@ -15,7 +15,7 @@ function PlaceholdText (text)
 
 function Init ()
 {
-    content = document.body;
+    content = main;
 
     content.addEventListener("contextmenu", () => onContext());
 }

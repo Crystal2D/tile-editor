@@ -20,30 +20,24 @@
                 },
                 {
                     "type": "InputHandler"
+                },
+                {
+                    "type": "MapperInput"
                 }
             ]
         },
         {
             "name" : "background",
             "id": 2,
-            "transform": {
-                "position": {
-                    "x": 0
-                }
-            },
             "components": [
                 {
-                    "type": "CircleRenderer",
+                    "type": "RectRenderer",
                     "args": {
-                        "color": {
-                            "r": 255,
-                            "g": 255,
-                            "b": 255
-                        },
+                        "thickness": 0,
                         "fillColor": {
-                            "r": 0,
-                            "g": 55,
-                            "b": 200
+                            "r": 86,
+                            "g": 86,
+                            "b": 86
                         }
                     }
                 }

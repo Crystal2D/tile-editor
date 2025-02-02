@@ -49,7 +49,7 @@ class InputManager
         let output = -1;
         
         this.#keys.find((element, index) => {
-            if (element.code !== (element.isLetter ? code.toLowerCase() : code)) return false;
+            if (element.code !== code) return false;
             
             output = index;
             
