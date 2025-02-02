@@ -2,6 +2,8 @@ class MapperInput extends GameBehavior
 {
     #inputHandler = null;
     #background = null;
+    #cam = null;
+    #sprRenderer = null;
     #creationRect = null;
     #creationRenderer = null;
     #createStart = null;
@@ -11,7 +13,8 @@ class MapperInput extends GameBehavior
     {
         this.#inputHandler = this.GetComponent("InputHandler");
         this.#background = GameObject.Find("background");
-
+        this.#cam = GameObject.Find("camera").GetComponent("Camera");
+        
         let bgLayerID = SortingLayer.layers.find(item => item.name === "Refractor Background")?.id;
 
         if (bgLayerID == null)
@@ -101,10 +104,57 @@ class MapperInput extends GameBehavior
         }
     }
 
-    SetBounds (size)
+    async SetRenderer ()
     {
-        this.#background.transform.scale = size;
-        this.#inputHandler.maxZoom = Math.max(size.x, size.y) * 2 + 0.25;
-        this.#inputHandler.bounds = new Bounds(Vector2.zero, size);
+        this.#sprRenderer = SceneBank.FindByID(-1).GetComponent("SpriteRenderer");
+
+        const bounds = this.#sprRenderer.bounds;
+        
+        this.#cam.transform.position = new Vector2(bounds.center.x, bounds.center.y);
+        this.#cam.orthographicSize = Math.max(bounds.size.x, bounds.size.y) + 0.25;
+        
+        this.#inputHandler.RecalcViewMatrix();
+
+        this.#background.transform.scale = new Vector2(bounds.size.x, bounds.size.y);
+        this.#inputHandler.maxZoom = Math.max(bounds.size.x, bounds.size.y) * 2 + 0.25;
+        this.#inputHandler.bounds = new Bounds(Vector2.zero, bounds.size);
+
+        const sprites = this.#sprRenderer.sprite.texture.sprites;
+        const ppu = this.#sprRenderer.sprite.pixelPerUnit;
+        const halfWidth = this.#sprRenderer.sprite.texture.width;
+        const halfHeight = this.#sprRenderer.sprite.texture.height;
+
+        for (let i = 1; i < sprites.length; i++)
+        {
+            const rect = sprites[i].rect;
+
+            await SceneInjector.GameObject({
+                name: "AAAAAAAAAAAAAAAAAAA",
+                id: 1111,
+                transform: {
+                    position: {
+                        x: (rect.center.x - halfWidth * 0.5) / ppu,
+                        y: -(rect.center.y - halfHeight * 0.5) / ppu
+                    },
+                    scale: {
+                        x: rect.size.x / ppu,
+                        y: rect.size.y / ppu
+                    }
+                },
+                components: [
+                    {
+                        type: "RectRenderer",
+                        args: {
+                            color: {
+                                r: 255,
+                                g: 255,
+                                b: 255
+                            },
+                            thickness: 1
+                        }
+                    }
+                ]
+            });
+        }
     }
 }

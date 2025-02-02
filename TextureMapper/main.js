@@ -87,7 +87,7 @@ MapperView.onLoad.Add(async () => {
         await SceneInjector.Resources(${JSON.stringify(texturePath)});
         await SceneInjector.GameObject(${JSON.stringify({
             name: "texture",
-            id: 0,
+            id: -1,
             components: [
                 {
                     type: "SpriteRenderer",
@@ -100,16 +100,7 @@ MapperView.onLoad.Add(async () => {
             ]
         })});
 
-        requestAnimationFrame(() => {
-            const cam = GameObject.FindComponents("Camera")[0];
-            const bounds = GameObject.FindComponents("SpriteRenderer")[0].bounds;
-            
-            cam.transform.position = new Vector2(bounds.center.x, bounds.center.y);
-            cam.orthographicSize = Math.max(bounds.size.x, bounds.size.y) + 0.25;
-            
-            GameObject.FindComponents("InputHandler")[0].RecalcViewMatrix();
-            GameObject.FindComponents("MapperInput")[0].SetBounds(new Vector2(bounds.size.x, bounds.size.y));
-        });
+        requestAnimationFrame(() => GameObject.FindComponents("MapperInput")[0].SetRenderer());
     })()`);
 
     await new Promise(resolve => requestAnimationFrame(resolve));
