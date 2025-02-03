@@ -6,7 +6,8 @@
         "InputHandler",
         "MainInput",
         "PaletteInput",
-        "MapperInput"
+        "MapperInput",
+        "SpriteRectInput"
     ],
     "classes": [
         {
@@ -23,6 +24,10 @@
         },
         {
             "name" : "MapperInput",
+            "type" : 0
+        },
+        {
+            "name" : "SpriteRectInput",
             "type" : 0
         }
     ]

@@ -9,6 +9,10 @@ class MapperInput extends GameBehavior
     #createStart = null;
     #createEnd = null;
 
+    #spriteCount = 0;
+
+    focused = null;
+
     Start ()
     {
         this.#inputHandler = this.GetComponent("InputHandler");
@@ -29,6 +33,7 @@ class MapperInput extends GameBehavior
 
     async Update ()
     {
+
         return;
 
         if (InputManager.GetKeyDown("left"))
@@ -106,39 +111,43 @@ class MapperInput extends GameBehavior
 
     async SetRenderer ()
     {
-        this.#sprRenderer = SceneBank.FindByID(-1).GetComponent("SpriteRenderer");
+        const spriteObj = SceneBank.FindByID(-1);
+        this.#sprRenderer = spriteObj.GetComponent("SpriteRenderer");
+
+        const ppu = this.#sprRenderer.sprite.pixelPerUnit;
+
+        spriteObj.transform.scale = Vector2.Scale(Vector2.one, ppu);
 
         const bounds = this.#sprRenderer.bounds;
         
         this.#cam.transform.position = new Vector2(bounds.center.x, bounds.center.y);
-        this.#cam.orthographicSize = Math.max(bounds.size.x, bounds.size.y) + 0.25;
+        this.#cam.orthographicSize = Math.max(bounds.size.x, bounds.size.y) * 1.25;
         
         this.#inputHandler.RecalcViewMatrix();
 
         this.#background.transform.scale = new Vector2(bounds.size.x, bounds.size.y);
-        this.#inputHandler.maxZoom = Math.max(bounds.size.x, bounds.size.y) * 2 + 0.25;
+        this.#inputHandler.maxZoom = Math.max(bounds.size.x, bounds.size.y) * 2.25;
         this.#inputHandler.bounds = new Bounds(Vector2.zero, bounds.size);
 
         const sprites = this.#sprRenderer.sprite.texture.sprites;
-        const ppu = this.#sprRenderer.sprite.pixelPerUnit;
-        const halfWidth = this.#sprRenderer.sprite.texture.width;
-        const halfHeight = this.#sprRenderer.sprite.texture.height;
+        const baseWidth = this.#sprRenderer.sprite.texture.width * 0.5;
+        const baseHeight = this.#sprRenderer.sprite.texture.height * 0.5;
 
         for (let i = 1; i < sprites.length; i++)
         {
             const rect = sprites[i].rect;
 
             await SceneInjector.GameObject({
-                name: "AAAAAAAAAAAAAAAAAAA",
-                id: 1111,
+                name: `rect_${this.#spriteCount}`,
+                id: this.#spriteCount,
                 transform: {
                     position: {
-                        x: (rect.center.x - halfWidth * 0.5) / ppu,
-                        y: -(rect.center.y - halfHeight * 0.5) / ppu
+                        x: rect.center.x - baseWidth,
+                        y: -rect.center.y + baseHeight
                     },
                     scale: {
-                        x: rect.size.x / ppu,
-                        y: rect.size.y / ppu
+                        x: rect.size.x,
+                        y: rect.size.y
                     }
                 },
                 components: [
@@ -152,9 +161,14 @@ class MapperInput extends GameBehavior
                             },
                             thickness: 1
                         }
+                    },
+                    {
+                        type: "SpriteRectInput"
                     }
                 ]
             });
+
+            this.#spriteCount++;
         }
     }
 }
