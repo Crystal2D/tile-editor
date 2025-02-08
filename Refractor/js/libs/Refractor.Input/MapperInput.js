@@ -33,6 +33,7 @@ class MapperInput extends GameBehavior
 
     async Update ()
     {
+        
 
         return;
 
@@ -130,6 +131,8 @@ class MapperInput extends GameBehavior
         const sprites = this.#sprRenderer.sprite.texture.sprites;
         const baseWidth = this.#sprRenderer.sprite.texture.width * 0.5;
         const baseHeight = this.#sprRenderer.sprite.texture.height * 0.5;
+
+        console.log(sprites);
 
         for (let i = 1; i < sprites.length; i++)
         {

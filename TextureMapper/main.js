@@ -108,6 +108,13 @@ MapperView.onLoad.Add(async () => {
 
 window.addEventListener("resize", () => MapperView.RecalcSize());
 
+const dock = UI.ContainerStart();
+dock.id = "dock";
+
+UI.TextField("Name");
+
+UI.ContainerEnd();
+
 
 ipcRenderer.on("OnChangePath", async (event, path) => {
     if (texturePath === path) return;

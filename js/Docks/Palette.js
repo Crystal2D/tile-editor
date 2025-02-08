@@ -356,7 +356,7 @@ async function LoadMapBase (name)
     paletteListItems.find(item => item.innerText === lastPalette)?.setAttribute("focused", 0);
     paletteListItems.find(item => item.innerText === name)?.setAttribute("focused", 1);
 
-    const map = paletteMaps.find(item => item.name === name);
+    let map = paletteMaps.find(item => item.name === name);
     const palette = palettes.find(item => item.name === name);
 
     if (map == null) map = await GenerateMap(name);
@@ -517,8 +517,10 @@ async function MapTextureBySqrt (map, data, pos)
             continue;
         }
 
-        const width = sprites[sprite.index - 1].width / ppu;
-        const height = sprites[sprite.index - 1].height / ppu;
+        const spriteRef = sprite.name != null ? sprites.find(item => item.name === sprite.name) : sprites[sprite.index - 1];
+
+        const width = spriteRef.width / ppu;
+        const height = spriteRef.height / ppu;
 
         if (width > map.cellSize.x) map.cellSize.x = width;
         if (height > map.cellSize.y) map.cellSize.y = height;
@@ -550,15 +552,20 @@ async function MapTextureByPos (map, data, pos)
 
     const texture = ProjectManager.FindResource(data.src);
     const ppu = texture.args.pixelPerUnit ?? 16;
-    const sprites = [...texture.args.sprites.map((item, index) => { return {
-        item: item,
-        index: index + 1
-    }; })];
+    const sprites = [...texture.args.sprites.map((item, index) => {
+        return {
+            item: item,
+            index: index + 1
+        };
+    })];
 
     sprites.sort((a, b) => (a.item.rect.x ?? 0) - (b.item.rect.x ?? 0));
     sprites.sort((a, b) => (a.item.rect.y ?? 0) - (b.item.rect.y ?? 0));
 
-    const zeroIndex = data.sprites.find(item => item.index === 0);
+    // TODO: cut data src to only end for find
+    // and make mapsprite use name
+
+    const zeroIndex = data.sprites.find(item => item.name === data.src || item.index === 0);
 
     if (zeroIndex != null)
     {
@@ -572,7 +579,7 @@ async function MapTextureByPos (map, data, pos)
     for (let i = 0; i < sprites.length; i++)
     {
         const sprite = sprites[i].item;
-        const paletteSprite = data.sprites.find(item => item.index === sprites[i].index);
+        const paletteSprite = data.sprites.find(item => item.name === sprite.name || item.index === sprites[i].index);
 
         if (paletteSprite == null) return;
 
