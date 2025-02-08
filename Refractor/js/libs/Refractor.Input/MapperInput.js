@@ -1,5 +1,7 @@
 class MapperInput extends GameBehavior
 {
+    #spriteCount = 0;
+
     #inputHandler = null;
     #background = null;
     #cam = null;
@@ -8,8 +10,6 @@ class MapperInput extends GameBehavior
     #creationRenderer = null;
     #createStart = null;
     #createEnd = null;
-
-    #spriteCount = 0;
 
     focused = null;
 
@@ -119,8 +119,6 @@ class MapperInput extends GameBehavior
         spriteObj.transform.scale = Vector2.Scale(Vector2.one, ppu);
 
         const bounds = this.#sprRenderer.bounds;
-        
-        this.#cam.transform.position = new Vector2(bounds.center.x, bounds.center.y);
         this.#cam.orthographicSize = Math.max(bounds.size.x, bounds.size.y) * 1.25;
         
         this.#inputHandler.RecalcViewMatrix();

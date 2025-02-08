@@ -7,7 +7,8 @@
         "MainInput",
         "PaletteInput",
         "MapperInput",
-        "SpriteRectInput"
+        "SpriteRectInput",
+        "RectDraggable"
     ],
     "classes": [
         {
