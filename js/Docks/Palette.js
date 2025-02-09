@@ -384,8 +384,10 @@ async function LoadMapBase (name)
                 y: 0
             }];
 
-            map.cellSize.x = Math.max(...sizes.map(item => item.x));
-            map.cellSize.y = Math.max(...sizes.map(item => item.y));
+            map.cellSize = {
+                x: Math.max(...sizes.map(item => item.x)),
+                y: Math.max(...sizes.map(item => item.y))
+            };
 
             save = true;
         }
@@ -479,8 +481,8 @@ async function GenerateMap (name)
     let map = {
         name: name,
         cellSize: {
-            x: 0.5,
-            y: 0.5
+            x: 0,
+            y: 0
         },
         textures: [],
         tiles: []
@@ -695,6 +697,83 @@ function GetTilePos (spriteID)
     return currentMap.tiles.find(item => item.spriteID === spriteID).position;
 }
 
+async function RecalcMapsByTexture (path)
+{
+    const maps = paletteMaps.filter(item => item.textures.includes(path));
+
+    if (maps.length === 0) return;
+
+    const texture = ProjectManager.FindResource(path);
+    const ppu = texture.args.pixelPerUnit ?? 16;
+    const sprites = texture.args.sprites ?? [];
+
+    const rawImage = new Image();
+    rawImage.src = `${ProjectManager.ProjectDir()}\\img\\${texture.args.src}`;
+
+    await new Promise(resolve => rawImage.onload = resolve);
+
+    const texWidth = rawImage.width / ppu;
+    const texHeight = rawImage.height / ppu;
+
+    for (let i = 0; i < maps.length; i++)
+    {
+        const map = maps[i];
+        const paletteTiles = palettes.find(item => item.name === map.name).textures.find(item => item.src === path).sprites;
+
+        for (let j = 0; j < paletteTiles.length; j++)
+        {
+            const paletteTile = paletteTiles[j];
+            const tile = map.tiles.find(item => item.spriteID === paletteTile.id);
+            
+            if (paletteTile.name === null || paletteTile.index === 0)
+            {
+                tile.size = {
+                    x: texWidth,
+                    y: texHeight
+                };
+
+                continue;
+            }
+
+            const sprite = paletteTile.name != null ? sprites.find(item => item.name === paletteTile.name) : sprites[paletteTile.index - 1];
+
+            tile.size = {
+                x: sprite.rect.width / ppu,
+                y: sprite.rect.height / ppu
+            };
+        }
+
+        const sizes = map.tiles.length > 0 ? map.tiles.map(item => item.size) : [{
+            x: 0,
+            y: 0
+        }];
+
+        map.cellSize = {
+            x: Math.max(...sizes.map(item => item.x)),
+            y: Math.max(...sizes.map(item => item.y))
+        };
+
+        if (currentPalette === map.name) Palette.PaletteView().Refract(`
+            SceneBank.FindByID(0).GetComponent("Grid").cellSize = new Vector2(${map.cellSize.x}, ${map.cellSize.y});
+
+            const tilemap = SceneBank.FindByID(1).GetComponent("Tilemap");
+            tilemap.ForceMeshUpdate();
+
+            requestAnimationFrame(() => {
+                const cam = GameObject.FindComponents("Camera")[0];
+                const bounds = tilemap.bounds;
+
+                cam.transform.position = new Vector2(bounds.center.x, bounds.center.y);
+                cam.orthographicSize = Math.max(bounds.size.x, bounds.size.y) * 1.25;
+
+                GameObject.FindComponents("InputHandler")[0].RecalcViewMatrix();
+            });
+        `);
+    }
+
+    await ProjectManager.SaveEditorData();
+}
+
 
 module.exports = {
     PaletteView,
@@ -705,5 +784,6 @@ module.exports = {
     LoadMap,
     GetTilePos,
     CacheResources,
-    GetResources
+    GetResources,
+    RecalcMapsByTexture
 };

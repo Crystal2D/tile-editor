@@ -66,18 +66,11 @@ function UpdatePPU (path, ppu)
         GameObject.FindComponents("MainInput")[0].ReloadPreview();
     `);
 
-    /**
-     * @todo: make palettes w/ texture update cellSize
-     *        then if active has texture, update display cellSize
-     */
     Palette.PaletteView().Refract(`
         Resources.FindUnloaded(${JSON.stringify(path)}).pixelPerUnit = ${ppu};
         Resources.Find(${JSON.stringify(path)}).pixelPerUnit = ${ppu ?? 16};
-
-        const tilemap = SceneBank.FindByID(1);
-
-        if (tilemap != null) tilemap.GetComponent("Tilemap").ForceMeshUpdate();
     `);
+    Palette.RecalcMapsByTexture(path);
 }
 
 async function ChangePath (oldPath, newPath)

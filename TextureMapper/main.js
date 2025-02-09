@@ -111,7 +111,16 @@ window.addEventListener("resize", () => MapperView.RecalcSize());
 const dock = UI.ContainerStart();
 dock.id = "dock";
 
-UI.TextField("Name");
+const name = UI.TextField("Name");
+name.element.id = "name";
+
+UI.SectionStart("Sprite");
+
+const position = UI.Vector2Field("Postion");
+const size = UI.Vector2Field("Size");
+const pivot = UI.Vector2Field("Pivot");
+
+UI.SectionEnd();
 
 UI.ContainerEnd();
 
