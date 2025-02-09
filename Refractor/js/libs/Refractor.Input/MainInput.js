@@ -36,6 +36,11 @@ class MainInput extends GameBehavior
         this.#previewRenderer = null;
     }
 
+    ReloadPreview ()
+    {
+        if (this.#previewRenderer != null) this.#previewRenderer.Reload();
+    }
+
     async #InjectPreview (sprite)
     {
         this.#previewRenderer = new SpriteRenderer(sprite);

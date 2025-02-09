@@ -307,7 +307,13 @@ async function OnRefractorLoad ()
             id: 0,
             components: [
                 {
-                    type: "Grid"
+                    type: "Grid",
+                    args: {
+                        cellSize: {
+                            x: 0,
+                            y: 0
+                        }
+                    }
                 }
             ]
         })});
@@ -371,6 +377,19 @@ async function LoadMapBase (name)
 
         for (let i = 0; i < removingTiles.length; i++) map.tiles.splice(map.tiles.indexOf(removingTiles[i]), 1);
 
+        if (removingTiles.length > 0)
+        {
+            const sizes = map.tiles.length > 0 ? map.tiles.map(item => item.size) : [{
+                x: 0,
+                y: 0
+            }];
+
+            map.cellSize.x = Math.max(...sizes.map(item => item.x));
+            map.cellSize.y = Math.max(...sizes.map(item => item.y));
+
+            save = true;
+        }
+
         let removingTextures = [];
 
         for (let i = 0; i < map.textures.length; i++)
@@ -380,13 +399,11 @@ async function LoadMapBase (name)
             if (texture == null || texture.sprites.length === 0) removingTextures.push(map.textures[i]);
         }
 
-        if (removingTiles.length > 0 || removingTextures.length > 0) save = true;
-
         for (let i = 0; i < removingTextures.length; i++) map.textures.splice(map.textures.indexOf(removingTextures[i]), 1);
 
         let pos = {
             x: 0,
-            y: Math.min(...map.tiles.map(item => item.position.y)) - 2
+            y: map.tiles.length > 0 ? (Math.min(...map.tiles.map(item => item.position.y)) - 2) : 0
         };
 
         const newTextures = palette.textures.filter(item => !map.textures.includes(item.src) && item.sprites.length > 0);
@@ -450,7 +467,7 @@ async function LoadMapBase (name)
             const bounds = GameObject.FindComponents("Tilemap")[0].bounds;
             
             cam.transform.position = new Vector2(bounds.center.x, bounds.center.y);
-            cam.orthographicSize = Math.min(bounds.size.x, bounds.size.y) + 1;
+            cam.orthographicSize = Math.max(bounds.size.x, bounds.size.y) * 1.25;
             
             GameObject.FindComponents("InputHandler")[0].RecalcViewMatrix();
         });
@@ -510,7 +527,7 @@ async function MapTextureBySqrt (map, data, pos)
     {
         const sprite = data.sprites[i];
 
-        if (sprite.index === 0)
+        if (sprite.name === null || sprite.index === 0)
         {
             await MapSprite(map, data.src, sprite, pos, maxX);
 
@@ -519,8 +536,8 @@ async function MapTextureBySqrt (map, data, pos)
 
         const spriteRef = sprite.name != null ? sprites.find(item => item.name === sprite.name) : sprites[sprite.index - 1];
 
-        const width = spriteRef.width / ppu;
-        const height = spriteRef.height / ppu;
+        const width = spriteRef.rect.width / ppu;
+        const height = spriteRef.rect.height / ppu;
 
         if (width > map.cellSize.x) map.cellSize.x = width;
         if (height > map.cellSize.y) map.cellSize.y = height;
@@ -531,6 +548,10 @@ async function MapTextureBySqrt (map, data, pos)
             position: {
                 x: pos.x,
                 y: pos.y
+            },
+            size: {
+                x: width,
+                y: height
             }
         });
 
@@ -562,10 +583,7 @@ async function MapTextureByPos (map, data, pos)
     sprites.sort((a, b) => (a.item.rect.x ?? 0) - (b.item.rect.x ?? 0));
     sprites.sort((a, b) => (a.item.rect.y ?? 0) - (b.item.rect.y ?? 0));
 
-    // TODO: cut data src to only end for find
-    // and make mapsprite use name
-
-    const zeroIndex = data.sprites.find(item => item.name === data.src || item.index === 0);
+    const zeroIndex = data.sprites.find(item => item.name === null || item.index === 0);
 
     if (zeroIndex != null)
     {
@@ -581,10 +599,10 @@ async function MapTextureByPos (map, data, pos)
         const sprite = sprites[i].item;
         const paletteSprite = data.sprites.find(item => item.name === sprite.name || item.index === sprites[i].index);
 
-        if (paletteSprite == null) return;
+        if (paletteSprite == null) continue;
 
-        const width = sprite.width / ppu;
-        const height = sprite.height / ppu;
+        const width = sprite.rect.width / ppu;
+        const height = sprite.rect.height / ppu;
 
         if (width > map.cellSize.x) map.cellSize.x = width;
         if (height > map.cellSize.y) map.cellSize.y = height;
@@ -604,6 +622,10 @@ async function MapTextureByPos (map, data, pos)
             position: {
                 x: pos.x,
                 y: pos.y
+            },
+            size: {
+                x: width,
+                y: height
             }
         });
 
@@ -620,10 +642,15 @@ async function MapSprite (map, texturePath, data, pos, maxX)
     const ppu = texture.args.pixelPerUnit ?? 16;
     const sprites = texture.args.sprites ?? [];
 
-    if (sprites.length > 0 && data.index > 0)
+    let width = 0;
+    let height = 0;
+
+    if (sprites.length > 0 && (data.name != null || data.index > 0))
     {
-        const width = sprites[data.index - 1].width / ppu;
-        const height = sprites[data.index - 1].height / ppu;
+        const sprite = data.name != null ? sprites.find(item => item.name === data.name) : sprites[data.index - 1];
+
+        width = sprite.rect.width / ppu;
+        height = sprite.rect.height / ppu;
 
         if (width > map.cellSize.x) map.cellSize.x = width;
         if (height > map.cellSize.y) map.cellSize.y = height;
@@ -635,8 +662,8 @@ async function MapSprite (map, texturePath, data, pos, maxX)
 
         await new Promise(resolve => rawImage.onload = resolve);
 
-        const width = rawImage.width / ppu;
-        const height = rawImage.height / ppu;
+        width = rawImage.width / ppu;
+        height = rawImage.height / ppu;
 
         if (width > map.cellSize.x) map.cellSize.x = width;
         if (height > map.cellSize.y) map.cellSize.y = height;
@@ -648,6 +675,10 @@ async function MapSprite (map, texturePath, data, pos, maxX)
         position: {
             x: pos.x,
             y: pos.y
+        },
+        size: {
+            x: width,
+            y: height
         }
     });
 
