@@ -454,13 +454,15 @@ async function NewScene ()
 {
     if (edited)
     {
-        const prompt = await ipcRenderer.invoke("UnsavedScenePrompt", activeScene.name, window.windowID);
+        const prompt = await ipcRenderer.invoke("UnsavedPrompt", "Scene has unsaved changes", activeScene.name, window.windowID);
 
         if (prompt === 0) return;
         else if (prompt === 1) await Save();
     }
 
     if (!LoadingScreen.IsEnabled()) LoadingScreen.EnableMini();
+
+    edited = false;
 
     LoadingScreen.SetText(`Creating New Scene`);
 
@@ -512,13 +514,15 @@ async function OpenScene ()
 
     if (edited)
     {
-        const prompt = await ipcRenderer.invoke("UnsavedScenePrompt", activeScene.name, window.windowID);
+        const prompt = await ipcRenderer.invoke("UnsavedPrompt", "Scene has unsaved changes", activeScene.name, window.windowID);
 
         if (prompt === 0) return;
         else if (prompt === 1) await Save();
     }
     else if (file.path === activeSceneSrc) return;
 
+    edited = false;
+    
     await Load(file.path);
 }
 

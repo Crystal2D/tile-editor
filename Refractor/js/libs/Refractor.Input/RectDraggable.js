@@ -10,7 +10,7 @@ class RectDraggable
     onMouseExit = () => { };
     onMouseDown = () => { };
     onMouseUp = () => { };
-    onDrag = (position) => { };
+    onDrag = (position, positionRaw) => { };
 
     rect = null;
 
@@ -46,7 +46,7 @@ class RectDraggable
         if (InputManager.GetKeyUp("left"))
         {
             this.onMouseUp();
-
+            
             this.#moving = false;
             this.#clickedPos = null;
             this.#clickOffset = null;
@@ -56,7 +56,13 @@ class RectDraggable
         {
             const newPos = Vector2.Add(mousePos, this.#clickOffset);
 
-            this.onDrag(newPos);
+            this.onDrag(
+                new Vector2(
+                    Math.round(newPos.x),
+                    Math.round(newPos.y)
+                ),
+                newPos
+            );
         }
     }
 }

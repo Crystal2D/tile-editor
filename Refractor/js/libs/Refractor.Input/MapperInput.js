@@ -1,7 +1,5 @@
 class MapperInput extends GameBehavior
 {
-    #spriteCount = 0;
-
     #inputHandler = null;
     #background = null;
     #cam = null;
@@ -10,6 +8,10 @@ class MapperInput extends GameBehavior
     #creationRenderer = null;
     #createStart = null;
     #createEnd = null;
+
+    baseWidth = 0;
+    baseHeight = 0;
+    spriteRects = [];
 
     focused = null;
 
@@ -129,22 +131,21 @@ class MapperInput extends GameBehavior
         this.#inputHandler.bounds = new Bounds(Vector2.zero, bounds.size);
 
         const sprites = this.#sprRenderer.sprite.texture.sprites;
-        const baseWidth = this.#sprRenderer.sprite.texture.width * 0.5;
-        const baseHeight = this.#sprRenderer.sprite.texture.height * 0.5;
 
-        console.log(sprites);
+        this.baseWidth = this.#sprRenderer.sprite.texture.width * 0.5;
+        this.baseHeight = this.#sprRenderer.sprite.texture.height * 0.5;
 
         for (let i = 1; i < sprites.length; i++)
         {
             const rect = sprites[i].rect;
 
             await SceneInjector.GameObject({
-                name: `rect_${this.#spriteCount}`,
-                id: this.#spriteCount,
+                name: `rect_${i}`,
+                id: i,
                 transform: {
                     position: {
-                        x: rect.center.x - baseWidth,
-                        y: -rect.center.y + baseHeight
+                        x: rect.center.x - this.baseWidth,
+                        y: -rect.center.y + this.baseHeight
                     },
                     scale: {
                         x: rect.size.x,
@@ -164,12 +165,15 @@ class MapperInput extends GameBehavior
                         }
                     },
                     {
-                        type: "SpriteRectInput"
+                        type: "SpriteRectInput",
+                        args: {
+                            spriteName: sprites[i].name
+                        }
                     }
                 ]
             });
 
-            this.#spriteCount++;
+            this.spriteRects.push(SceneBank.FindByID(i).GetComponent("SpriteRectInput"));
         }
     }
 }

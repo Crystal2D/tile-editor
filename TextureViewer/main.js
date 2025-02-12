@@ -303,7 +303,7 @@ async function UnsavedPrompt ()
 {
     if (!edited) return true;
 
-    const prompt = await ipcRenderer.invoke("UnsavedPrompt", "Texture has unsaved changes", `"${currentTexture}"`, window.windowID); 
+    const prompt = await ipcRenderer.invoke("UnsavedPrompt", "Texture has unsaved changes", currentTexture, window.windowID);
 
     if (prompt === 0) return false;
     else if (prompt === 1) await Save();

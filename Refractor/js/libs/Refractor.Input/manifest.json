@@ -29,7 +29,13 @@
         },
         {
             "name" : "SpriteRectInput",
-            "type" : 0
+            "type" : 0,
+            "args": [
+                {
+                    "name": "spriteName",
+                    "type": "string"
+                }
+            ]
         }
     ]
 } 

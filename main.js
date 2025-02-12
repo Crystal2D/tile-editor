@@ -238,7 +238,7 @@ async function ModalDialog (src, title, content, windowID)
 
 async function UnsavedPrompt (title, content, windowID)
 {
-    return await ModalDialog("unsaved-prompt", title, content, windowID);
+    return await ModalDialog("unsaved-prompt", title, `"${content}"`, windowID);
 }
 
 async function WarningDialog (title, content, windowID)

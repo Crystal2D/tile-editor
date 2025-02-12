@@ -8,7 +8,7 @@ let texturePath = decodeURIComponent(URLSearch.get("path"));
 Refractor.SetDirectory("../");
 
 MenuManager.AddToBar(
-    "Project",
+    "Texture",
     focused => {
         if (!focused)
         {
@@ -25,7 +25,7 @@ MenuManager.AddToBar(
 
         new ContextMenu(
             [
-                new MenuItem("Exit", () => window.close())
+                new MenuItem("Save")
             ]
         );
     }
@@ -113,10 +113,13 @@ dock.id = "dock";
 
 const name = UI.TextField("Name");
 name.element.id = "name";
+// name.onUpdate = value => console.log(value);
 
 UI.SectionStart("Sprite");
 
 const position = UI.Vector2Field("Postion");
+// position.fieldX.onUpdate = value => console.log(value);
+
 const size = UI.Vector2Field("Size");
 const pivot = UI.Vector2Field("Pivot");
 

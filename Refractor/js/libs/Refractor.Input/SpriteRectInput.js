@@ -18,9 +18,21 @@ class SpriteRectInput extends GameBehavior
     #rect = null;
     #onWheel = null;
 
+    spriteName = "";
+
     get rect ()
     {
         return new Rect(this.#rect.x, this.#rect.y, this.#rect.width, this.#rect.height);
+    }
+
+    get finalRect ()
+    {
+        return new Rect(
+            this.#rect.x + this.#mapperInput.baseWidth,
+            -this.#rect.yMax + this.#mapperInput.baseHeight,
+            this.#rect.width,
+            this.#rect.height
+        );
     }
 
     get hovered ()
@@ -68,16 +80,21 @@ class SpriteRectInput extends GameBehavior
             this.#cursorLocked = true;
         };
         this.#posDraggable.onMouseUp = () => this.#cursorLocked = false;
-        this.#posDraggable.onDrag = pos => {
+        this.#posDraggable.onDrag = (pos, posRaw) => {
             if (this.#mapperInput.focused !== this) return;
 
-            const newPos = new Vector2(
-                Math.round(pos.x),
-                Math.round(pos.y)
+            this.#rect.position = Vector2.Clamp(
+                new Vector2(
+                    Math.round(posRaw.x - this.#rect.width * 0.5),
+                    Math.round(posRaw.y - this.#rect.height * 0.5)
+                ),
+                new Vector2(-this.#mapperInput.baseWidth, -this.#mapperInput.baseHeight),
+                Vector2.Add(
+                    new Vector2(this.#mapperInput.baseWidth, this.#mapperInput.baseHeight),
+                    new Vector2(-this.#rect.width, -this.#rect.height)
+                )
             );
-            
-            this.#rect.center = newPos;
-            this.transform.position = newPos;
+            this.transform.position = this.#rect.center;
             
             this.#RecalcDraggables();
         };
@@ -91,9 +108,11 @@ class SpriteRectInput extends GameBehavior
             this.#SetCursor("");
         };
         this.#upDraggable.onDrag = pos => {
-            const newPos = Math.round(pos.y);
-
-            this.#rect.yMax = newPos;
+            this.#rect.yMax = Math.Clamp(
+                pos.y,
+                this.#rect.yMin + 1,
+                this.#mapperInput.baseHeight
+            );
             this.transform.position = this.#rect.center;
             this.transform.scale = this.#rect.size;
 
@@ -109,9 +128,11 @@ class SpriteRectInput extends GameBehavior
             this.#SetCursor("");
         };
         this.#downDraggable.onDrag = pos => {
-            const newPos = Math.round(pos.y);
-
-            this.#rect.yMin = newPos;
+            this.#rect.yMin = Math.Clamp(
+                pos.y,
+                -this.#mapperInput.baseHeight,
+                this.#rect.yMax - 1
+            );
             this.transform.position = this.#rect.center;
             this.transform.scale = this.#rect.size;
 
@@ -127,9 +148,11 @@ class SpriteRectInput extends GameBehavior
             this.#SetCursor("");
         };
         this.#leftDraggable.onDrag = pos => {
-            const newPos = Math.round(pos.x);
-
-            this.#rect.xMin = newPos;
+            this.#rect.xMin = Math.Clamp(
+                pos.x,
+                -this.#mapperInput.baseWidth,
+                this.#rect.xMax - 1
+            );
             this.transform.position = this.#rect.center;
             this.transform.scale = this.#rect.size;
 
@@ -145,9 +168,11 @@ class SpriteRectInput extends GameBehavior
             this.#SetCursor("");
         };
         this.#rightDraggable.onDrag = pos => {
-            const newPos = Math.round(pos.x);
-
-            this.#rect.xMax = newPos;
+            this.#rect.xMax = Math.Clamp(
+                pos.x,
+                this.#rect.xMin + 1,
+                this.#mapperInput.baseWidth
+            );
             this.transform.position = this.#rect.center;
             this.transform.scale = this.#rect.size;
 
@@ -163,13 +188,16 @@ class SpriteRectInput extends GameBehavior
             this.#SetCursor("");
         };
         this.#upleftDraggable.onDrag = pos => {
-            const newPos = new Vector2(
-                Math.round(pos.x),
-                Math.round(pos.y)
+            this.#rect.xMin = Math.Clamp(
+                pos.x,
+                -this.#mapperInput.baseWidth,
+                this.#rect.xMax - 1
             );
-
-            this.#rect.xMin = newPos.x;
-            this.#rect.yMax = newPos.y;
+            this.#rect.yMax = Math.Clamp(
+                pos.y,
+                this.#rect.yMin + 1,
+                this.#mapperInput.baseHeight
+            );
             this.transform.position = this.#rect.center;
             this.transform.scale = this.#rect.size;
 
@@ -185,12 +213,11 @@ class SpriteRectInput extends GameBehavior
             this.#SetCursor("");
         };
         this.#uprightDraggable.onDrag = pos => {
-            const newPos = new Vector2(
-                Math.round(pos.x),
-                Math.round(pos.y)
+            this.#rect.max = Vector2.Clamp(
+                pos,
+                Vector2.Add(this.#rect.min, 1),
+                new Vector2(this.#mapperInput.baseWidth, this.#mapperInput.baseHeight)
             );
-
-            this.#rect.max = newPos;
             this.transform.position = this.#rect.center;
             this.transform.scale = this.#rect.size;
 
@@ -206,12 +233,11 @@ class SpriteRectInput extends GameBehavior
             this.#SetCursor("");
         };
         this.#downleftDraggable.onDrag = pos => {
-            const newPos = new Vector2(
-                Math.round(pos.x),
-                Math.round(pos.y)
+            this.#rect.min = Vector2.Clamp(
+                pos,
+                new Vector2(-this.#mapperInput.baseWidth, -this.#mapperInput.baseHeight),
+                Vector2.Add(this.#rect.max, -1)
             );
-
-            this.#rect.min = newPos;
             this.transform.position = this.#rect.center;
             this.transform.scale = this.#rect.size;
 
@@ -227,13 +253,16 @@ class SpriteRectInput extends GameBehavior
             this.#SetCursor("");
         };
         this.#downrightDraggable.onDrag = pos => {
-            const newPos = new Vector2(
-                Math.round(pos.x),
-                Math.round(pos.y)
+            this.#rect.xMax = Math.Clamp(
+                pos.x,
+                this.#rect.xMin + 1,
+                this.#mapperInput.baseWidth
             );
-
-            this.#rect.xMax = newPos.x;
-            this.#rect.yMin = newPos.y;
+            this.#rect.yMin = Math.Clamp(
+                pos.y,
+                -this.#mapperInput.baseHeight,
+                this.#rect.yMax - 1
+            );
             this.transform.position = this.#rect.center;
             this.transform.scale = this.#rect.size;
 
@@ -243,7 +272,18 @@ class SpriteRectInput extends GameBehavior
 
     #RecalcDraggables ()
     {
-        const halfThickness = (this.#cam.orthographicSize * 0.15 * (4 / 40));
+        const position = this.finalRect.position;
+        const size = this.finalRect.size;
+
+        window.parent.RefractBack(`
+            position.x = ${position.x};
+            position.y = ${position.y};
+
+            size.x = ${size.x};
+            size.y = ${size.y};
+        `);
+
+        const halfThickness = (this.#cam.orthographicSize * 0.15 * (this.#renderer.thickness / 40));
 
         this.#posDraggable.rect = new Rect(this.#rect.x + halfThickness * 0.5, this.#rect.y + halfThickness * 0.5, this.#rect.width - halfThickness, this.#rect.height - halfThickness);
 
@@ -287,6 +327,21 @@ class SpriteRectInput extends GameBehavior
     
             this.#mapperInput.focused.Unfocus();
         }
+
+        const position = this.finalRect.position;
+        const size = this.finalRect.size;
+
+        window.parent.RefractBack(`
+            name.SetText(${JSON.stringify(this.spriteName)});
+
+            position.x = ${position.x};
+            position.y = ${position.y};
+
+            size.x = ${size.x};
+            size.y = ${size.y};
+
+            dock.style.display = "block";
+        `);
     
         this.#mapperInput.focused = this;
         this.#renderer.color = new Color(0, 1, 1);
