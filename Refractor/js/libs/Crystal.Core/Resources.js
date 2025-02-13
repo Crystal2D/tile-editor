@@ -97,6 +97,9 @@ class Resources
         this.FindUnloaded(oldPath).path = newPath;
 
         const res = this.#resources.find(item => item.path === oldPath);
+
+        if (res == null) return
+
         res.path = newPath;
         res.obj.name = newPath.split("/").slice(-1)[0];
     }

@@ -29,6 +29,11 @@
         {
             "name" : "background",
             "id": 2,
+            "transform": {
+                "scale": {
+                    "x": 0, "y": 0
+                }
+            },
             "components": [
                 {
                     "type": "RectRenderer",

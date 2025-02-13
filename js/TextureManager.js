@@ -71,6 +71,12 @@ function UpdatePPU (path, ppu)
         Resources.Find(${JSON.stringify(path)}).pixelPerUnit = ${ppu ?? 16};
     `);
     Palette.RecalcMapsByTexture(path);
+
+    ipcRenderer.invoke("eval", `
+        const win = FindMini(${window.windowID}, ${JSON.stringify(`texture-mapper:${path}`)});
+        
+        if (win != null) win.webContents.send("OnTextureUpdate", ${JSON.stringify(path)});
+    `);
 }
 
 async function ChangePath (oldPath, newPath)
@@ -115,7 +121,7 @@ async function ChangePath (oldPath, newPath)
         if (win != null)
         {
             win.id = ${JSON.stringify(`texture-mapper:${newPath}`)};
-            win.window.webContents.send("OnChangePath", ${JSON.stringify(newPath)});
+            win.window.webContents.send("OnTextureUpdate", ${JSON.stringify(newPath)});
         }
     `);
     

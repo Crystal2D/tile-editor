@@ -72,7 +72,7 @@ class SpriteRectInput extends GameBehavior
         this.#rect.size = new Vector2(this.transform.scale.x, this.transform.scale.y);
         this.#rect.center = new Vector2(this.transform.position.x, this.transform.position.y);
 
-        this.#RecalcDraggables();
+        this.#RecalcDraggables(true);
 
         this.#posDraggable.onMouseDown = () => {
             this.Focus();
@@ -270,17 +270,14 @@ class SpriteRectInput extends GameBehavior
         };
     }
 
-    #RecalcDraggables ()
+    #RecalcDraggables (ignoreOnDock)
     {
         const position = this.finalRect.position;
         const size = this.finalRect.size;
 
-        window.parent.RefractBack(`
-            position.x = ${position.x};
-            position.y = ${position.y};
-
-            size.x = ${size.x};
-            size.y = ${size.y};
+        if (!ignoreOnDock) window.parent.RefractBack(`
+            SetPosition(${position.x}, ${position.y});
+            SetSize(${size.x}, ${size.y});
         `);
 
         const halfThickness = (this.#cam.orthographicSize * 0.15 * (this.#renderer.thickness / 40));
@@ -298,13 +295,50 @@ class SpriteRectInput extends GameBehavior
         this.#downrightDraggable.rect = new Rect(this.#rect.xMax - halfThickness * 0.5, this.#rect.yMin - halfThickness * 0.5, halfThickness, halfThickness);
     }
 
+    SetPosition (pos)
+    {
+        this.#rect.position = Vector2.Clamp(
+            new Vector2(
+                pos.x - this.#mapperInput.baseWidth,
+                -pos.y + this.#mapperInput.baseHeight - this.#rect.height
+            ),
+            new Vector2(-this.#mapperInput.baseWidth, -this.#mapperInput.baseHeight),
+            Vector2.Add(
+                new Vector2(this.#mapperInput.baseWidth, this.#mapperInput.baseHeight),
+                new Vector2(-this.#rect.width, -this.#rect.height)
+            )
+        );
+        this.transform.position = this.#rect.center;
+        
+        this.#RecalcDraggables(true);
+    }
+
+    SetSize (size)
+    {
+        this.#rect.xMax = Math.Clamp(
+            size.x + this.#rect.xMin,
+            this.#rect.xMin + 1,
+            this.#mapperInput.baseWidth
+        );
+        this.#rect.yMin = Math.Clamp(
+            -size.y + this.#rect.yMax,
+            -this.#mapperInput.baseHeight,
+            this.#rect.yMax - 1
+        );
+        this.transform.position = this.#rect.center;
+        this.transform.scale = this.#rect.size;
+        
+        this.#RecalcDraggables(true);
+    }
+
     Update ()
     {
         const mousePos = this.#inputHandler.mousePos;
+        const focused = this.#mapperInput.focused === this;
 
         this.#posDraggable.Update(mousePos);
 
-        if (this.#mapperInput.focused !== this) return;
+        if (!focused) return;
 
         this.#upDraggable.Update(mousePos);
         this.#downDraggable.Update(mousePos);
@@ -328,27 +362,14 @@ class SpriteRectInput extends GameBehavior
             this.#mapperInput.focused.Unfocus();
         }
 
-        const position = this.finalRect.position;
-        const size = this.finalRect.size;
-
-        window.parent.RefractBack(`
-            name.SetText(${JSON.stringify(this.spriteName)});
-
-            position.x = ${position.x};
-            position.y = ${position.y};
-
-            size.x = ${size.x};
-            size.y = ${size.y};
-
-            dock.style.display = "block";
-        `);
+        window.parent.RefractBack(`FocusSprite(${JSON.stringify(this.spriteName)})`);
     
         this.#mapperInput.focused = this;
         this.#renderer.color = new Color(0, 1, 1);
         this.#renderer.thickness = 4;
         this.#renderer.sortingOrder = 1;
 
-        this.#RecalcDraggables();
+        this.#RecalcDraggables(true);
     }
 
     Unfocus ()
@@ -358,6 +379,6 @@ class SpriteRectInput extends GameBehavior
         this.#renderer.thickness = 1;
         this.#renderer.sortingOrder = 0;
 
-        this.#RecalcDraggables();
+        this.#RecalcDraggables(true);
     }
 }

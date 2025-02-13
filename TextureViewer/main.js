@@ -22,6 +22,7 @@ let inspectorApply = null;
 let inspectorPreview = null;
 let currentTexture = null;
 let textureRes = null;
+let noTextureInfo = null;
 
 let currentPPU = null;
 let currentRegPath = null;
@@ -51,7 +52,6 @@ let currentRegPath = null;
 
     textureList.append(...textureListItems);
 
-
     const dock = UI.ContainerStart();
     dock.id = "dock";
 
@@ -71,11 +71,11 @@ let currentRegPath = null;
         wrap.addEventListener("mousedown", event => { if (event.button === 0 && !keepFocus) Unfocus(); });
 
         UI.AddContent(textureList);
-
-        searchInfo = UI.Info("Sorry :v", "");
-        searchInfo.style.display = "none";
     }
-    else UI.Info("Huh...", "You currently have no textures");
+    else noTextureInfo = UI.Info("Huh...", "You currently have no textures");
+
+    searchInfo = UI.Info("Sorry :v", "");
+    searchInfo.style.display = "none";
 
     UI.ContainerEnd();
 
@@ -367,6 +367,17 @@ async function Unfocus ()
 
 async function NewTexture (path, src)
 {
+    if (noTextureInfo != null)
+    {
+        noTextureInfo.remove();
+
+        const wrap = main.querySelector("#list-wrap");
+        wrap.addEventListener("mousedown", event => { if (event.button === 0 && !keepFocus) Unfocus(); });
+        wrap.append(textureList);
+
+        noTextureInfo = null;
+    }
+
     const texture = {
         path: path,
         type: "Texture",
@@ -437,4 +448,14 @@ window.addEventListener("beforeunload", async event => {
         forceClose = true;
         window.close();
     }
+});
+
+ipcRenderer.on("UpdateTexture", async (event, path) => {
+    const resRequest = await fetch(`${projectDir}\\data\\resources.json`);
+    const newRes = await resRequest.json();
+
+    const texture = resources.find(item => item.path === path);
+    const newTexture = newRes.find(item => item.path === path);
+
+    texture.args.sprites = newTexture.args.sprites;
 });
