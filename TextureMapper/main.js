@@ -97,7 +97,7 @@ let texture = null;
 
     texture = resources.find(item => item.path === texturePath);
 
-    if (texture.args.sprites == null || texture.args.sprites.length === 0) texture.args.sprites = [];
+    if (texture.args.sprites == null) texture.args.sprites = [];
 })();
 
 const MapperView = new Refractor.Embed(mapperViewWrap, projectDir);
@@ -222,7 +222,17 @@ async function Save ()
         if (sprites[i].rect.y === 0) sprites[i].rect.y = undefined;
     }
 
+    if (texture.args.sprites.length === 0) texture.args.sprites = undefined;
+
     await FS.writeFile(`${projectDir}\\data\\resources.json`, JSON.stringify(resources, null, 4));
+
+    for (let i = 0; i < sprites.length; i++)
+    {
+        if (sprites[i].rect.x === undefined) sprites[i].rect.x = 0;
+        if (sprites[i].rect.y === undefined) sprites[i].rect.y = 0;
+    }
+
+    if (texture.args.sprites == null) texture.args.sprites = [];
 
     ipcRenderer.invoke("eval", `
         const win = FindMini(${window.parentID}, "texture-viewer");
@@ -230,7 +240,7 @@ async function Save ()
         if (win != null) win.webContents.send("UpdateTexture", ${JSON.stringify(texture.path)});
     `);
 
-    // TODO update resources on main
+    EvalToMain(`TextureManager.ReloadTextureSprites(${JSON.stringify(texture.path)})`);
 }
 
 

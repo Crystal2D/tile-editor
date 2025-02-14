@@ -57,13 +57,19 @@ function UpdatePPU (path, ppu)
 
     SceneView.Refract(`
         Resources.FindUnloaded(${JSON.stringify(path)}).pixelPerUnit = ${ppu};
-        Resources.Find(${JSON.stringify(path)}).pixelPerUnit = ${ppu ?? 16};
 
-        const tilemaps = ${JSON.stringify(tilemaps)};
+        const texture = Resources.Find(${JSON.stringify(path)});
 
-        for (let i = 0; i < tilemaps.length; i++) SceneBank.FindByID(tilemaps[i]).GetComponent("Tilemap").ForceMeshUpdate();
+        if (texture != null)
+        {
+            texture.pixelPerUnit = ${ppu ?? 16};
 
-        GameObject.FindComponents("MainInput")[0].ReloadPreview();
+            const tilemaps = ${JSON.stringify(tilemaps)};
+
+            for (let i = 0; i < tilemaps.length; i++) SceneBank.FindByID(tilemaps[i]).GetComponent("Tilemap").ForceMeshUpdate();
+
+            GameObject.FindComponents("MainInput")[0].ReloadPreview();
+        }
     `);
 
     Palette.PaletteView().Refract(`
@@ -128,8 +134,41 @@ async function ChangePath (oldPath, newPath)
     LoadingScreen.Disable();
 }
 
+async function ReloadTextureSprites (path)
+{
+    const resRequest = await fetch(`${ProjectManager.ProjectDir()}\\data\\resources.json`);
+    const newRes = await resRequest.json();
+
+    const texture = ProjectManager.FindResource(path);
+    const newTexture = newRes.find(item => item.path === path);
+
+    texture.args.sprites = newTexture.args.sprites;
+
+    const tilemaps = GetTilemapsWithTexture(path).map(item => item.id);
+
+    if (tilemaps.length === 0)
+    {
+        SceneView.Refract(`
+            Resources.FindUnloaded(${JSON.stringify(path)}).args.sprites = ${JSON.stringify(newTexture.args.sprites)};
+
+            const texture = Resources.Load(${JSON.stringify(path)});
+
+            if (texture != null)
+            {
+                Resources.Unload(${JSON.stringify(path)});
+                Resources.Load(${JSON.stringify(path)});
+            }
+        `);
+
+        return;
+    }
+
+    //
+}
+
 
 module.exports = {
     UpdatePPU,
-    ChangePath
+    ChangePath,
+    ReloadTextureSprites
 };
