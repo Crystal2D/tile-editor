@@ -109,7 +109,7 @@ class MapperInput extends GameBehavior
         }
     }
 
-    async SetRenderer ()
+    SetRenderer ()
     {
         const spriteObj = SceneBank.FindByID(0);
         this.#sprRenderer = spriteObj.GetComponent("SpriteRenderer");
@@ -141,7 +141,7 @@ class MapperInput extends GameBehavior
             do objID = Math.floor(Math.random() * 65536) + Math.floor(Math.random() * 65536);
             while (GameObject.FindByID(objID) != null)
 
-            await SceneInjector.GameObject({
+            SceneInjector.GameObject({
                 name: `rect_${objID}`,
                 id: objID,
                 transform: {
