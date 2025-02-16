@@ -249,10 +249,11 @@ class CrystalEngine
                 errWrap.style.marginLeft = "12px";
 
                 errLogs = document.createElement("span");
+                errLogs.style.userSelect = "text";
                 errLogs.append(error.stack);
                 
                 const tip = document.createElement("span");
-                tip.append("\n\n\n----------\n\nPress F5 to refresh");
+                tip.append("\n\n\n----------\n\nPlease report this");
                 
                 errWrap.append(errLogs, tip)
                 document.body.append(errWrap);
