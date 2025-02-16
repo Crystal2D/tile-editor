@@ -90,6 +90,7 @@ UI.AddContent(mapperViewWrap);
 
 let resources = null;
 let texture = null;
+let textureSize = null;
 
 (async () => {
     const resRequest = await fetch(`${projectDir}\\data\\resources.json`);
@@ -97,19 +98,29 @@ let texture = null;
 
     texture = resources.find(item => item.path === texturePath);
 
+    const rawImage = new Image();
+    rawImage.src = `${projectDir}\\img\\${texture.args.src}`;
+
+    await new Promise(resolve => rawImage.onload = resolve);
+
+    textureSize = {
+        x: rawImage.width,
+        y: rawImage.height
+    };
+
     if (texture.args.sprites == null) texture.args.sprites = [];
 })();
 
 const MapperView = new Refractor.Embed(mapperViewWrap, projectDir);
 MapperView.content.addEventListener("load", () => MapperView.Refract("window.targetScene = 2"));
 MapperView.onLoad.Add(async () => {
-    await new Promise(resolve => Loop.Append(() => { if (texture != null) resolve(); }, null, () => texture != null));
+    await new Promise(resolve => Loop.Append(() => { if (textureSize != null) resolve(); }, null, () => textureSize != null));
 
     MapperView.Refract(`(async () => {
         await SceneInjector.Resources(${JSON.stringify(texturePath)});
         await SceneInjector.GameObject(${JSON.stringify({
             name: "texture",
-            id: -1,
+            id: 0,
             components: [
                 {
                     type: "SpriteRenderer",
@@ -136,18 +147,60 @@ dock.id = "dock";
 let focusedSprite = null;
 
 const inspectorName = UI.TextField("Name");
-inspectorName.element.id = "name";
-// name.onUpdate = value => console.log(value);
+(() => {
+    inspectorName.element.id = "name";
+
+    const input = inspectorName.element.querySelector(".input")
+    inspectorName.onBlur = () => {
+        const text = input.innerText.trim();
+
+        if (text.length > 0) return;
+
+        input.innerText = focusedSprite.name;
+    };
+})();
+inspectorName.onUpdate = value => {
+    if (focusedSprite.name === value) return;
+
+    focusedSprite.name = value;
+
+    MapperView.Refract(`GameObject.FindComponents("MapperInput")[0].focused.spriteName = ${JSON.stringify(value)}`);
+};
 
 UI.SectionStart("Sprite");
 
+function Clamp (value, min, max)
+{
+    return Math.min(Math.max(value, min), max);
+}
+
 const inspectorPosition = UI.Vector2Field("Postion");
 inspectorPosition.fieldX.onUpdate = value => {
+    value = Clamp(
+        value,
+        0,
+        textureSize.x - focusedSprite.rect.width
+    );
+
+    inspectorPosition.x = value;
+
+    if (focusedSprite.rect.x === value) return;
+
     focusedSprite.rect.x = value;
     
     MapperView.Refract(`GameObject.FindComponents("MapperInput")[0].focused.SetPosition(new Vector2(${value}, ${focusedSprite.rect.y}))`);
 };
 inspectorPosition.fieldY.onUpdate = value => {
+    value = Clamp(
+        value,
+        0,
+        textureSize.y - focusedSprite.rect.height
+    );
+
+    inspectorPosition.y = value;
+
+    if (focusedSprite.rect.y === value) return;
+
     focusedSprite.rect.y = value;
     
     MapperView.Refract(`GameObject.FindComponents("MapperInput")[0].focused.SetPosition(new Vector2(${focusedSprite.rect.x}, ${value}))`);
@@ -155,11 +208,31 @@ inspectorPosition.fieldY.onUpdate = value => {
 
 const inspectorSize = UI.Vector2Field("Size");
 inspectorSize.fieldX.onUpdate = value => {
+    value = Clamp(
+        value,
+        1,
+        textureSize.x - focusedSprite.rect.x
+    );
+
+    inspectorSize.x = value;
+
+    if (focusedSprite.rect.width === value) return;
+
     focusedSprite.rect.width = value;
     
     MapperView.Refract(`GameObject.FindComponents("MapperInput")[0].focused.SetSize(new Vector2(${value}, ${focusedSprite.rect.height}))`);
 };
 inspectorSize.fieldY.onUpdate = value => {
+    value = Clamp(
+        value,
+        1,
+        textureSize.y - focusedSprite.rect.y
+    );
+
+    inspectorSize.y = value;
+
+    if (focusedSprite.rect.height === value) return;
+
     focusedSprite.rect.height = value;
     
     MapperView.Refract(`GameObject.FindComponents("MapperInput")[0].focused.SetSize(new Vector2(${focusedSprite.rect.width}, ${value}))`);

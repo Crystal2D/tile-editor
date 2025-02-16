@@ -139,7 +139,18 @@ let currentRegPath = null;
     inspectorContent.style.display = "none";
 
     inspectorPath = UI.TextField("Registered Path");
-    inspectorPath.element.id = "texture-path";
+    (() => {
+        inspectorPath.element.id = "texture-path";
+
+        const input = inspectorPath.element.querySelector(".input")
+        inspectorPath.onBlur = () => {
+            const text = input.innerText.trim();
+
+            if (text.length > 0) return;
+
+            input.innerText = currentTexture;
+        };
+    })();
     inspectorPath.onUpdate = value => {
         if (currentTexture == null || currentRegPath === value) return;
 

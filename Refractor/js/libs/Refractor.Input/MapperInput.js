@@ -11,7 +11,6 @@ class MapperInput extends GameBehavior
 
     baseWidth = 0;
     baseHeight = 0;
-    spriteRects = [];
 
     focused = null;
 
@@ -35,8 +34,6 @@ class MapperInput extends GameBehavior
 
     async Update ()
     {
-        
-
         return;
 
         if (InputManager.GetKeyDown("left"))
@@ -114,7 +111,7 @@ class MapperInput extends GameBehavior
 
     async SetRenderer ()
     {
-        const spriteObj = SceneBank.FindByID(-1);
+        const spriteObj = SceneBank.FindByID(0);
         this.#sprRenderer = spriteObj.GetComponent("SpriteRenderer");
 
         const ppu = this.#sprRenderer.sprite.pixelPerUnit;
@@ -139,9 +136,14 @@ class MapperInput extends GameBehavior
         {
             const rect = sprites[i].rect;
 
+            let objID = null;
+
+            do objID = Math.floor(Math.random() * 65536) + Math.floor(Math.random() * 65536);
+            while (GameObject.FindByID(objID) != null)
+
             await SceneInjector.GameObject({
-                name: `rect_${i}`,
-                id: i,
+                name: `rect_${objID}`,
+                id: objID,
                 transform: {
                     position: {
                         x: rect.center.x - this.baseWidth,
@@ -172,8 +174,6 @@ class MapperInput extends GameBehavior
                     }
                 ]
             });
-
-            this.spriteRects.push(SceneBank.FindByID(i).GetComponent("SpriteRectInput"));
         }
     }
 }

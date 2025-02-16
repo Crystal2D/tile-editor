@@ -165,13 +165,14 @@ async function ReloadTextureSprites (path)
 
     await ipcRenderer.invoke("InfoDialog", "Restart Required", "The texture changed is currently in use.\n\nRestart will be done to apply changes", window.windowID);
 
-    if (!SceneManager.IsEdited()) return;
-    
-    const prompt = await ipcRenderer.invoke("UnsavedPrompt", "Scene has unsaved changes", `scene "${SceneManager.GetActiveScene().name}"`, window.windowID);
+    if (SceneManager.IsEdited())
+    {
+        const prompt = await ipcRenderer.invoke("UnsavedPrompt", "Scene has unsaved changes", `scene "${SceneManager.GetActiveScene().name}"`, window.windowID);
 
-    if (prompt === 1) await SceneManager.Save();
+        if (prompt === 1) await SceneManager.Save();
     
-    forceDOMClose = true;
+        forceDOMClose = true;
+    }
 
     // lazy method lmao
     window.location.reload();
