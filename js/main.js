@@ -2,6 +2,8 @@ let viewerFPS = {
     main: 0,
     palette: 0
 };
+let forceDOMClose = false;
+
 let SceneView = null;
 
 window.RefractBack = data => eval(data);
@@ -275,10 +277,8 @@ window.onload = async () => {
 
     return;
 
-    let forceClose = false;
-
     window.addEventListener("beforeunload", async event => {
-        if (forceClose) return;
+        if (forceDOMClose) return;
 
         if (SceneManager.IsEdited())
         {
@@ -289,7 +289,7 @@ window.onload = async () => {
             if (prompt === 0) return;
             else if (prompt === 1) await SceneManager.Save();
             
-            forceClose = true;
+            forceDOMClose = true;
             window.close();
         }
     });

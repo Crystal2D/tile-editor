@@ -25,6 +25,11 @@ class Application
         return this.#loaded;
     }
 
+    static get isUnloaded ()
+    {
+        return this.#unloaded;
+    }
+
     static get isPlaying ()
     {
         return this.#playing;
@@ -81,7 +86,7 @@ class Application
         this.#inited = true;
     }
     
-    static Bind (onLoad)
+    static Bind (onLoad, onUnload)
     {
         if (this.#binded) return;
         
@@ -105,10 +110,20 @@ class Application
     {
         if (this.#loaded) return;
 
-        await this.#onLoad();
+        try
+        {
+            await this.#onLoad();
 
-        this.#loaded = true;
-        this.#playing = true;
+            this.#loaded = true;
+            this.#playing = true;
+        }
+        catch (error)
+        {
+            this.#loaded = true;
+            this.#playing = true;
+
+            throw error;
+        }
     }
     
     static async Unload ()

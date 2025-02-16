@@ -39,8 +39,6 @@ async function main ()
     globalShortcut.register("CommandOrControl+Shift+R", () => { });
     globalShortcut.register("F5", () => { });
 
-    InitWindow();
-
     app.on("second-instance", () => {
         if (closeHub)
         {
@@ -52,6 +50,8 @@ async function main ()
         hubWindow.show();
         hubWindow.focus();
     });
+
+    InitWindow();
 }
 
 async function CreateWindow (data)
@@ -198,6 +198,10 @@ async function InitWindow ()
 
 async function ModalDialog (src, title, content, windowID)
 {
+    const parentWin = FindWindow(windowID);
+    parentWin.show();
+    parentWin.focus();
+
     const win = await CreateWindow({
         name: title,
         width: 400,
@@ -209,9 +213,9 @@ async function ModalDialog (src, title, content, windowID)
             color: "#202020",
             symbolColor: "#aaaaaa",
         },
-        search: `content=${content}&parent-id=${windowID}`,
+        search: `content=${encodeURIComponent(content)}&parent-id=${windowID}`,
         modal: true,
-        parent: FindWindow(windowID)
+        parent: parentWin
     });
     win.minimizable = false;
     win.maximizable = false;
@@ -244,6 +248,11 @@ async function UnsavedPrompt (title, content, windowID)
 async function WarningDialog (title, content, windowID)
 {
     return await ModalDialog("warning-dialog", title, content, windowID);
+}
+
+async function InfoDialog (title, content, windowID)
+{
+    return await ModalDialog("info-dialog", title, content, windowID);
 }
 
 async function RefreshTray ()
@@ -398,5 +407,6 @@ ipcMain.handle("OpenProject", async (event, dir) => OpenProject(dir));
 ipcMain.handle("RefreshTray", () => RefreshTray());
 ipcMain.handle("UnsavedPrompt", async (data, title, content, windowID) => await UnsavedPrompt(title, content, windowID));
 ipcMain.handle("WarningDialog", async (data, title, content, windowID) => await WarningDialog(title, content, windowID));
+ipcMain.handle("InfoDialog", async (data, title, content, windowID) => await InfoDialog(title, content, windowID));
 ipcMain.handle("eval", (data, input) => eval(input));
 ipcMain.handle("OpenMini", async (data, title, windowID, miniID, js, css, search) => await OpenMini (title, windowID, miniID, js, css, search));

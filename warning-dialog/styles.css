@@ -5,3 +5,8 @@ img
     margin-left: 30px;
     margin-right: 20px;
 }
+
+#text
+{
+    white-space: pre-wrap;
+}
