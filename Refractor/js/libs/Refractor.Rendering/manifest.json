@@ -78,6 +78,10 @@
                 {
                     "name" : "sortingOrder",
                     "type" : "number"
+                },
+                {
+                    "name" : "radius",
+                    "type" : "number"
                 }
             ]
         }

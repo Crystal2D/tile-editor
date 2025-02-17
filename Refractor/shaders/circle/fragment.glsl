@@ -21,14 +21,13 @@ void main ()
 
     float distance = distance(vec2(gl_FragCoord), uPosition);
 
-    fragColor = vec4(vec3(uColor), uColor.a - distance + uRadius + thicknessOffset);
+    fragColor = vec4(vec3(uColor), uColor.a * (1.0 - distance + uRadius + thicknessOffset));
     
     if (distance < uRadius - thicknessOffset)
     {
-        float factor = 1.0 - (uRadius - thicknessOffset) + distance;
-        
-        if (factor < 0.0) factor = 0.0;
+        vec4 fillColor = uFillColor.a > 0.0 ? uFillColor : vec4(vec3(uColor), 0.0);
+        float factor = max(1.0 - (uRadius - thicknessOffset) + distance, 0.0);
 
-        fragColor = mix(uFillColor, uColor, factor);
+        fragColor = mix(fillColor, uColor, factor);
     }
 }

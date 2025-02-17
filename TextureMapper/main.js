@@ -162,9 +162,49 @@ const inspectorName = UI.TextField("Name");
 inspectorName.onUpdate = value => {
     if (focusedSprite.name === value) return;
 
-    focusedSprite.name = value;
+    let nameIndex = value.match(/ \(\d+\)$/);
 
-    MapperView.Refract(`GameObject.FindComponents("MapperInput")[0].focused.spriteName = ${JSON.stringify(value)}`);
+    if (nameIndex != null)
+    {
+        value = value.slice(0, -nameIndex[0].length);
+        nameIndex = parseInt(nameIndex[0].slice(2, -1));
+    }
+    else nameIndex = 0;
+
+    const nameRegex = new RegExp(`(${value}) \\(\\d+\\)$`);
+
+    const nameMatches = texture.args.sprites.filter(item => item.name.match(nameRegex) != null || item.name === value).map(item => parseInt((item.name.match(/ \(\d+\)$/) ?? [" (0)"])[0].slice(2, -1)));
+    nameMatches.sort((a, b) => a - b);
+
+    for (let i = 0; i < nameMatches.length; i++)
+    {
+        if (nameMatches[i] < nameIndex) continue;
+
+        if (nameMatches[i] - nameIndex === 0)
+        {
+            nameIndex++;
+
+            continue;
+        }
+
+        nameIndex = nameMatches[i - 1] + 1;
+
+        break;
+    }
+
+    if (nameIndex === 0)
+    {
+        focusedSprite.name = value;
+
+        MapperView.Refract(`GameObject.FindComponents("MapperInput")[0].focused.spriteName = ${JSON.stringify(value)}`);
+
+        return;
+    }
+    
+    focusedSprite.name = `${value} (${nameIndex})`;
+    inspectorName.SetText(focusedSprite.name);
+
+    MapperView.Refract(`GameObject.FindComponents("MapperInput")[0].focused.spriteName = ${JSON.stringify(focusedSprite.name)}`);
 };
 
 UI.SectionStart("Sprite");
@@ -207,12 +247,10 @@ inspectorPosition.fieldY.onUpdate = value => {
 };
 
 const inspectorSize = UI.Vector2Field("Size");
+inspectorSize.fieldX.min = 1;
+inspectorSize.fieldY.min = 1;
 inspectorSize.fieldX.onUpdate = value => {
-    value = Clamp(
-        value,
-        1,
-        textureSize.x - focusedSprite.rect.x
-    );
+    value = Math.min(value, textureSize.x - focusedSprite.rect.x);
 
     inspectorSize.x = value;
 
@@ -223,11 +261,7 @@ inspectorSize.fieldX.onUpdate = value => {
     MapperView.Refract(`GameObject.FindComponents("MapperInput")[0].focused.SetSize(new Vector2(${value}, ${focusedSprite.rect.height}))`);
 };
 inspectorSize.fieldY.onUpdate = value => {
-    value = Clamp(
-        value,
-        1,
-        textureSize.y - focusedSprite.rect.y
-    );
+    value = Math.min(value, textureSize.y - focusedSprite.rect.y);
 
     inspectorSize.y = value;
 
@@ -238,7 +272,31 @@ inspectorSize.fieldY.onUpdate = value => {
     MapperView.Refract(`GameObject.FindComponents("MapperInput")[0].focused.SetSize(new Vector2(${focusedSprite.rect.width}, ${value}))`);
 };
 
-const inspectorPivot = UI.Vector2Field("Pivot");
+const inspectorPivot = UI.Vector2Field("Pivot", 0.5, 0.5);
+inspectorPivot.fieldX.min = 0;
+inspectorPivot.fieldY.min = 0;
+inspectorPivot.fieldX.onUpdate = value => {
+    value = Math.min(value, 1);
+
+    inspectorPivot.x = value;
+
+    if (focusedSprite.pivot.x === value) return;
+
+    focusedSprite.pivot.x = value;
+    
+    // MapperView.Refract(`GameObject.FindComponents("MapperInput")[0].focused.SetSize(new Vector2(${value}, ${focusedSprite.rect.height}))`);
+};
+inspectorPivot.fieldY.onUpdate = value => {
+    value = Math.min(value, 1);
+
+    inspectorPivot.y = value;
+
+    if (focusedSprite.pivot.y === value) return;
+
+    focusedSprite.pivot.y = value;
+    
+    // MapperView.Refract(`GameObject.FindComponents("MapperInput")[0].focused.SetSize(new Vector2(${focusedSprite.rect.width}, ${value}))`);
+};
 
 UI.SectionEnd();
 
@@ -263,6 +321,13 @@ function FocusSprite (name)
 
     inspectorSize.x = focusedSprite.rect.width;
     inspectorSize.y = focusedSprite.rect.height;
+
+    if (focusedSprite.pivot == null) focusedSprite.pivot = { };
+    if (focusedSprite.pivot.x == null) focusedSprite.pivot.x = 0.5;
+    if (focusedSprite.pivot.y == null) focusedSprite.pivot.y = 0.5;
+
+    inspectorPivot.x = focusedSprite.pivot.x;
+    inspectorPivot.y = focusedSprite.pivot.y;
 }
 
 function SetPosition (x, y)
@@ -283,6 +348,15 @@ function SetSize (x, y)
     inspectorSize.y = focusedSprite.rect.height;
 }
 
+function SetPivot (x, y)
+{
+    focusedSprite.pivot.x = x;
+    focusedSprite.pivot.y = y;
+
+    inspectorPivot.x = focusedSprite.pivot.x;
+    inspectorPivot.y = focusedSprite.pivot.y;
+}
+
 async function Save ()
 {
     await new Promise(resolve => requestAnimationFrame(resolve));
@@ -293,6 +367,10 @@ async function Save ()
     {
         if (sprites[i].rect.x === 0) sprites[i].rect.x = undefined;
         if (sprites[i].rect.y === 0) sprites[i].rect.y = undefined;
+
+        if (sprites[i].pivot.x === 0.5) sprites[i].pivot.x = undefined;
+        if (sprites[i].pivot.y === 0.5) sprites[i].pivot.y = undefined;
+        if (sprites[i].pivot.x == null && sprites[i].pivot.y == null) sprites[i].pivot = undefined;
     }
 
     if (texture.args.sprites.length === 0) texture.args.sprites = undefined;
@@ -301,8 +379,12 @@ async function Save ()
 
     for (let i = 0; i < sprites.length; i++)
     {
-        if (sprites[i].rect.x === undefined) sprites[i].rect.x = 0;
-        if (sprites[i].rect.y === undefined) sprites[i].rect.y = 0;
+        if (sprites[i].rect.x == null) sprites[i].rect.x = 0;
+        if (sprites[i].rect.y == null) sprites[i].rect.y = 0;
+
+        if (sprites[i].pivot == null) sprites[i].pivot = { };
+        if (sprites[i].pivot.x == null) sprites[i].pivot.x = 0.5;
+        if (sprites[i].pivot.y == null) sprites[i].pivot.y = 0.5;
     }
 
     if (texture.args.sprites == null) texture.args.sprites = [];
@@ -324,13 +406,16 @@ ipcRenderer.on("OnTextureUpdate", async (event, path) => {
     resources = await resRequest.json();
 
     const newTexture = resources.find(item => item.path === path);
+    const oldPath = texture.path;
 
     texture.path = newTexture.path;
     texture.args.pixelPerUnit = newTexture.args.pixelPerUnit;
-
+    
     resources.splice(
         resources.indexOf(newTexture),
         1,
         texture
     );
+
+    MapperView.Refract(`Resources.Find(${JSON.stringify(oldPath)}).name = ${JSON.stringify(texture.path.split("/").slice(-1)[0])}`);
 });

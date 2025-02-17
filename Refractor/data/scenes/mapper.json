@@ -47,6 +47,44 @@
                     }
                 }
             ]
+        },
+        {
+            "name" : "grid",
+            "id": 3,
+            "components": [
+                {
+                    "type": "Grid",
+                    "args": {
+                        "cellSize": {
+                            "x": 1,
+                            "y": 1
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name" : "pivot",
+            "id": 4,
+            "components": [
+                {
+                    "type": "CircleRenderer",
+                    "args": {
+                        "sortingOrder": 2,
+                        "thickness": 3,
+                        "radius": 6,
+                        "color": {
+                            "r": 255,
+                            "g": 125,
+                            "b": 0,
+                            "a": 0
+                        }
+                    }
+                },
+                {
+                    "type": "CircleDragInput"
+                }
+            ]
         }
     ]
 }

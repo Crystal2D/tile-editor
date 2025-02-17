@@ -2,23 +2,38 @@ class MapperInput extends GameBehavior
 {
     #inputHandler = null;
     #background = null;
+    #grid = null;
     #cam = null;
     #sprRenderer = null;
     #creationRect = null;
-    #creationRenderer = null;
     #createStart = null;
     #createEnd = null;
 
+    cursorLocked = false;
     baseWidth = 0;
     baseHeight = 0;
+    spriteRects = [];
 
+    pivot = null;
     focused = null;
+
+    async SetCursor (cursor)
+    {
+        if (this.cursorLocked) return;
+
+        if (cursor !== "") await new Promise(resolve => requestAnimationFrame(resolve));
+
+        document.body.style.cursor = cursor;
+    }
 
     Start ()
     {
         this.#inputHandler = this.GetComponent("InputHandler");
         this.#background = GameObject.Find("background");
+        this.#grid = GameObject.Find("grid").GetComponent("Grid");
         this.#cam = GameObject.Find("camera").GetComponent("Camera");
+
+        this.pivot = GameObject.Find("pivot").GetComponent("CircleRenderer");
         
         let bgLayerID = SortingLayer.layers.find(item => item.name === "Refractor Background")?.id;
 
@@ -32,84 +47,155 @@ class MapperInput extends GameBehavior
         this.#background.GetComponent("RectRenderer").sortingLayer = bgLayerID;
     }
 
-    async Update ()
+    async #CreateSprite ()
     {
-        return;
+        const mousePosSnapped = this.#grid.SnapToGrid(this.#inputHandler.mousePos);
 
+        if (mousePosSnapped.x < -this.baseWidth + 0.5 || mousePosSnapped.x > this.baseWidth - 0.5) return;
+        if (mousePosSnapped.y < -this.baseHeight + 0.5 || mousePosSnapped.y > this.baseHeight - 0.5) return;
+
+        let objID = null;
+
+        do objID = Math.floor(Math.random() * 65536) + Math.floor(Math.random() * 65536);
+        while (SceneBank.FindByID(objID) != null)
+
+        let nameObj = this.#sprRenderer.sprite.texture.name;
+        let nameIndex = nameObj.match(/ \(\d+\)$/);
+
+        if (nameIndex != null)
+        {
+            nameObj = nameObj.slice(0, -nameIndex[0].length);
+            nameIndex = parseInt(nameIndex[0].slice(2, -1));
+        }
+        else nameIndex = 0;
+
+        const nameRegex = new RegExp(`(${nameObj}) \\(\\d+\\)$`);
+
+        const nameMatches = this.spriteRects.filter(item => item.spriteName.match(nameRegex) != null || item.spriteName === nameObj).map(item => parseInt((item.spriteName.match(/ \(\d+\)$/) ?? [" (0)"])[0].slice(2, -1)));
+        nameMatches.sort((a, b) => a - b);
+
+        for (let i = 0; i < nameMatches.length; i++)
+        {
+            if (nameMatches[i] < nameIndex) continue;
+
+            if (nameMatches[i] - nameIndex === 0)
+            {
+                nameIndex++;
+
+                continue;
+            }
+
+            nameIndex = nameMatches[i - 1] + 1;
+
+            break;
+        }
+
+        await SceneInjector.GameObject({
+            name: `rect_${objID}`,
+            id: objID,
+            components: [
+                {
+                    type: "RectRenderer",
+                    args: {
+                        color: {
+                            r: 0,
+                            g: 0,
+                            b: 255
+                        },
+                        thickness: 4,
+                        sortingOrder: 1
+                    }
+                },
+                {
+                    type: "SpriteRectInput",
+                    args: {
+                        spriteName: `${nameObj} (${nameIndex})`
+                    }
+                }
+            ]
+        });
+
+        this.#creationRect = SceneBank.FindByID(objID).GetComponent("RectRenderer");
+        this.#createStart = mousePosSnapped;
+    }
+
+    Update ()
+    {
         if (InputManager.GetKeyDown("left"))
         {
-            // bad idea to place await in Update loop
-            await SceneInjector.GameObject({
-                name: "AAAAAAAAAAAAAAAAAAA",
-                id: 1111,
-                components: [
-                    {
-                        type: "RectRenderer"
+            for (let i = 0; i < this.spriteRects.length; i++) if (this.spriteRects[i].hovered) return;
+
+            if (this.focused != null) this.focused.Unfocus();
+
+            this.#CreateSprite();
+        }
+
+        if (this.#createStart == null) return;
+
+        this.#createEnd = Vector2.Clamp(
+            this.#grid.SnapToGrid(this.#inputHandler.mousePos),
+            new Vector2(-this.baseWidth + 0.5, -this.baseHeight + 0.5),
+            new Vector2(this.baseWidth - 0.5, this.baseHeight - 0.5)
+        );
+
+        const rect = new Rect();
+
+        if (this.#createStart.x < this.#createEnd.x)
+        {
+            rect.xMin = this.#createStart.x;
+            rect.xMax = this.#createEnd.x;
+        }
+        else
+        {
+            rect.xMin = this.#createEnd.x;
+            rect.xMax = this.#createStart.x;
+        }
+
+        if (this.#createStart.y < this.#createEnd.y)
+        {
+            rect.yMin = this.#createStart.y;
+            rect.yMax = this.#createEnd.y;
+        }
+        else
+        {
+            rect.yMin = this.#createEnd.y;
+            rect.yMax = this.#createStart.y;
+        }
+
+        this.#creationRect.transform.position = rect.center;
+        this.#creationRect.transform.scale = Vector2.Add(rect.size, Vector2.one);
+
+        if (InputManager.GetKeyUp("left"))
+        {
+            const rectInput = this.#creationRect.GetComponent("SpriteRectInput");
+            rectInput.SetBaseRect();
+
+            const position = rectInput.finalRect.position;
+            const size = rectInput.finalRect.size;
+
+            window.parent.RefractBack(`
+                texture.args.sprites.push({
+                    name: ${JSON.stringify(rectInput.spriteName)},
+                    rect: {
+                        x: ${position.x},
+                        y: ${position.y},
+                        width: ${size.x},
+                        height: ${size.y}
                     }
-                ]
-            });
+                });
+            `);
 
-            this.#creationRect = SceneBank.FindByID(1111);
-            this.#creationRenderer = this.#creationRect.GetComponent("RectRenderer");
-            this.#createStart = this.#inputHandler.mousePos;
-        }
+            rectInput.Focus();
 
-        // if (this.#createStart == null)
-        // {
-        //     if (InputManager.isMouseOver && !this.#selectionRenderer.color.Equals(Color.white)) this.#selectionRenderer.color = Color.white;
-        //     else if (!InputManager.isMouseOver) this.#selectionRenderer.color = new Color(0, 0, 0, 0);
+            this.spriteRects.push(rectInput);
 
-        //     const gridSize = Vector2.Add(grid.cellSize, grid.cellGap);
-
-        //     if (!this.#selectionRect.transform.scale.Equals(gridSize)) this.#selectionRect.transform.scale = gridSize;
-            
-        //     this.#selectionRect.transform.position = this.#inputHandler.mousePosSnapped;
-        // }
-
-        if (this.#createStart != null && InputManager.GetKey("left"))
-        {
-            if (!this.#creationRenderer.color.Equals(new Color(0, 1, 1))) this.#creationRenderer.color = new Color(0, 1, 1);
-
-            this.#createEnd = this.#inputHandler.mousePos;
-
-            const rect = new Rect();
-
-            if (this.#createStart.x < this.#createEnd.x)
-            {
-                rect.xMin = this.#createStart.x;
-                rect.xMax = this.#createEnd.x;
-            }
-            else
-            {
-                rect.xMin = this.#createEnd.x;
-                rect.xMax = this.#createStart.x;
-            }
-
-            if (this.#createStart.y < this.#createEnd.y)
-            {
-                rect.yMin = this.#createStart.y;
-                rect.yMax = this.#createEnd.y;
-            }
-            else
-            {
-                rect.yMin = this.#createEnd.y;
-                rect.yMax = this.#createStart.y;
-            }
-
-            this.#creationRect.transform.position = rect.center;
-            this.#creationRect.transform.scale = rect.size;
-        }
-
-        if (this.#createStart != null && InputManager.GetKeyUp("left"))
-        {
             this.#creationRect = null;
-            this.#creationRenderer = null;
             this.#createStart = null;
             this.#createEnd = null;
         }
     }
 
-    SetRenderer ()
+    async SetRenderer ()
     {
         const spriteObj = SceneBank.FindByID(0);
         this.#sprRenderer = spriteObj.GetComponent("SpriteRenderer");
@@ -132,6 +218,11 @@ class MapperInput extends GameBehavior
         this.baseWidth = this.#sprRenderer.sprite.texture.width * 0.5;
         this.baseHeight = this.#sprRenderer.sprite.texture.height * 0.5;
 
+        this.#grid.transform.position = new Vector2(
+            +(this.#sprRenderer.sprite.texture.width % 2 === 0) * 0.5,
+            +(this.#sprRenderer.sprite.texture.height % 2 === 0) * 0.5
+        )
+
         for (let i = 1; i < sprites.length; i++)
         {
             const rect = sprites[i].rect;
@@ -139,9 +230,9 @@ class MapperInput extends GameBehavior
             let objID = null;
 
             do objID = Math.floor(Math.random() * 65536) + Math.floor(Math.random() * 65536);
-            while (GameObject.FindByID(objID) != null)
+            while (SceneBank.FindByID(objID) != null)
 
-            SceneInjector.GameObject({
+            await SceneInjector.GameObject({
                 name: `rect_${objID}`,
                 id: objID,
                 transform: {
@@ -169,11 +260,14 @@ class MapperInput extends GameBehavior
                     {
                         type: "SpriteRectInput",
                         args: {
-                            spriteName: sprites[i].name
+                            spriteName: sprites[i].name,
+                            pivot: sprites[i].pivot
                         }
                     }
                 ]
             });
+
+            this.spriteRects.push(SceneBank.FindByID(objID).GetComponent("SpriteRectInput"))
         }
     }
 }
