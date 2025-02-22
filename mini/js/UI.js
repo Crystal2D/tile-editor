@@ -1,8 +1,19 @@
+const onContext = new DelegateEvent();
+const onClear = new DelegateEvent();
+
 let tree = [];
-let onContext = () => { };
-let onClear = () => { };
 
 let content = null;
+
+function OnContext ()
+{
+    return onContext;
+}
+
+function OnClear ()
+{
+    return onClear;
+}
 
 function PlaceholdText (text)
 {
@@ -17,17 +28,14 @@ function Init ()
 {
     content = main;
 
-    content.addEventListener("contextmenu", () => onContext());
+    content.addEventListener("contextmenu", () => onContext.Invoke());
 }
 
 function Clear ()
 {
     while (content.firstChild != null) content.firstChild.remove();
 
-    onClear();
-
-    onContext = () => { };
-    onClear = () => { };
+    onClear.Invoke();
 }
 
 function AddContent (data)
@@ -496,5 +504,7 @@ module.exports = {
     SectionEnd,
     Info,
     Button,
-    SearchBar
+    SearchBar,
+    OnContext,
+    OnClear
 };

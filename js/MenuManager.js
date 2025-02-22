@@ -93,14 +93,20 @@ class ContextMenu
         document.body.append(this.#box);
 
         if (settings.posX == null) settings.posX = 0;
-        if (settings.posY == null) settings.posY = 20.5;
-        if (settings.posX >= window.innerWidth * 0.5) settings.posX -= this.#box.offsetWidth;
-        if (settings.posY >= window.innerHeight * 0.5) settings.posY -= this.#box.offsetHeight;
-
-        this.#box.style.left = `${Math.max(settings.posX, 0)}px`;
-        this.#box.style.top = `${Math.max(settings.posY, minY)}px`;
+        if (settings.posY == null) settings.posY = minY;
 
         if (settings.thinPadding) this.#box.setAttribute("thin-padding", 1);
+
+        requestAnimationFrame(() => {
+            const width = this.#box.getBoundingClientRect().width;
+            const height = this.#box.getBoundingClientRect().height;
+
+            if (settings.posX + width > window.innerWidth) settings.posX -= width;
+            if (settings.posY + height > window.innerHeight) settings.posY -= height;
+
+            this.#box.style.left = `${Math.max(settings.posX, 0)}px`;
+            this.#box.style.top = `${Math.max(settings.posY, minY)}px`;
+        });
 
         this.#backdropCall = () => this.Close();
 

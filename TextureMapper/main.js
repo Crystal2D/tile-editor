@@ -217,7 +217,7 @@ function Clamp (value, min, max)
 const inspectorPosition = UI.Vector2Field("Postion");
 inspectorPosition.fieldX.onUpdate = value => {
     value = Clamp(
-        value,
+        Math.round(value),
         0,
         textureSize.x - focusedSprite.rect.width
     );
@@ -232,7 +232,7 @@ inspectorPosition.fieldX.onUpdate = value => {
 };
 inspectorPosition.fieldY.onUpdate = value => {
     value = Clamp(
-        value,
+        Math.round(value),
         0,
         textureSize.y - focusedSprite.rect.height
     );
@@ -250,7 +250,7 @@ const inspectorSize = UI.Vector2Field("Size");
 inspectorSize.fieldX.min = 1;
 inspectorSize.fieldY.min = 1;
 inspectorSize.fieldX.onUpdate = value => {
-    value = Math.min(value, textureSize.x - focusedSprite.rect.x);
+    value = Math.min(Math.round(value), textureSize.x - focusedSprite.rect.x);
 
     inspectorSize.x = value;
 
@@ -261,7 +261,7 @@ inspectorSize.fieldX.onUpdate = value => {
     MapperView.Refract(`GameObject.FindComponents("MapperInput")[0].focused.SetSize(new Vector2(${value}, ${focusedSprite.rect.height}))`);
 };
 inspectorSize.fieldY.onUpdate = value => {
-    value = Math.min(value, textureSize.y - focusedSprite.rect.y);
+    value = Math.min(Math.round(value), textureSize.y - focusedSprite.rect.y);
 
     inspectorSize.y = value;
 
@@ -284,7 +284,7 @@ inspectorPivot.fieldX.onUpdate = value => {
 
     focusedSprite.pivot.x = value;
     
-    // MapperView.Refract(`GameObject.FindComponents("MapperInput")[0].focused.SetSize(new Vector2(${value}, ${focusedSprite.rect.height}))`);
+    MapperView.Refract(`GameObject.FindComponents("MapperInput")[0].focused.SetPivot(new Vector2(${value}, ${focusedSprite.pivot.y}))`);
 };
 inspectorPivot.fieldY.onUpdate = value => {
     value = Math.min(value, 1);
@@ -295,7 +295,7 @@ inspectorPivot.fieldY.onUpdate = value => {
 
     focusedSprite.pivot.y = value;
     
-    // MapperView.Refract(`GameObject.FindComponents("MapperInput")[0].focused.SetSize(new Vector2(${focusedSprite.rect.width}, ${value}))`);
+    MapperView.Refract(`GameObject.FindComponents("MapperInput")[0].focused.SetPivot(new Vector2(${focusedSprite.pivot.x}, ${value}))`);
 };
 
 UI.SectionEnd();
@@ -368,9 +368,12 @@ async function Save ()
         if (sprites[i].rect.x === 0) sprites[i].rect.x = undefined;
         if (sprites[i].rect.y === 0) sprites[i].rect.y = undefined;
 
-        if (sprites[i].pivot.x === 0.5) sprites[i].pivot.x = undefined;
-        if (sprites[i].pivot.y === 0.5) sprites[i].pivot.y = undefined;
-        if (sprites[i].pivot.x == null && sprites[i].pivot.y == null) sprites[i].pivot = undefined;
+        if (sprites[i].pivot != null)
+        {
+            if (sprites[i].pivot.x === 0.5) sprites[i].pivot.x = undefined;
+            if (sprites[i].pivot.y === 0.5) sprites[i].pivot.y = undefined;
+            if (sprites[i].pivot.x == null && sprites[i].pivot.y == null) sprites[i].pivot = undefined;
+        }
     }
 
     if (texture.args.sprites.length === 0) texture.args.sprites = undefined;

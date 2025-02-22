@@ -37,7 +37,7 @@ class SpriteRectInput extends GameBehavior
 
     get hovered ()
     {
-        return this.#posDraggable.isMouseOver || this.#upDraggable.isMouseOver || this.#downDraggable.isMouseOver || this.#leftDraggable.isMouseOver || this.#rightDraggable.isMouseOver || this.#upleftDraggable.isMouseOver || this.#uprightDraggable.isMouseOver || this.#downleftDraggable.isMouseOver || this.#downrightDraggable.isMouseOver;
+        return this.#mapperInput.pivot.isMouseOver || this.#posDraggable.isMouseOver || this.#upDraggable.isMouseOver || this.#downDraggable.isMouseOver || this.#leftDraggable.isMouseOver || this.#rightDraggable.isMouseOver || this.#upleftDraggable.isMouseOver || this.#uprightDraggable.isMouseOver || this.#downleftDraggable.isMouseOver || this.#downrightDraggable.isMouseOver;
     }
 
     OnEnable ()
@@ -70,14 +70,16 @@ class SpriteRectInput extends GameBehavior
 
         this.SetBaseRect();
 
-        this.#posDraggable.onMouseDown = () => {
-            this.Focus();
-
-            this.#mapperInput.cursorLocked = true;
-        };
+        this.#posDraggable.onMouseDown = () => this.Focus();
         this.#posDraggable.onMouseUp = () => this.#mapperInput.cursorLocked = false;
         this.#posDraggable.onDrag = (pos, posRaw) => {
             if (this.#mapperInput.focused !== this) return;
+
+            if (!this.#mapperInput.cursorLocked)
+            {
+                this.#mapperInput.SetCursor("");
+                this.#mapperInput.cursorLocked = true;
+            }
 
             this.#rect.position = Vector2.Clamp(
                 new Vector2(
@@ -101,7 +103,7 @@ class SpriteRectInput extends GameBehavior
         this.#upDraggable.onMouseUp = () => {
             this.#mapperInput.cursorLocked = false;
 
-            this.#mapperInput.SetCursor("");
+            if (!this.#upDraggable.isMouseOver) this.#mapperInput.SetCursor("");
         };
         this.#upDraggable.onDrag = pos => {
             this.#rect.yMax = Math.Clamp(
@@ -121,7 +123,7 @@ class SpriteRectInput extends GameBehavior
         this.#downDraggable.onMouseUp = () => {
             this.#mapperInput.cursorLocked = false;
 
-            this.#mapperInput.SetCursor("");
+            if (!this.#downDraggable.isMouseOver) this.#mapperInput.SetCursor("");
         };
         this.#downDraggable.onDrag = pos => {
             this.#rect.yMin = Math.Clamp(
@@ -141,7 +143,7 @@ class SpriteRectInput extends GameBehavior
         this.#leftDraggable.onMouseUp = () => {
             this.#mapperInput.cursorLocked = false;
 
-            this.#mapperInput.SetCursor("");
+            if (!this.#leftDraggable.isMouseOver) this.#mapperInput.SetCursor("");
         };
         this.#leftDraggable.onDrag = pos => {
             this.#rect.xMin = Math.Clamp(
@@ -161,7 +163,7 @@ class SpriteRectInput extends GameBehavior
         this.#rightDraggable.onMouseUp = () => {
             this.#mapperInput.cursorLocked = false;
 
-            this.#mapperInput.SetCursor("");
+            if (!this.#rightDraggable.isMouseOver) this.#mapperInput.SetCursor("");
         };
         this.#rightDraggable.onDrag = pos => {
             this.#rect.xMax = Math.Clamp(
@@ -181,7 +183,7 @@ class SpriteRectInput extends GameBehavior
         this.#upleftDraggable.onMouseUp = () => {
             this.#mapperInput.cursorLocked = false;
 
-            this.#mapperInput.SetCursor("");
+            if (!this.#upleftDraggable.isMouseOver) this.#mapperInput.SetCursor("");
         };
         this.#upleftDraggable.onDrag = pos => {
             this.#rect.xMin = Math.Clamp(
@@ -206,7 +208,7 @@ class SpriteRectInput extends GameBehavior
         this.#uprightDraggable.onMouseUp = () => {
             this.#mapperInput.cursorLocked = false;
 
-            this.#mapperInput.SetCursor("");
+            if (!this.#uprightDraggable.isMouseOver) this.#mapperInput.SetCursor("");
         };
         this.#uprightDraggable.onDrag = pos => {
             this.#rect.max = Vector2.Clamp(
@@ -226,7 +228,7 @@ class SpriteRectInput extends GameBehavior
         this.#downleftDraggable.onMouseUp = () => {
             this.#mapperInput.cursorLocked = false;
 
-            this.#mapperInput.SetCursor("");
+            if (!this.#downleftDraggable.isMouseOver) this.#mapperInput.SetCursor("");
         };
         this.#downleftDraggable.onDrag = pos => {
             this.#rect.min = Vector2.Clamp(
@@ -246,7 +248,7 @@ class SpriteRectInput extends GameBehavior
         this.#downrightDraggable.onMouseUp = () => {
             this.#mapperInput.cursorLocked = false;
 
-            this.#mapperInput.SetCursor("");
+            if (!this.#downrightDraggable.isMouseOver) this.#mapperInput.SetCursor("");
         };
         this.#downrightDraggable.onDrag = pos => {
             this.#rect.xMax = Math.Clamp(
@@ -313,6 +315,11 @@ class SpriteRectInput extends GameBehavior
             )
         );
         this.transform.position = this.#rect.center;
+
+        this.#mapperInput.pivot.transform.position = new Vector2(
+            this.#rect.xMin + (this.#rect.xMax - this.#rect.xMin) * this.pivot.x,
+            this.#rect.yMax + (this.#rect.yMin - this.#rect.yMax) * this.pivot.y
+        );
         
         this.#RecalcDraggables(true);
     }
@@ -331,18 +338,35 @@ class SpriteRectInput extends GameBehavior
         );
         this.transform.position = this.#rect.center;
         this.transform.scale = this.#rect.size;
+
+        this.#mapperInput.pivot.transform.position = new Vector2(
+            this.#rect.xMin + (this.#rect.xMax - this.#rect.xMin) * this.pivot.x,
+            this.#rect.yMax + (this.#rect.yMin - this.#rect.yMax) * this.pivot.y
+        );
         
         this.#RecalcDraggables(true);
     }
 
+    SetPivot (pivot)
+    {
+        this.pivot = pivot;
+
+        this.#mapperInput.pivot.transform.position = new Vector2(
+            this.#rect.xMin + (this.#rect.xMax - this.#rect.xMin) * this.pivot.x,
+            this.#rect.yMax + (this.#rect.yMin - this.#rect.yMax) * this.pivot.y
+        );
+    }
+
     Update ()
     {
+        if (this.#mapperInput.pivot.isMouseOver && !this.#posDraggable.isHeld) return;
+
         const mousePos = this.#inputHandler.mousePos;
         const focused = this.#mapperInput.focused === this;
 
         this.#posDraggable.Update(mousePos);
 
-        if (!focused) return;
+        if (this.#mapperInput.pivot.isMouseOver || !focused) return;
 
         this.#upDraggable.Update(mousePos);
         this.#downDraggable.Update(mousePos);
@@ -373,11 +397,11 @@ class SpriteRectInput extends GameBehavior
         this.#renderer.thickness = 4;
         this.#renderer.sortingOrder = 1;
 
-        this.#mapperInput.pivot.color.a = 1;
         this.#mapperInput.pivot.transform.position = new Vector2(
             this.#rect.xMin + (this.#rect.xMax - this.#rect.xMin) * this.pivot.x,
             this.#rect.yMax + (this.#rect.yMin - this.#rect.yMax) * this.pivot.y
         );
+        this.#mapperInput.pivot.SetActive(true);
 
         this.#RecalcDraggables(true);
     }
@@ -391,7 +415,7 @@ class SpriteRectInput extends GameBehavior
         this.#renderer.thickness = 1;
         this.#renderer.sortingOrder = 0;
 
-        this.#mapperInput.pivot.color.a = 0;
+        this.#mapperInput.pivot.SetActive(false);
 
         this.#RecalcDraggables(true);
     }

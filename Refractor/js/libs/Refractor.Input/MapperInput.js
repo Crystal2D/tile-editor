@@ -33,7 +33,7 @@ class MapperInput extends GameBehavior
         this.#grid = GameObject.Find("grid").GetComponent("Grid");
         this.#cam = GameObject.Find("camera").GetComponent("Camera");
 
-        this.pivot = GameObject.Find("pivot").GetComponent("CircleRenderer");
+        this.pivot = GameObject.Find("pivot").GetComponent("CircleDragInput");
         
         let bgLayerID = SortingLayer.layers.find(item => item.name === "Refractor Background")?.id;
 
@@ -123,11 +123,16 @@ class MapperInput extends GameBehavior
     {
         if (InputManager.GetKeyDown("left"))
         {
-            for (let i = 0; i < this.spriteRects.length; i++) if (this.spriteRects[i].hovered) return;
+            let run = true;
 
-            if (this.focused != null) this.focused.Unfocus();
+            for (let i = 0; i < this.spriteRects.length; i++) if (this.spriteRects[i].hovered) run = false;
 
-            this.#CreateSprite();
+            if (run)
+            {
+                if (this.focused != null) this.focused.Unfocus();
+
+                this.#CreateSprite();
+            }
         }
 
         if (this.#createStart == null) return;

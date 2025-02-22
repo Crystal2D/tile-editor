@@ -19,6 +19,11 @@ class RectDraggable
         return this.#mouseOver;
     }
 
+    get isHeld ()
+    {
+        return this.#clickedPos != null;
+    }
+
     Update (mousePos)
     {
         const hovered = this.rect.Contains(mousePos);
