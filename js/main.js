@@ -116,6 +116,14 @@ window.onload = async () => {
         },
         () => {
             MenuManager.CloseContextMenus();
+
+            const save = new MenuShortcutItem("Save", "Ctrl+S", () => {
+                MenuManager.UnfocusBar();
+                MenuManager.CloseContextMenus();
+
+                SceneManager.Save();
+            });
+            save.enabled = SceneManager.IsEdited();
             
             new ContextMenu(
                 [
@@ -132,12 +140,7 @@ window.onload = async () => {
                         SceneManager.OpenScene();
                     }),
                     new MenuLine(),
-                    new MenuShortcutItem("Save", "Ctrl+S", () => {
-                        MenuManager.UnfocusBar();
-                        MenuManager.CloseContextMenus();
-
-                        SceneManager.Save();
-                    }),
+                    save,
                     new MenuShortcutItem("Save As", "Ctrl+Shift+S", () => {
                         MenuManager.UnfocusBar();
                         MenuManager.CloseContextMenus();
@@ -234,7 +237,7 @@ window.onload = async () => {
         if (Input.OnCtrl(KeyCode.N)) SceneManager.NewScene();
         if (Input.OnCtrl(KeyCode.O)) SceneManager.OpenScene();
 
-        if (Input.OnCtrl(KeyCode.S)) SceneManager.Save();
+        if (Input.OnCtrl(KeyCode.S) && SceneManager.IsEdited()) SceneManager.Save();
         if (Input.OnCtrlShift(KeyCode.S)) SceneManager.SaveAs();
     });
 

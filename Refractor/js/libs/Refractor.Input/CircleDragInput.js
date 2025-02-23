@@ -3,6 +3,7 @@ class CircleDragInput extends GameBehavior
     #enabled = false;
     #mouseOver = false;
     #moving = false;
+    #lettingGo = false;
 
     #inputHandler = null;
     #mapperInput = null;
@@ -19,6 +20,11 @@ class CircleDragInput extends GameBehavior
     get isHeld ()
     {
         return this.#clickedPos != null;
+    }
+
+    LetGo ()
+    {
+        this.#lettingGo = true;
     }
 
     SetActive (state)
@@ -46,6 +52,10 @@ class CircleDragInput extends GameBehavior
         const mousePos = this.#inputHandler.mousePos;
         const hovered = Vector2.Distance(mousePos, this.transform.position) <= (this.#cam.orthographicSize * 0.15 * (4.5 / 40));
 
+        let lettingGo = this.#lettingGo;
+
+        if (lettingGo) this.#lettingGo = false;
+
         if (this.#mouseOver !== hovered)
         {
             if (hovered) this.#OnMouseEnter();
@@ -63,10 +73,12 @@ class CircleDragInput extends GameBehavior
         }
 
         if (this.#clickOffset == null) return;
-        
-        if (!this.#clickedPos.Equals(mousePos)) this.#moving = true;
 
-        if (InputManager.GetKeyUp("left"))
+        if (!this.#clickedPos.Equals(mousePos)) this.#moving = true;
+        
+        if (InputManager.GetKeyUp("left")) lettingGo = true;
+
+        if (lettingGo)
         {
             this.#OnMouseUp();
             
@@ -95,11 +107,13 @@ class CircleDragInput extends GameBehavior
 
     #OnMouseDown ()
     {
+        this.#mapperInput.StartRecording();
         this.#mapperInput.cursorLocked = true;
     }
 
     #OnMouseUp ()
     {
+        this.#mapperInput.StopRecording();
         this.#mapperInput.cursorLocked = false;
 
         if (!this.isMouseOver) this.#mapperInput.SetCursor("");

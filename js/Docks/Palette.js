@@ -1,3 +1,14 @@
+const transformOnUndo = () => {
+    ActionManager.CancelUndo();
+
+    SceneView.Refract("const mainInput = GameObject.FindComponents(\"MainInput\")[0]; mainInput.Deselect(); mainInput.StopRecording()");
+
+    requestAnimationFrame(() => {
+        ActionManager.Undo();
+        ActionManager.Undo();
+    });
+};
+
 let focused = false;
 let listSearch = "";
 let palettes = [];
@@ -6,13 +17,6 @@ let actions = [];
 let paletteListItems = [];
 let listSearched = [];
 let resources = [];
-let transformOnUndo = () => {
-    ActionManager.CancelUndo();
-
-    SceneView.Refract("const mainInput = GameObject.FindComponents(\"MainInput\")[0]; mainInput.Deselect(); mainInput.StopRecording()");
-
-    requestAnimationFrame(() => ActionManager.Undo());
-};
 
 let paletteViewBase = null;
 let paletteViewWrap = null;
@@ -253,7 +257,7 @@ function DrawUI ()
 
 function UseActionBase (index)
 {
-    if (currentAction === index) return;
+    if (currentAction === index || index == null) return;
 
     if (currentAction != null) actions[currentAction].setAttribute("focused", 0);
 

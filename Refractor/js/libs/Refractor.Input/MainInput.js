@@ -438,7 +438,12 @@ class MainInput extends GameBehavior
             this.#lastTransPos = this.#inputHandler.mousePosSnapped;
         }
 
-        if (this.#transforming && InputManager.GetKeyUp("left")) this.#lastTransPos = null;
+        if (this.#transforming && InputManager.GetKeyUp("left"))
+        {
+            this.#lastTransPos = null;
+
+            this.StopRecording();
+        }
 
         if ((Input.GetKeyDown(KeyCode.Backspace) || Input.GetKeyDown(KeyCode.Delete)) && !Input.GetKey(KeyCode.Ctrl) && !Input.GetKey(KeyCode.Shift)) this.DeleteSelection();
         if (Input.OnCtrl(KeyCode.F)) this.FillSelection();
@@ -496,6 +501,7 @@ class MainInput extends GameBehavior
         this.#selection = [];
         this.#existingTiles = [];
         this.#transforming = false;
+        this.#lastTransPos = null;
 
         document.body.style.cursor = "";
     }

@@ -59,6 +59,19 @@ class SpriteRectInput extends GameBehavior
         this.#RecalcDraggables(true);
     }
 
+    LetGo ()
+    {
+        this.#posDraggable.LetGo();
+        this.#upDraggable.LetGo();
+        this.#downDraggable.LetGo();
+        this.#leftDraggable.LetGo();
+        this.#rightDraggable.LetGo();
+        this.#upleftDraggable.LetGo();
+        this.#uprightDraggable.LetGo();
+        this.#downleftDraggable.LetGo();
+        this.#downrightDraggable.LetGo();
+    }
+
     Start ()
     {
         const handlers = GameObject.Find("handlers");
@@ -70,13 +83,24 @@ class SpriteRectInput extends GameBehavior
 
         this.SetBaseRect();
 
+        const onMouseDown = () => {
+            this.#mapperInput.StartRecording();
+            this.#mapperInput.cursorLocked = true;
+        };
+        const onMouseUp = () => {
+            this.#mapperInput.StopRecording();
+            this.#mapperInput.cursorLocked = false;
+        };
+
         this.#posDraggable.onMouseDown = () => this.Focus();
-        this.#posDraggable.onMouseUp = () => this.#mapperInput.cursorLocked = false;
+        this.#posDraggable.onMouseUp = () => onMouseUp();
         this.#posDraggable.onDrag = (pos, posRaw) => {
             if (this.#mapperInput.focused !== this) return;
 
             if (!this.#mapperInput.cursorLocked)
             {
+                this.#mapperInput.StartRecording();
+
                 this.#mapperInput.SetCursor("");
                 this.#mapperInput.cursorLocked = true;
             }
@@ -99,9 +123,9 @@ class SpriteRectInput extends GameBehavior
 
         this.#upDraggable.onMouseEnter = () => this.#mapperInput.SetCursor("n-resize");
         this.#upDraggable.onMouseExit = () => this.#mapperInput.SetCursor("");
-        this.#upDraggable.onMouseDown = () => this.#mapperInput.cursorLocked = true;
+        this.#upDraggable.onMouseDown = () => onMouseDown();
         this.#upDraggable.onMouseUp = () => {
-            this.#mapperInput.cursorLocked = false;
+            onMouseUp();
 
             if (!this.#upDraggable.isMouseOver) this.#mapperInput.SetCursor("");
         };
@@ -119,9 +143,9 @@ class SpriteRectInput extends GameBehavior
 
         this.#downDraggable.onMouseEnter = () => this.#mapperInput.SetCursor("s-resize");
         this.#downDraggable.onMouseExit = () => this.#mapperInput.SetCursor("");
-        this.#downDraggable.onMouseDown = () => this.#mapperInput.cursorLocked = true;
+        this.#downDraggable.onMouseDown = () => onMouseDown();
         this.#downDraggable.onMouseUp = () => {
-            this.#mapperInput.cursorLocked = false;
+            onMouseUp();
 
             if (!this.#downDraggable.isMouseOver) this.#mapperInput.SetCursor("");
         };
@@ -139,9 +163,9 @@ class SpriteRectInput extends GameBehavior
 
         this.#leftDraggable.onMouseEnter = () => this.#mapperInput.SetCursor("w-resize");
         this.#leftDraggable.onMouseExit = () => this.#mapperInput.SetCursor("");
-        this.#leftDraggable.onMouseDown = () => this.#mapperInput.cursorLocked = true;
+        this.#leftDraggable.onMouseDown = () => onMouseDown();
         this.#leftDraggable.onMouseUp = () => {
-            this.#mapperInput.cursorLocked = false;
+            onMouseUp();
 
             if (!this.#leftDraggable.isMouseOver) this.#mapperInput.SetCursor("");
         };
@@ -159,9 +183,9 @@ class SpriteRectInput extends GameBehavior
 
         this.#rightDraggable.onMouseEnter = () => this.#mapperInput.SetCursor("e-resize");
         this.#rightDraggable.onMouseExit = () => this.#mapperInput.SetCursor("");
-        this.#rightDraggable.onMouseDown = () => this.#mapperInput.cursorLocked = true;
+        this.#rightDraggable.onMouseDown = () => onMouseDown();
         this.#rightDraggable.onMouseUp = () => {
-            this.#mapperInput.cursorLocked = false;
+            onMouseUp();
 
             if (!this.#rightDraggable.isMouseOver) this.#mapperInput.SetCursor("");
         };
@@ -179,9 +203,9 @@ class SpriteRectInput extends GameBehavior
 
         this.#upleftDraggable.onMouseEnter = () => this.#mapperInput.SetCursor("nw-resize");
         this.#upleftDraggable.onMouseExit = () => this.#mapperInput.SetCursor("");
-        this.#upleftDraggable.onMouseDown = () => this.#mapperInput.cursorLocked = true;
+        this.#upleftDraggable.onMouseDown = () => onMouseDown();
         this.#upleftDraggable.onMouseUp = () => {
-            this.#mapperInput.cursorLocked = false;
+            onMouseUp();
 
             if (!this.#upleftDraggable.isMouseOver) this.#mapperInput.SetCursor("");
         };
@@ -204,9 +228,9 @@ class SpriteRectInput extends GameBehavior
 
         this.#uprightDraggable.onMouseEnter = () => this.#mapperInput.SetCursor("ne-resize");
         this.#uprightDraggable.onMouseExit = () => this.#mapperInput.SetCursor("");
-        this.#uprightDraggable.onMouseDown = () => this.#mapperInput.cursorLocked = true;
+        this.#uprightDraggable.onMouseDown = () => onMouseDown();
         this.#uprightDraggable.onMouseUp = () => {
-            this.#mapperInput.cursorLocked = false;
+            onMouseUp();
 
             if (!this.#uprightDraggable.isMouseOver) this.#mapperInput.SetCursor("");
         };
@@ -224,9 +248,9 @@ class SpriteRectInput extends GameBehavior
 
         this.#downleftDraggable.onMouseEnter = () => this.#mapperInput.SetCursor("sw-resize");
         this.#downleftDraggable.onMouseExit = () => this.#mapperInput.SetCursor("");
-        this.#downleftDraggable.onMouseDown = () => this.#mapperInput.cursorLocked = true;
+        this.#downleftDraggable.onMouseDown = () => onMouseDown();
         this.#downleftDraggable.onMouseUp = () => {
-            this.#mapperInput.cursorLocked = false;
+            onMouseUp();
 
             if (!this.#downleftDraggable.isMouseOver) this.#mapperInput.SetCursor("");
         };
@@ -244,9 +268,9 @@ class SpriteRectInput extends GameBehavior
 
         this.#downrightDraggable.onMouseEnter = () => this.#mapperInput.SetCursor("se-resize");
         this.#downrightDraggable.onMouseExit = () => this.#mapperInput.SetCursor("");
-        this.#downrightDraggable.onMouseDown = () => this.#mapperInput.cursorLocked = true;
+        this.#downrightDraggable.onMouseDown = () => onMouseDown();
         this.#downrightDraggable.onMouseUp = () => {
-            this.#mapperInput.cursorLocked = false;
+            onMouseUp();
 
             if (!this.#downrightDraggable.isMouseOver) this.#mapperInput.SetCursor("");
         };
@@ -270,11 +294,11 @@ class SpriteRectInput extends GameBehavior
 
     #RecalcDraggables (ignoreOnDock)
     {
-        const position = this.finalRect.position;
-        const size = this.finalRect.size;
-
         if (!ignoreOnDock)
         {
+            const position = this.finalRect.position;
+            const size = this.finalRect.size;
+
             window.parent.RefractBack(`
                 SetPosition(${position.x}, ${position.y});
                 SetSize(${size.x}, ${size.y});
@@ -379,7 +403,7 @@ class SpriteRectInput extends GameBehavior
         this.#downrightDraggable.Update(mousePos);
     }
 
-    Focus ()
+    Focus (ignoreOnDock)
     {
         if (this.#mapperInput.focused === this) return;
         
@@ -387,10 +411,10 @@ class SpriteRectInput extends GameBehavior
         {
             if (this.#mapperInput.focused.hovered) return;
     
-            this.#mapperInput.focused.Unfocus();
+            this.#mapperInput.focused.Unfocus(true);
         }
 
-        window.parent.RefractBack(`FocusSprite(${JSON.stringify(this.spriteName)})`);
+        if (!ignoreOnDock) window.parent.RefractBack(`FocusSprite(${JSON.stringify(this.spriteName)})`);
     
         this.#mapperInput.focused = this;
         this.#renderer.color = new Color(0, 1, 1);
@@ -406,9 +430,9 @@ class SpriteRectInput extends GameBehavior
         this.#RecalcDraggables(true);
     }
 
-    Unfocus ()
+    Unfocus (ignoreOnDock)
     {
-        window.parent.RefractBack("FocusSprite(null)");
+        if (!ignoreOnDock) window.parent.RefractBack("FocusSprite(null)");
 
         this.#mapperInput.focused = null;
         this.#renderer.color = Color.white;

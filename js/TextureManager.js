@@ -144,9 +144,7 @@ async function ReloadTextureSprites (path)
 
     texture.args.sprites = newTexture.args.sprites;
 
-    const tilemaps = GetTilemapsWithTexture(path).map(item => item.id);
-
-    if (tilemaps.length === 0)
+    if (GetPalettesWithTexture(path).length === 0)
     {
         SceneView.Refract(`
             Resources.FindUnloaded(${JSON.stringify(path)}).args.sprites = ${JSON.stringify(newTexture.args.sprites)};
@@ -163,7 +161,7 @@ async function ReloadTextureSprites (path)
         return;
     }
 
-    await ipcRenderer.invoke("InfoDialog", "Restart Required", "The texture changed is currently in use.\n\nRestart will be done to apply changes", window.windowID);
+    await ipcRenderer.invoke("InfoDialog", "Restart Required", "The texture changed is used in a tile palette.\n\nRestart will be done to apply changes", window.windowID);
 
     if (SceneManager.IsEdited())
     {

@@ -8,6 +8,8 @@ class MapperInput extends GameBehavior
     #creationRect = null;
     #createStart = null;
     #createEnd = null;
+    #lastRect = null;
+    #lastPivot = null;
 
     cursorLocked = false;
     baseWidth = 0;
@@ -16,6 +18,68 @@ class MapperInput extends GameBehavior
 
     pivot = null;
     focused = null;
+
+    StartRecording ()
+    {
+        if (this.#lastRect != null) return;
+
+        window.parent.RefractBack("ActionManager.StartRecording(\"RefractedChange\")");
+
+        this.#lastRect = this.focused.finalRect;
+        this.#lastPivot = new Vector2(this.focused.pivot.x, this.focused.pivot.y);
+    }
+
+    StopRecording ()
+    {
+        if (this.#lastRect == null) return;
+
+        this.focused.LetGo();
+        this.pivot.LetGo();
+
+        const lastPosition = this.#lastRect.position;
+        const lastSize = this.#lastRect.size;
+
+        const finalRect = this.focused.finalRect;
+        const position = finalRect.position;
+        const size = finalRect.size;
+        const pivot = this.focused.pivot;
+
+        window.parent.RefractBack(`
+            let done = false;
+
+            ActionManager.Record(
+                "RefractedChange",
+                () => {
+                    MarkAsEdited();
+
+                    if (!done) return;
+                    
+                    SetPosition(${position.x}, ${position.y});
+                    SetSize(${size.x}, ${size.y});
+                    SetPivot(${pivot.x}, ${pivot.y});
+                },
+                () => {
+                    MarkAsEdited();
+                    
+                    SetPosition(${lastPosition.x}, ${lastPosition.y});
+                    SetSize(${lastSize.x}, ${lastSize.y});
+                    SetPivot(${this.#lastPivot.x}, ${this.#lastPivot.y});
+                }
+            );
+            ActionManager.StopRecording("RefractedChange", () => MapperView.Refract(\`
+                const rect = GameObject.FindComponents("MapperInput")[0].focused;
+
+                rect.SetPosition(new Vector2(\${focusedSprite.rect.x}, \${focusedSprite.rect.y}));
+                rect.SetSize(new Vector2(\${focusedSprite.rect.width}, \${focusedSprite.rect.height}));
+
+                rect.SetPivot(new Vector2(\${focusedSprite.pivot.x}, \${focusedSprite.pivot.y}));
+            \`));
+
+            done = true;
+        `);
+
+        this.#lastRect = null;
+    }
 
     async SetCursor (cursor)
     {
@@ -121,6 +185,8 @@ class MapperInput extends GameBehavior
 
     Update ()
     {
+        if (this.#sprRenderer == null) return;
+
         if (InputManager.GetKeyDown("left"))
         {
             let run = true;
@@ -211,6 +277,8 @@ class MapperInput extends GameBehavior
 
         const bounds = this.#sprRenderer.bounds;
         this.#cam.orthographicSize = Math.max(bounds.size.x, bounds.size.y) * 1.25;
+
+        this.#sprRenderer.color = Color.white;
         
         this.#inputHandler.RecalcViewMatrix();
 
@@ -274,5 +342,11 @@ class MapperInput extends GameBehavior
 
             this.spriteRects.push(SceneBank.FindByID(objID).GetComponent("SpriteRectInput"))
         }
+    }
+
+    Focus (name)
+    {
+        if (name == null) this.focused.Unfocus(true);
+        else this.spriteRects.find(item => item.spriteName === name).Focus(true);
     }
 }

@@ -127,6 +127,12 @@ MapperView.onLoad.Add(async () => {
                     args: {
                         sprite: {
                             texture: texturePath
+                        },
+                        color: {
+                            r: 255,
+                            g: 255,
+                            b: 255,
+                            a: 0,
                         }
                     }
                 }
@@ -137,6 +143,28 @@ MapperView.onLoad.Add(async () => {
     })()`);
 
     await new Promise(resolve => requestAnimationFrame(resolve));
+
+    const onUndo = async () => {
+        ActionManager.CancelUndo();
+
+        MapperView.Refract("GameObject.FindComponents(\"MapperInput\")[0].StopRecording()");
+
+        ActionManager.OnBeforeUndo().Remove(onUndo);
+
+        await new Promise(resolve => requestAnimationFrame(resolve));
+
+        ActionManager.Undo();
+        ActionManager.OnBeforeUndo().Add(onUndo);
+    };
+
+    ActionManager.OnBeforeUndo().Add(onUndo);
+
+    Loop.Append(() => {
+        if (Input.OnCtrl(KeyCode.Z)) ActionManager.Undo();
+        if (Input.OnCtrlShift(KeyCode.Z)) ActionManager.Redo();
+
+        // if (Input.OnCtrl(KeyCode.S) && SceneManager.IsEdited()) SceneManager.Save();
+    });
 });
 
 window.addEventListener("resize", () => MapperView.RecalcSize());
@@ -160,7 +188,9 @@ const inspectorName = UI.TextField("Name");
     };
 })();
 inspectorName.onUpdate = value => {
-    if (focusedSprite.name === value) return;
+    const lastName = focusedSprite.name;
+
+    if (lastName === value) return;
 
     let nameIndex = value.match(/ \(\d+\)$/);
 
@@ -170,41 +200,51 @@ inspectorName.onUpdate = value => {
         nameIndex = parseInt(nameIndex[0].slice(2, -1));
     }
     else nameIndex = 0;
-
+    
     const nameRegex = new RegExp(`(${value}) \\(\\d+\\)$`);
-
-    const nameMatches = texture.args.sprites.filter(item => item.name.match(nameRegex) != null || item.name === value).map(item => parseInt((item.name.match(/ \(\d+\)$/) ?? [" (0)"])[0].slice(2, -1)));
+    
+    const nameMatches = texture.args.sprites.filter(item => item !== focusedSprite && (item.name.match(nameRegex) != null || item.name === value)).map(item => parseInt((item.name.match(/ \(\d+\)$/) ?? [" (0)"])[0].slice(2, -1)));
     nameMatches.sort((a, b) => a - b);
-
+    
     for (let i = 0; i < nameMatches.length; i++)
     {
         if (nameMatches[i] < nameIndex) continue;
-
+    
         if (nameMatches[i] - nameIndex === 0)
         {
             nameIndex++;
-
+        
             continue;
         }
-
+    
         nameIndex = nameMatches[i - 1] + 1;
-
+    
         break;
     }
-
-    if (nameIndex === 0)
-    {
-        focusedSprite.name = value;
-
-        MapperView.Refract(`GameObject.FindComponents("MapperInput")[0].focused.spriteName = ${JSON.stringify(value)}`);
-
-        return;
-    }
     
-    focusedSprite.name = `${value} (${nameIndex})`;
-    inspectorName.SetText(focusedSprite.name);
+    if (nameIndex > 0)
+    {
+        value = `${value} (${nameIndex})`;
+        inspectorName.SetText(value);
+    }
 
-    MapperView.Refract(`GameObject.FindComponents("MapperInput")[0].focused.spriteName = ${JSON.stringify(focusedSprite.name)}`);
+    ActionManager.StartRecording("Rename");
+    ActionManager.Record(
+        "Rename",
+        () => {
+            MarkAsEdited();
+
+            focusedSprite.name = value;
+            MapperView.Refract(`GameObject.FindComponents("MapperInput")[0].focused.spriteName = ${JSON.stringify(focusedSprite.name)}`);
+        },
+        () => {
+            MarkAsEdited();
+            
+            focusedSprite.name = lastName;
+            MapperView.Refract(`GameObject.FindComponents("MapperInput")[0].focused.spriteName = ${JSON.stringify(focusedSprite.name)}`);
+        }
+    );
+    ActionManager.StopRecording("Rename", () => inspectorName.SetText(focusedSprite.name));
 };
 
 UI.SectionStart("Sprite");
@@ -224,11 +264,27 @@ inspectorPosition.fieldX.onUpdate = value => {
 
     inspectorPosition.x = value;
 
-    if (focusedSprite.rect.x === value) return;
+    const lastPos = focusedSprite.rect.x;
 
-    focusedSprite.rect.x = value;
-    
-    MapperView.Refract(`GameObject.FindComponents("MapperInput")[0].focused.SetPosition(new Vector2(${value}, ${focusedSprite.rect.y}))`);
+    if (lastPos === value) return;
+
+    ActionManager.StartRecording("SetPosition.X");
+    ActionManager.Record(
+        "SetPosition.X",
+        () => {
+            MarkAsEdited();
+
+            focusedSprite.rect.x = value;
+            MapperView.Refract(`GameObject.FindComponents("MapperInput")[0].focused.SetPosition(new Vector2(${value}, ${focusedSprite.rect.y}))`);
+        },
+        () => {
+            MarkAsEdited();
+            
+            focusedSprite.rect.x = lastPos;
+            MapperView.Refract(`GameObject.FindComponents("MapperInput")[0].focused.SetPosition(new Vector2(${lastPos}, ${focusedSprite.rect.y}))`);
+        }
+    );
+    ActionManager.StopRecording("SetPosition.X", () => inspectorPosition.x = focusedSprite.rect.x);
 };
 inspectorPosition.fieldY.onUpdate = value => {
     value = Clamp(
@@ -239,11 +295,27 @@ inspectorPosition.fieldY.onUpdate = value => {
 
     inspectorPosition.y = value;
 
-    if (focusedSprite.rect.y === value) return;
+    const lastPos = focusedSprite.rect.y;
 
-    focusedSprite.rect.y = value;
-    
-    MapperView.Refract(`GameObject.FindComponents("MapperInput")[0].focused.SetPosition(new Vector2(${focusedSprite.rect.x}, ${value}))`);
+    if (lastPos === value) return;
+
+    ActionManager.StartRecording("SetPosition.Y");
+    ActionManager.Record(
+        "SetPosition.Y",
+        () => {
+            MarkAsEdited();
+
+            focusedSprite.rect.y = value;
+            MapperView.Refract(`GameObject.FindComponents("MapperInput")[0].focused.SetPosition(new Vector2(${focusedSprite.rect.x}, ${value}))`);
+        },
+        () => {
+            MarkAsEdited();
+            
+            focusedSprite.rect.y = lastPos;
+            MapperView.Refract(`GameObject.FindComponents("MapperInput")[0].focused.SetPosition(new Vector2(${focusedSprite.rect.x}, ${lastPos}))`);
+        }
+    );
+    ActionManager.StopRecording("SetPosition.Y", () => inspectorPosition.y = focusedSprite.rect.y);
 };
 
 const inspectorSize = UI.Vector2Field("Size");
@@ -254,22 +326,54 @@ inspectorSize.fieldX.onUpdate = value => {
 
     inspectorSize.x = value;
 
-    if (focusedSprite.rect.width === value) return;
+    const lastSize = focusedSprite.rect.width;
 
-    focusedSprite.rect.width = value;
-    
-    MapperView.Refract(`GameObject.FindComponents("MapperInput")[0].focused.SetSize(new Vector2(${value}, ${focusedSprite.rect.height}))`);
+    if (lastSize === value) return;
+
+    ActionManager.StartRecording("SetSize.X");
+    ActionManager.Record(
+        "SetSize.X",
+        () => {
+            MarkAsEdited();
+
+            focusedSprite.rect.width = value;
+            MapperView.Refract(`GameObject.FindComponents("MapperInput")[0].focused.SetSize(new Vector2(${value}, ${focusedSprite.rect.height}))`);
+        },
+        () => {
+            MarkAsEdited();
+            
+            focusedSprite.rect.width = lastSize;
+            MapperView.Refract(`GameObject.FindComponents("MapperInput")[0].focused.SetSize(new Vector2(${lastSize}, ${focusedSprite.rect.height}))`);
+        }
+    );
+    ActionManager.StopRecording("SetSize.X", () => inspectorSize.x = focusedSprite.rect.width);
 };
 inspectorSize.fieldY.onUpdate = value => {
     value = Math.min(Math.round(value), textureSize.y - focusedSprite.rect.y);
 
     inspectorSize.y = value;
 
-    if (focusedSprite.rect.height === value) return;
+    const lastSize = focusedSprite.rect.height;
 
-    focusedSprite.rect.height = value;
-    
-    MapperView.Refract(`GameObject.FindComponents("MapperInput")[0].focused.SetSize(new Vector2(${focusedSprite.rect.width}, ${value}))`);
+    if (lastSize === value) return;
+
+    ActionManager.StartRecording("SetSize.Y");
+    ActionManager.Record(
+        "SetSize.Y",
+        () => {
+            MarkAsEdited();
+
+            focusedSprite.rect.height = value;
+            MapperView.Refract(`GameObject.FindComponents("MapperInput")[0].focused.SetSize(new Vector2(${focusedSprite.rect.width}, ${value}))`);
+        },
+        () => {
+            MarkAsEdited();
+            
+            focusedSprite.rect.height = lastSize;
+            MapperView.Refract(`GameObject.FindComponents("MapperInput")[0].focused.SetSize(new Vector2(${focusedSprite.rect.width}, ${lastSize}))`);
+        }
+    );
+    ActionManager.StopRecording("SetSize.Y", () => inspectorSize.y = focusedSprite.rect.height);
 };
 
 const inspectorPivot = UI.Vector2Field("Pivot", 0.5, 0.5);
@@ -280,32 +384,63 @@ inspectorPivot.fieldX.onUpdate = value => {
 
     inspectorPivot.x = value;
 
-    if (focusedSprite.pivot.x === value) return;
+    const lastPivot = focusedSprite.pivot.x;
 
-    focusedSprite.pivot.x = value;
-    
-    MapperView.Refract(`GameObject.FindComponents("MapperInput")[0].focused.SetPivot(new Vector2(${value}, ${focusedSprite.pivot.y}))`);
+    if (lastPivot === value) return;
+
+    ActionManager.StartRecording("SetSize.X");
+    ActionManager.Record(
+        "SetSize.X",
+        () => {
+            MarkAsEdited();
+
+            focusedSprite.pivot.x = value;
+            MapperView.Refract(`GameObject.FindComponents("MapperInput")[0].focused.SetPivot(new Vector2(${value}, ${focusedSprite.pivot.y}))`);
+        },
+        () => {
+            MarkAsEdited();
+            
+            focusedSprite.pivot.x = lastPivot;
+            MapperView.Refract(`GameObject.FindComponents("MapperInput")[0].focused.SetPivot(new Vector2(${lastPivot}, ${focusedSprite.pivot.y}))`);
+        }
+    );
+    ActionManager.StopRecording("SetSize.X", () => inspectorPivot.x = focusedSprite.pivot.x);
 };
 inspectorPivot.fieldY.onUpdate = value => {
     value = Math.min(value, 1);
 
     inspectorPivot.y = value;
 
-    if (focusedSprite.pivot.y === value) return;
+    const lastPivot = focusedSprite.pivot.y;
 
-    focusedSprite.pivot.y = value;
-    
-    MapperView.Refract(`GameObject.FindComponents("MapperInput")[0].focused.SetPivot(new Vector2(${focusedSprite.pivot.x}, ${value}))`);
+    if (lastPivot === value) return;
+
+    ActionManager.StartRecording("SetSize.Y");
+    ActionManager.Record(
+        "SetSize.Y",
+        () => {
+            MarkAsEdited();
+
+            focusedSprite.pivot.y = value;
+            MapperView.Refract(`GameObject.FindComponents("MapperInput")[0].focused.SetPivot(new Vector2(${focusedSprite.pivot.x}, ${value}))`);
+        },
+        () => {
+            MarkAsEdited();
+            
+            focusedSprite.pivot.y = lastPivot;
+            MapperView.Refract(`GameObject.FindComponents("MapperInput")[0].focused.SetPivot(new Vector2(${focusedSprite.pivot.x}, ${lastPivot}))`);
+        }
+    );
+    ActionManager.StopRecording("SetSize.Y", () => inspectorPivot.y = focusedSprite.pivot.y);
 };
 
 UI.SectionEnd();
 
 UI.ContainerEnd();
 
-function FocusSprite (name)
+function FocusSpriteBase (name)
 {
     focusedSprite = texture.args.sprites.find(item => item.name === name);
-    lastName = name;
 
     dock.style.display = focusedSprite == null ? "" : "block";
 
@@ -328,6 +463,19 @@ function FocusSprite (name)
 
     inspectorPivot.x = focusedSprite.pivot.x;
     inspectorPivot.y = focusedSprite.pivot.y;
+}
+
+function FocusSprite (name)
+{
+    const lastName = focusedSprite?.name;
+
+    ActionManager.StartRecording("Focus");
+    ActionManager.Record(
+        "Focus",
+        () => FocusSpriteBase(name),
+        () => FocusSpriteBase(lastName)
+    );
+    ActionManager.StopRecording("Focus", () => MapperView.Refract(`GameObject.FindComponents("MapperInput")[0].Focus(${JSON.stringify(focusedSprite?.name)})`));
 }
 
 function SetPosition (x, y)
@@ -355,6 +503,10 @@ function SetPivot (x, y)
 
     inspectorPivot.x = focusedSprite.pivot.x;
     inspectorPivot.y = focusedSprite.pivot.y;
+}
+
+function MarkAsEdited ()
+{
 }
 
 async function Save ()

@@ -2,6 +2,7 @@ class RectDraggable
 {
     #mouseOver = false;
     #moving = false;
+    #lettingGo = false;
 
     #clickedPos = null;
     #clickOffset = null;
@@ -24,9 +25,17 @@ class RectDraggable
         return this.#clickedPos != null;
     }
 
+    LetGo ()
+    {
+        this.#lettingGo = true;
+    }
+
     Update (mousePos)
     {
         const hovered = this.rect.Contains(mousePos);
+        let lettingGo = this.#lettingGo;
+
+        if (lettingGo) this.#lettingGo = false;
 
         if (this.#mouseOver !== hovered)
         {
@@ -47,8 +56,10 @@ class RectDraggable
         if (this.#clickOffset == null) return;
         
         if (!this.#clickedPos.Equals(mousePos)) this.#moving = true;
+        
+        if (InputManager.GetKeyUp("left")) lettingGo = true;
 
-        if (InputManager.GetKeyUp("left"))
+        if (lettingGo)
         {
             this.onMouseUp();
             
