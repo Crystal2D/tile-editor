@@ -347,6 +347,9 @@ async function Load (src)
 
 async function SaveSceneAs (src)
 {
+    edited = false;
+    document.title = `${ProjectManager.ProjectName()} - ${activeScene.name} - Crystal Tile Editor`;
+
     LoadingScreen.EnableMini();
     LoadingScreen.SetText(`Saving Scene: ${src}`);
 
@@ -528,9 +531,6 @@ async function OpenScene ()
 
 async function Save ()
 {
-    edited = false;
-    document.title = `${ProjectManager.ProjectName()} - ${activeScene.name} - Crystal Tile Editor`;
-
     if (activeSceneSrc != null) await SaveSceneAs(activeSceneSrc);
     else await SaveAs();
 }

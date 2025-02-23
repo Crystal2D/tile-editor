@@ -111,7 +111,63 @@ class MapperInput extends GameBehavior
         this.#background.GetComponent("RectRenderer").sortingLayer = bgLayerID;
     }
 
-    async #CreateSprite ()
+    async CreateSprite (name, position, size, pivot)
+    {
+        let objID = null;
+
+        do objID = Math.floor(Math.random() * 65536) + Math.floor(Math.random() * 65536);
+        while (SceneBank.FindByID(objID) != null)
+
+        await SceneInjector.GameObject({
+            name: `rect_${objID}`,
+            id: objID,
+            transform: {
+                position: {
+                    x: (position.x + size.x * 0.5) - this.baseWidth,
+                    y: -(position.y + size.y * 0.5) + this.baseHeight
+                },
+                scale: {
+                    x: size.x,
+                    y: size.y
+                }
+            },
+            components: [
+                {
+                    type: "RectRenderer",
+                    args: {
+                        color: {
+                            r: 255,
+                            g: 255,
+                            b: 255
+                        },
+                        thickness: 1
+                    }
+                },
+                {
+                    type: "SpriteRectInput",
+                    args: {
+                        spriteName: name,
+                        pivot: pivot
+                    }
+                }
+            ]
+        });
+
+        this.spriteRects.push(SceneBank.FindByID(objID).GetComponent("SpriteRectInput"));
+    }
+
+    Delete (name)
+    {
+        const spriteRect = this.spriteRects.find(item => item.spriteName === name);
+
+        this.spriteRects.splice(this.spriteRects.indexOf(spriteRect), 1);
+
+        spriteRect.Unfocus(true);
+
+        GameObject.Destroy(spriteRect.gameObject);
+    }
+
+    async #CreateSpriteStart ()
     {
         const mousePosSnapped = this.#grid.SnapToGrid(this.#inputHandler.mousePos);
 
@@ -153,6 +209,8 @@ class MapperInput extends GameBehavior
 
             break;
         }
+
+        if (Number.isNaN(nameIndex)) nameIndex = 0;
 
         await SceneInjector.GameObject({
             name: `rect_${objID}`,
@@ -197,7 +255,7 @@ class MapperInput extends GameBehavior
             {
                 if (this.focused != null) this.focused.Unfocus();
 
-                this.#CreateSprite();
+                this.#CreateSpriteStart();
             }
         }
 
@@ -245,18 +303,57 @@ class MapperInput extends GameBehavior
             const size = rectInput.finalRect.size;
 
             window.parent.RefractBack(`
-                texture.args.sprites.push({
-                    name: ${JSON.stringify(rectInput.spriteName)},
-                    rect: {
-                        x: ${position.x},
-                        y: ${position.y},
-                        width: ${size.x},
-                        height: ${size.y}
+                let done = false;
+
+                ActionManager.StartRecording("Create");
+                ActionManager.Record(
+                    "Create",
+                    async () => {
+                        MarkAsEdited();
+
+                        const spriteData = {
+                            name: ${JSON.stringify(rectInput.spriteName)},
+                            rect: {
+                                x: ${position.x},
+                                y: ${position.y},
+                                width: ${size.x},
+                                height: ${size.y}
+                            }
+                        };
+
+                        texture.args.sprites.push(spriteData);
+
+                        if (done) MapperView.Refract(\`(async () => {
+                            const input = GameObject.FindComponents("MapperInput")[0];
+
+                            await input.CreateSprite(
+                                \${JSON.stringify(spriteData.name)},
+                                new Vector2(\${spriteData.rect.x}, \${spriteData.rect.y}),
+                                new Vector2(\${spriteData.rect.width}, \${spriteData.rect.height}),
+                                new Vector2(0.5, 0.5)
+                            );
+
+                            await new Promise(resolve => requestAnimationFrame(resolve));
+                                
+                            input.Focus(\${JSON.stringify(spriteData.name)});
+
+                            window.parent.RefractBack(\\\`FocusSpriteBase(${JSON.stringify(rectInput.spriteName)});\\\`);
+                        })();\`);
+                    },
+                    () => {
+                        MarkAsEdited();
+
+                        DeleteBase(${JSON.stringify(rectInput.spriteName)});
                     }
-                });
+                );
+                ActionManager.StopRecording("Create");
+
+                done = true;
+
+                FocusSpriteBase(${JSON.stringify(rectInput.spriteName)});
             `);
 
-            rectInput.Focus();
+            rectInput.Focus(true);
 
             this.spriteRects.push(rectInput);
 
@@ -266,7 +363,7 @@ class MapperInput extends GameBehavior
         }
     }
 
-    async SetRenderer ()
+    SetRenderer ()
     {
         const spriteObj = SceneBank.FindByID(0);
         this.#sprRenderer = spriteObj.GetComponent("SpriteRenderer");
@@ -300,47 +397,12 @@ class MapperInput extends GameBehavior
         {
             const rect = sprites[i].rect;
 
-            let objID = null;
-
-            do objID = Math.floor(Math.random() * 65536) + Math.floor(Math.random() * 65536);
-            while (SceneBank.FindByID(objID) != null)
-
-            await SceneInjector.GameObject({
-                name: `rect_${objID}`,
-                id: objID,
-                transform: {
-                    position: {
-                        x: rect.center.x - this.baseWidth,
-                        y: -rect.center.y + this.baseHeight
-                    },
-                    scale: {
-                        x: rect.size.x,
-                        y: rect.size.y
-                    }
-                },
-                components: [
-                    {
-                        type: "RectRenderer",
-                        args: {
-                            color: {
-                                r: 255,
-                                g: 255,
-                                b: 255
-                            },
-                            thickness: 1
-                        }
-                    },
-                    {
-                        type: "SpriteRectInput",
-                        args: {
-                            spriteName: sprites[i].name,
-                            pivot: sprites[i].pivot
-                        }
-                    }
-                ]
-            });
-
-            this.spriteRects.push(SceneBank.FindByID(objID).GetComponent("SpriteRectInput"))
+            this.CreateSprite(
+                sprites[i].name,
+                rect.position,
+                rect.size,
+                sprites[i].pivot
+            );
         }
     }
 

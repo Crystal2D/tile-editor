@@ -7,6 +7,8 @@ const texturePath = decodeURIComponent(URLSearch.get("path"));
 
 Refractor.SetDirectory("../");
 
+let edited = false;
+
 MenuManager.AddToBar(
     "Texture",
     focused => {
@@ -23,14 +25,17 @@ MenuManager.AddToBar(
     () => {
         MenuManager.CloseContextMenus();
 
+        const save = new MenuShortcutItem("Save", "Ctrl+S", () => {
+            MenuManager.UnfocusBar();
+            MenuManager.CloseContextMenus();
+
+            Save();
+        })
+        save.enabled = edited;
+
         new ContextMenu(
             [
-                new MenuShortcutItem("Save", "Ctrl+S", () => {
-                    MenuManager.UnfocusBar();
-                    MenuManager.CloseContextMenus();
-                
-                    Save();
-                })
+                save
             ],
             {
                 width : 120
@@ -93,6 +98,8 @@ let texture = null;
 let textureSize = null;
 
 (async () => {
+    document.title = `${texturePath} - Texture Mapper`;
+
     const resRequest = await fetch(`${projectDir}\\data\\resources.json`);
     resources = await resRequest.json();
 
@@ -160,10 +167,12 @@ MapperView.onLoad.Add(async () => {
     ActionManager.OnBeforeUndo().Add(onUndo);
 
     Loop.Append(() => {
+        if ((Input.GetKeyDown(KeyCode.Backspace) || Input.GetKeyDown(KeyCode.Delete)) && !Input.GetKey(KeyCode.Ctrl) && !Input.GetKey(KeyCode.Shift)) DeleteFocused();
+
         if (Input.OnCtrl(KeyCode.Z)) ActionManager.Undo();
         if (Input.OnCtrlShift(KeyCode.Z)) ActionManager.Redo();
 
-        // if (Input.OnCtrl(KeyCode.S) && SceneManager.IsEdited()) SceneManager.Save();
+        if (Input.OnCtrl(KeyCode.S) && edited) Save();
     });
 });
 
@@ -505,12 +514,71 @@ function SetPivot (x, y)
     inspectorPivot.y = focusedSprite.pivot.y;
 }
 
+function DeleteBase (name)
+{
+    FocusSpriteBase(null);
+
+    const sprite = texture.args.sprites.find(item => item.name === name);
+
+    texture.args.sprites.splice(texture.args.sprites.indexOf(sprite), 1);
+
+    MapperView.Refract(`GameObject.FindComponents("MapperInput")[0].Delete(${JSON.stringify(name)})`);
+}
+
+function DeleteFocused ()
+{
+    if (focusedSprite == null) return;
+
+    const sprite = focusedSprite;
+
+    ActionManager.StartRecording("Delete");
+    ActionManager.Record(
+        "Delete",
+        () => {
+            MarkAsEdited();
+
+            DeleteBase(sprite.name);
+        },
+        () => {
+            MarkAsEdited();
+
+            texture.args.sprites.push(sprite);
+
+            MapperView.Refract(`(async () => {
+                const input = GameObject.FindComponents("MapperInput")[0];
+
+                await input.CreateSprite(
+                    ${JSON.stringify(sprite.name)},
+                    new Vector2(${sprite.rect.x}, ${sprite.rect.y}),
+                    new Vector2(${sprite.rect.width}, ${sprite.rect.height}),
+                    new Vector2(${sprite.pivot.x}, ${sprite.pivot.y})
+                );
+
+                await new Promise(resolve => requestAnimationFrame(resolve));
+                    
+                input.Focus(${JSON.stringify(sprite.name)});
+
+                window.parent.RefractBack(\`FocusSpriteBase(${JSON.stringify(sprite.name)});\`);
+            })();`);
+        }
+    );
+    ActionManager.StopRecording("Delete");
+}
+
 function MarkAsEdited ()
 {
+    if (edited) return;
+    
+    edited = true;
+
+    document.title = `${texture.path} - Texture Mapper*`;
 }
 
 async function Save ()
 {
+    edited = false;
+    document.title = `${texture.path} - Texture Mapper`;
+
     await new Promise(resolve => requestAnimationFrame(resolve));
 
     const sprites = texture.args.sprites;
@@ -551,10 +619,14 @@ async function Save ()
     `);
 
     EvalToMain(`TextureManager.ReloadTextureSprites(${JSON.stringify(texture.path)})`);
+
+    Input.RestateKeys();
 }
 
 
 ipcRenderer.on("OnTextureUpdate", async (event, path) => {
+    document.title = `${path} - Texture Mapper`;
+
     window.miniID = `texture-mapper:${path}`;
 
     const resRequest = await fetch(`${projectDir}\\data\\resources.json`);

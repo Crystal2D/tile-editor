@@ -434,6 +434,12 @@ class SpriteRectInput extends GameBehavior
     {
         if (!ignoreOnDock) window.parent.RefractBack("FocusSprite(null)");
 
+        this.#mapperInput.pivot.LetGo();
+        this.LetGo();
+
+        this.#mapperInput.cursorLocked = false;
+        this.#mapperInput.SetCursor("");
+
         this.#mapperInput.focused = null;
         this.#renderer.color = Color.white;
         this.#renderer.thickness = 1;
