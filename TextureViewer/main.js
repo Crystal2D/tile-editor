@@ -445,10 +445,10 @@ async function Import ()
 }
 
 
-let forceClose = false;
+let forceDOMClose = false;
 
 window.addEventListener("beforeunload", async event => {
-    if (forceClose) return;
+    if (forceDOMClose) return;
 
     if (edited)
     {
@@ -456,7 +456,7 @@ window.addEventListener("beforeunload", async event => {
 
         if (!(await UnsavedPrompt())) return;
             
-        forceClose = true;
+        forceDOMClose = true;
         window.close();
     }
 });

@@ -32,3 +32,25 @@ body > nav
     padding: 10px;
     padding-top: 0;
 }
+
+#palette-dock
+{
+    top: 24.5px;
+    left: 4px;
+    padding: 10px;
+    border-radius: 4px;
+    width: 250px;
+    position: fixed;
+    background: rgb(52, 52, 52);
+    display: none;
+}
+
+#palette-dock > :first-child
+{
+    margin-bottom: 2px;
+}
+
+#palette-dock > :last-child
+{
+    margin-left: 4px;
+}

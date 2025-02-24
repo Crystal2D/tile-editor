@@ -8,40 +8,17 @@ const texturePath = decodeURIComponent(URLSearch.get("path"));
 Refractor.SetDirectory("../");
 
 let edited = false;
+let openToPalette = false;
 
 MenuManager.AddToBar(
-    "Texture",
-    focused => {
-        if (!focused)
-        {
-            MenuManager.FocusBar();
-
-            return;
-        }
-        
+    "Save",
+    async () => {
         MenuManager.UnfocusBar();
         MenuManager.CloseContextMenus();
+
+        Save();
     },
-    () => {
-        MenuManager.CloseContextMenus();
-
-        const save = new MenuShortcutItem("Save", "Ctrl+S", () => {
-            MenuManager.UnfocusBar();
-            MenuManager.CloseContextMenus();
-
-            Save();
-        })
-        save.enabled = edited;
-
-        new ContextMenu(
-            [
-                save
-            ],
-            {
-                width : 120
-            }
-        );
-    }
+    () => MenuManager.CloseContextMenus()
 );
 MenuManager.AddToBar(
     "Edit",
@@ -81,11 +58,21 @@ MenuManager.AddToBar(
                 redo   
             ],
             {
-                posX : 51,
+                posX : 41,
                 width : 150
             }
         );
     }
+);
+MenuManager.AddToBar(
+    "Create Tile Palette",
+    async () => {
+        MenuManager.UnfocusBar();
+        MenuManager.CloseContextMenus();
+
+        ToPalette();
+    },
+    () => MenuManager.CloseContextMenus()
 );
 
 const mapperViewWrap = document.createElement("div");
@@ -447,6 +434,41 @@ UI.SectionEnd();
 
 UI.ContainerEnd();
 
+const paletteDock = UI.ContainerStart();
+paletteDock.id = "palette-dock";
+
+let paletteName = "";
+
+const paletteDockName = UI.TextField();
+paletteDockName.element.querySelector(".placehold").textContent = "Palette Name...";
+paletteDockName.onUpdate = value => {
+    if (paletteName === value) return;
+
+    paletteName = value;
+
+    paletteCreate.SetActive(value.length > 0);
+};
+
+const paletteCreate = UI.Button("Create Palette");
+paletteCreate.onClick = async () => {
+    if (!(await UnsavedPrompt())) return;
+
+    paletteDock.style.display = "";
+
+    // do the majik on main
+    
+    openToPalette = false;
+};
+
+const paletteCancel = UI.Button("Cancel");
+paletteCancel.onClick = () => {
+    paletteDock.style.display = "";
+
+    openToPalette = false;
+};
+
+UI.ContainerEnd();
+
 function FocusSpriteBase (name)
 {
     focusedSprite = texture.args.sprites.find(item => item.name === name);
@@ -623,6 +645,48 @@ async function Save ()
     Input.RestateKeys();
 }
 
+async function UnsavedPrompt ()
+{
+    if (!edited) return true;
+
+    const prompt = await ipcRenderer.invoke("UnsavedPrompt", "Texture has unsaved changes", texture.path, window.windowID);
+
+    if (prompt === 0) return false;
+    else if (prompt === 1) await Save();
+
+    return true;
+}
+
+async function ToPalette ()
+{
+    if (openToPalette) return;
+
+    openToPalette = true;
+
+    paletteName = "";
+    paletteDockName.SetText("");
+
+    paletteCreate.SetActive(false);
+    
+    paletteDock.style.display = "block";
+}
+
+
+// let forceDOMClose = false;
+
+// window.addEventListener("beforeunload", async event => {
+//     if (forceDOMClose) return;
+
+//     if (edited)
+//     {
+//         event.preventDefault();
+
+//         if (!(await UnsavedPrompt())) return;
+        
+//         forceDOMClose = true;
+//         window.close();
+//     }
+// });
 
 ipcRenderer.on("OnTextureUpdate", async (event, path) => {
     document.title = `${path} - Texture Mapper`;
