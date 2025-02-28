@@ -130,10 +130,10 @@ Please help me with this so I can include more platforms in upcoming versions
 
 ## Commands
 - Mac:
-``` ps
+``` ps1
 npm run make -- --platform darwin
 ```
 - Linux:
-``` ps
+``` ps1
 npm run make -- --platform linux
 ```
