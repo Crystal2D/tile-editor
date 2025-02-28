@@ -124,7 +124,7 @@ Please help me with this so I can include more platforms in upcoming versions
 
 
 ### Requirements
-- Node Version ^20.11
+- Node Version ^20.11.0
 - Electron ^29.1.4
 - Electron Forge ^7.4.0
 
