@@ -126,6 +126,8 @@ function Init ()
     document.addEventListener("mousedown", event => onMouseDown.Invoke(event));
     document.addEventListener("mouseup", event => onMouseUp.Invoke(event));
     document.addEventListener("keydown", event => {
+        if ((event.ctrlKey && event.key.toLowerCase() === "r") || event.key === "F5") event.preventDefault();
+
         if (MenuManager.Enabled())
         {
             event.preventDefault();

@@ -3,7 +3,9 @@ const { FuseV1Options, FuseVersion } = require('@electron/fuses');
 
 module.exports = {
   packagerConfig: {
+    name: "Crystal Tile Editor 2025.1f",
     asar: true,
+    icon: `${__dirname}\\icon\\forge\\icon`
   },
   rebuildConfig: {},
   makers: [
@@ -17,7 +19,11 @@ module.exports = {
     },
     {
       name: '@electron-forge/maker-deb',
-      config: {},
+      config: {
+        options: {
+          icon: `${__dirname}\\icon\\forge\\icon.png`
+        }
+      },
     },
     {
       name: '@electron-forge/maker-rpm',

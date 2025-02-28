@@ -42,7 +42,7 @@ class Loop
     {
         if (this.targetFrameRate === 0 || this.vSyncCount === 1) requestAnimationFrame(this.#Update.bind(this));
         else if (this.vSyncCount === 2) requestAnimationFrame(() => requestAnimationFrame(this.#Update.bind(this)));
-        else setTimeout(this.#Update.bind(this), 5);
+        else setTimeout(this.#Update.bind(this), 0);
     }
 
     static #UpdateBase ()

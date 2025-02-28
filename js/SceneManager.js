@@ -312,12 +312,12 @@ async function Load (src)
     tileCount = tilemaps.map(item => item.components.find(component => component.type === "Tilemap").args?.tiles)?.flat()?.filter(item => item != null)?.length ?? 0;
 
     Footer.FindItem("tiles").text = `Tiles: ${tileCount}`;
-    
-    for (let i = 0; i < grids.length; i++)
-    {
-        const localTilemaps = GetGridChildren(grids[i].id);
 
-        for (let j = localTilemaps.length - 1; j >= 0; j--) new Layer(localTilemaps[j], grids[i]);
+    for (let i = tilemaps.length - 1; i >= 0; i--)
+    {
+        const grid = grids.find(item => item.id === tilemaps[i].parent);
+
+        new Layer(tilemaps[i], grid);
     }
 
     const loadCall = () => SceneView.Refract(`(async () => {
@@ -408,7 +408,7 @@ async function SaveSceneAs (src)
             if (tilemap.args.sortingLayer === 0) tilemap.args.sortingLayer = undefined;
             if (tilemap.args.sortingOrder === 0) tilemap.args.sortingOrder = undefined;
 
-            if (tilemap.args.tiles == null) tilemap.args = undefined;
+            if (tilemap.args.tiles == null && tilemap.args.sortingLayer === 0 && tilemap.args.sortingOrder === 0) tilemap.args = undefined;
         }
 
         activeScene.gameObjects.splice(activeScene.gameObjects.indexOf(lastOnOrder) + 1, 0, gameObject);

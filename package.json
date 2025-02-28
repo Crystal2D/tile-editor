@@ -1,7 +1,7 @@
 {
   "name": "crystal-tile-editor",
-  "version": "1.0.0",
-  "description": "AAAAAAAAAA",
+  "version": "2025.1.0",
+  "description": "A tile editor for Crystal projects",
   "main": "main.js",
   "scripts": {
     "start": "electron-forge start",

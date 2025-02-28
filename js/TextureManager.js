@@ -1,3 +1,25 @@
+let saving = false;
+
+async function AddTexture (texture)
+{
+    LoadingScreen.EnableMini();
+    LoadingScreen.SetText("Importing Texture");
+
+    const resources = ProjectManager.GetResources();
+    resources.push(texture);
+
+    SceneView.Refract(`
+        Resources.AddUnloaded(${JSON.stringify(texture)});
+        Resources.Load(${JSON.stringify(texture.path)});
+    `);
+    Palette.PaletteView().Refract(`
+        Resources.AddUnloaded(${JSON.stringify(texture)});
+        Resources.Load(${JSON.stringify(texture.path)});
+    `);
+
+    LoadingScreen.Disable();
+}
+
 function GetPalettesWithTexture (path)
 {
     return ProjectManager.GetPalettes().filter(item => item.textures.find(texture => texture.src === path));
@@ -158,27 +180,50 @@ async function ReloadTextureSprites (path)
             }
         `);
 
+        ipcRenderer.invoke("eval", `
+            const win = FindMini(${window.windowID}, "texture-mapper:${texture.path}");
+    
+            if (win != null) win.webContents.send("OnSave");
+        `);
+
         return;
     }
+
+    if (saving) return;
+
+    saving = true;
 
     await ipcRenderer.invoke("InfoDialog", "Restart Required", "The texture changed is used in a tile palette.\n\nRestart will be done to apply changes", window.windowID);
 
     if (SceneManager.IsEdited())
     {
-        const prompt = await ipcRenderer.invoke("UnsavedPrompt", "Scene has unsaved changes", `scene "${SceneManager.GetActiveScene().name}"`, window.windowID);
+        const prompt = await ipcRenderer.invoke("UnsavedPrompt", "Scene has unsaved changes", SceneManager.GetActiveScene().name, window.windowID, true);
 
         if (prompt === 1) await SceneManager.Save();
     
         forceDOMClose = true;
     }
 
+    ipcRenderer.invoke("eval", `
+        const win = FindMini(${window.windowID}, "texture-mapper:${texture.path}");
+
+        if (win != null) win.webContents.send("OnSave");
+    `);
+
     // lazy method lmao
     window.location.reload();
 }
 
+function IsSaving ()
+{
+    return saving;
+}
+
 
 module.exports = {
+    AddTexture,
     UpdatePPU,
     ChangePath,
-    ReloadTextureSprites
+    ReloadTextureSprites,
+    IsSaving
 };

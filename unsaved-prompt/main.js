@@ -4,6 +4,8 @@ window.onload = async () => {
     const URLSearch = new URLSearchParams(window.location.search);
     const parentID = parseInt(decodeURIComponent(URLSearch.get("parent-id")));
 
+    if (decodeURIComponent(URLSearch.get("uncancelable")) === "true") cancel.style.display = "none";
+
     content.append(decodeURIComponent(URLSearch.get("content")));
 
     if (text.getBoundingClientRect().height > 100)

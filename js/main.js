@@ -278,8 +278,6 @@ window.onload = async () => {
     footerCamera.visible = true;
     footerTiles.visible = true;
 
-    return;
-
     window.addEventListener("beforeunload", async event => {
         if (forceDOMClose) return;
 

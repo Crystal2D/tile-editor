@@ -10,6 +10,7 @@ const transformOnUndo = () => {
 };
 
 let focused = false;
+let saving = false;
 let listSearch = "";
 let palettes = [];
 let paletteMaps = [];
@@ -160,7 +161,7 @@ async function Init ()
         if (Input.OnCtrl(KeyCode.R)) UseAction(3);
         if (Input.GetKeyDown(KeyCode.T) && !Input.GetKey(KeyCode.Ctrl) && !Input.GetKey(KeyCode.Shift)) UseAction(4);
 
-        if (Input.OnCtrl(KeyCode.A))
+        if (Input.OnCtrl(KeyCode.A) && Layers.Selection().hasTiles)
         {
             UseAction(3);
 
@@ -778,6 +779,52 @@ async function RecalcMapsByTexture (path)
     await ProjectManager.SaveEditorData();
 }
 
+async function FromTexture (path, name)
+{
+    const texture = ProjectManager.FindResource(path);
+    let sprites = texture.args.sprites ?? [];
+
+    if (sprites.length === 0) sprites = [{
+        name: null,
+        id: 0
+    }];
+
+    ProjectManager.GetPalettes().push({
+        name: name,
+        textures: [
+            {
+                src: path,
+                sprites: sprites.map((item, index) => {
+                    return {
+                        name: item.name,
+                        id: index
+                    };
+                })
+            }
+        ]
+    });
+
+    await FS.writeFile(`${ProjectManager.ProjectDir()}\\data\\tilepalettes.json`, JSON.stringify(ProjectManager.GetPalettes(), null, 4));
+
+    if (saving) return;
+
+    saving = true;
+
+    await ipcRenderer.invoke("InfoDialog", "Restart Required", "Restart will be done to create the palette", window.windowID);
+
+    if (SceneManager.IsEdited())
+    {
+        const prompt = await ipcRenderer.invoke("UnsavedPrompt", "Scene has unsaved changes", SceneManager.GetActiveScene().name, window.windowID, true);
+
+        if (prompt === 1) await SceneManager.Save();
+    
+        forceDOMClose = true;
+    }
+
+    // lazy method lmao
+    window.location.reload();
+}
+
 
 module.exports = {
     PaletteView,
@@ -789,5 +836,6 @@ module.exports = {
     GetTilePos,
     CacheResources,
     GetResources,
-    RecalcMapsByTexture
+    RecalcMapsByTexture,
+    FromTexture
 };

@@ -124,4 +124,9 @@ class Resources
             });
         }
     }
+
+    static AddUnloaded (resource)
+    {
+        this.#unloadedRes.push(resource);
+    }
 }

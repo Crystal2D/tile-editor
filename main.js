@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain, dialog, Menu, Tray, globalShortcut } = require("electron");
+const { app, BrowserWindow, ipcMain, dialog, Menu, Tray } = require("electron");
 const FS = require("fs/promises");
 const DelegateEvent = require("./js/DelegateEvent");
 
@@ -36,8 +36,8 @@ async function main ()
     await app.whenReady();
 
     // globalShortcut.register("CommandOrControl+R", () => { });
-    globalShortcut.register("CommandOrControl+Shift+R", () => { });
-    globalShortcut.register("F5", () => { });
+    // globalShortcut.register("CommandOrControl+Shift+R", () => { });
+    // globalShortcut.register("F5", () => { });
 
     app.on("second-instance", () => {
         if (closeHub)
@@ -70,7 +70,8 @@ async function CreateWindow (data)
         webPreferences : {
             contextIsolation : false,
             nodeIntegration : true
-        }
+        },
+        icon: `${__dirname}/icon/icon.png`
     });
 
     win.setMenuBarVisibility(false);
@@ -162,10 +163,6 @@ async function SelectFile (path, data)
 
 async function InitWindow ()
 {
-    await OpenProject("C:\\Users\\marcp\\Documents\\GitHub\\crystal2d.github.io");
-
-    return;
-
     hubWindow = await CreateWindow({
         name: "Crystal Tile Editor",
         width: 900,
@@ -190,14 +187,18 @@ async function InitWindow ()
         hubWindow.hide();
     });
 
-    appTray = new Tray(`${__dirname}/img/loading.png`);
+    appTray = new Tray(`${__dirname}/icon/icon.png`);
     appTray.setToolTip("Crystal Tile Editor");
+    appTray.addListener("click", () => hubWindow.show());
 
     hubWindow.focus();
 }
 
-async function ModalDialog (src, title, content, windowID)
+async function ModalDialog (src, title, content, windowID, search)
 {
+    let searchData = `content=${encodeURIComponent(content)}&parent-id=${windowID}`;
+    if (search != null) searchData += `&${search}`;
+
     const parentWin = FindWindow(windowID);
     parentWin.show();
     parentWin.focus();
@@ -213,7 +214,7 @@ async function ModalDialog (src, title, content, windowID)
             color: "#202020",
             symbolColor: "#aaaaaa",
         },
-        search: `content=${encodeURIComponent(content)}&parent-id=${windowID}`,
+        search: searchData,
         modal: true,
         parent: parentWin
     });
@@ -240,9 +241,15 @@ async function ModalDialog (src, title, content, windowID)
     return output;
 }
 
-async function UnsavedPrompt (title, content, windowID)
+async function UnsavedPrompt (title, content, windowID, uncancelable)
 {
-    return await ModalDialog("unsaved-prompt", title, `"${content}"`, windowID);
+    return await ModalDialog(
+        "unsaved-prompt",
+        title,
+        `"${content}"`, 
+        windowID,
+        `uncancelable=${uncancelable ?? false}`
+    );
 }
 
 async function WarningDialog (title, content, windowID)
@@ -326,7 +333,7 @@ async function OpenProject (dir)
         maximized: true
     });
     projectWin.setMinimumSize(1100, 700);
-    projectWin.webContents.openDevTools({ mode: "detach" });
+    // projectWin.webContents.openDevTools({ mode: "detach" });
 
     const winCache = {
         dir: dir,
@@ -362,7 +369,7 @@ async function OpenMini (title, windowID, miniID, js, css, search)
         search: searchData
     });
     win.setMinimumSize(600, 400);
-    win.webContents.openDevTools({ mode: "detach" });
+    // win.webContents.openDevTools({ mode: "detach" });
 
     existing = FindMini(windowID, miniID);
 
@@ -405,7 +412,7 @@ ipcMain.handle("SelectFolder", async (event, path, data) => await SelectFolder(p
 ipcMain.handle("SelectFile", async (event, path, data) => await SelectFile(path, data));
 ipcMain.handle("OpenProject", async (event, dir) => OpenProject(dir));
 ipcMain.handle("RefreshTray", () => RefreshTray());
-ipcMain.handle("UnsavedPrompt", async (data, title, content, windowID) => await UnsavedPrompt(title, content, windowID));
+ipcMain.handle("UnsavedPrompt", async (data, title, content, windowID, uncancelable) => await UnsavedPrompt(title, content, windowID, uncancelable));
 ipcMain.handle("WarningDialog", async (data, title, content, windowID) => await WarningDialog(title, content, windowID));
 ipcMain.handle("InfoDialog", async (data, title, content, windowID) => await InfoDialog(title, content, windowID));
 ipcMain.handle("eval", (data, input) => eval(input));

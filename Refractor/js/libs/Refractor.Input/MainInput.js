@@ -693,7 +693,13 @@ class MainInput extends GameBehavior
 
         for (let i = 0; i < this.#selection.length; i++)
         {
-            const newPos = Vector2.Add(this.#selection[i].position, SceneModifier.focusedGrid.WorldToCell(dir));
+            const newPos = Vector2.Add(
+                this.#selection[i].position,
+                SceneModifier.focusedGrid.WorldToCell(Vector2.Add(
+                    dir,
+                    SceneModifier.focusedGrid.transform.position
+                ))
+            );
 
             const existingTile = SceneModifier.focusedTilemap.GetTile(newPos);
 

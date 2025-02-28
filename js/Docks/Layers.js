@@ -297,7 +297,7 @@ class Layer
             () => {
                 SceneManager.MarkAsEdited();
                 
-                if (tilemap.args == null) tile.args = { };
+                if (tilemap.args == null) tilemap.args = { };
 
                 tilemap.args.sortingOrder = value;
 
@@ -306,7 +306,7 @@ class Layer
             () => {
                 SceneManager.MarkAsEdited();
 
-                if (tilemap.args == null) tile.args = { };
+                if (tilemap.args == null) tilemap.args = { };
 
                 tilemap.args.sortingOrder = lastValue;
                     
@@ -316,11 +316,22 @@ class Layer
         ActionManager.StopRecording("Layer.SortOrder", () => Inspector.Redraw());
     }
 
+    get hasTiles ()
+    {
+        const tilemap = this.#data.components.find(item => item.type === "Tilemap");
+
+        return (tilemap.args?.tiles ?? []).length > 0;
+    }
+
     constructor (data, gridData)
     {
         this.#data = data;
         this.#gridData = gridData;
-        this.#gridComponent = gridData.components.find(item => item.type === "Grid").args ?? { };
+
+        const gridComponent = gridData.components.find(item => item.type === "Grid");
+        if (gridComponent.args == null) gridComponent.args = { };
+
+        this.#gridComponent = gridComponent.args;
 
         this.item = document.createElement("div");
         this.item.classList.add("item");
@@ -522,7 +533,7 @@ class Layer
         {
             for (let i = 0; i < procedingLayers.length; i++)
             {
-                procedingLayers[i].index--;
+                procedingLayers[i].indexNonManaged--;
                 procedingLayers[i].dockPos = procedingLayers[i].index * 24;
             }
     
@@ -598,7 +609,11 @@ class Layer
         await new Promise(resolve => requestAnimationFrame(resolve));
 
         this.#gridData = gridData;
-        this.#gridComponent = gridData.components.find(item => item.type === "Grid").args ?? { };
+
+        const gridComponent = gridData.components.find(item => item.type === "Grid");
+        if (gridComponent.args == null) gridComponent.args = { };
+
+        this.#gridComponent = gridComponent.args;
 
         Redraw();
 
@@ -652,7 +667,9 @@ class Layer
                     g: colorBase.g ?? 255,
                     b: colorBase.b ?? 255,
                     a: colorBase.a ?? 255
-                }
+                },
+                sortingLayer: this.sortingLayer,
+                sortingOrder: this.sortingOrder
             }
         };
 
@@ -715,7 +732,11 @@ class Layer
                 SceneManager.DestroyObject(this.#gridData.id);
 
                 this.#gridData = gridData;
-                this.#gridComponent = this.#gridData.components.find(item => item.type === "Grid").args ?? { };
+                
+                const gridComponent = gridData.components.find(item => item.type === "Grid");
+                if (gridComponent.args == null) gridComponent.args = { };
+
+                this.#gridComponent = gridComponent.args;
 
                 SceneView.Refract(`SceneModifier.FocusGrid(${this.#gridData.id})`);
 
@@ -737,7 +758,12 @@ class Layer
             }
 
             this.#gridData = SceneManager.FindGrid(grid) ?? SceneManager.NewGrid(grid);
-            this.#gridComponent = this.#gridData.components.find(item => item.type === "Grid").args ?? { };
+
+            const gridComponent = this.#gridData.components.find(item => item.type === "Grid");
+            if (gridComponent.args == null) gridComponent.args = { };
+                
+            this.#gridComponent = gridComponent.args;
+
             this.#data.parent = this.#gridData.id;
 
             requestAnimationFrame(() => SceneView.Refract(`
@@ -780,7 +806,11 @@ class Layer
                 SceneManager.DestroyObject(this.#gridData.id);
 
                 this.#gridData = gridData;
-                this.#gridComponent = this.#gridData.components.find(item => item.type === "Grid").args ?? { };
+
+                const gridComponent = gridData.components.find(item => item.type === "Grid");
+                if (gridComponent.args == null) gridComponent.args = { };
+                    
+                this.#gridComponent = gridComponent.args;
 
                 SceneView.Refract(`SceneModifier.FocusGrid(${this.#gridData.id})`);
 
@@ -802,7 +832,12 @@ class Layer
             }
 
             this.#gridData = SceneManager.FindGrid(grid) ?? SceneManager.NewGrid(grid);
-            this.#gridComponent = this.#gridData.components.find(item => item.type === "Grid").args ?? { };
+            
+            const gridComponent = this.#gridData.components.find(item => item.type === "Grid");
+            if (gridComponent.args == null) gridComponent.args = { };
+                
+            this.#gridComponent = gridComponent.args;
+
             this.#data.parent = this.#gridData.id;
 
             requestAnimationFrame(() => SceneView.Refract(`
@@ -845,7 +880,11 @@ class Layer
                 SceneManager.DestroyObject(this.#gridData.id);
 
                 this.#gridData = gridData;
-                this.#gridComponent = this.#gridData.components.find(item => item.type === "Grid").args ?? { };
+                
+                const gridComponent = gridData.components.find(item => item.type === "Grid");
+                if (gridComponent.args == null) gridComponent.args = { };
+                    
+                this.#gridComponent = gridComponent.args;
 
                 SceneView.Refract(`SceneModifier.FocusGrid(${this.#gridData.id})`);
 
@@ -865,7 +904,12 @@ class Layer
             }
 
             this.#gridData = SceneManager.FindGrid(grid) ?? SceneManager.NewGrid(grid);
-            this.#gridComponent = this.#gridData.components.find(item => item.type === "Grid").args ?? { };
+
+            const gridComponent = this.#gridData.components.find(item => item.type === "Grid");
+            if (gridComponent.args == null) gridComponent.args = { };
+                
+            this.#gridComponent = gridComponent.args;
+
             this.#data.parent = this.#gridData.id;
 
             requestAnimationFrame(() => SceneView.Refract(`
@@ -908,7 +952,11 @@ class Layer
                 SceneManager.DestroyObject(this.#gridData.id);
 
                 this.#gridData = gridData;
-                this.#gridComponent = this.#gridData.components.find(item => item.type === "Grid").args ?? { };
+
+                const gridComponent = gridData.components.find(item => item.type === "Grid");
+                if (gridComponent.args == null) gridComponent.args = { };
+                    
+                this.#gridComponent = gridComponent.args;
 
                 SceneView.Refract(`SceneModifier.FocusGrid(${this.#gridData.id})`);
 
@@ -928,7 +976,12 @@ class Layer
             }
 
             this.#gridData = SceneManager.FindGrid(grid) ?? SceneManager.NewGrid(grid);
-            this.#gridComponent = this.#gridData.components.find(item => item.type === "Grid").args ?? { };
+
+            const gridComponent = this.#gridData.components.find(item => item.type === "Grid");
+            if (gridComponent.args == null) gridComponent.args = { };
+                
+            this.#gridComponent = gridComponent.args;
+
             this.#data.parent = this.#gridData.id;
 
             requestAnimationFrame(() => SceneView.Refract(`
@@ -1011,7 +1064,9 @@ async function PasteLayerBase ()
                 g: colorBase.g ?? 255,
                 b: colorBase.b ?? 255,
                 a: colorBase.a ?? 255
-            }
+            },
+            sortingLayer: tilemapBase.args.sortingLayer,
+            sortingOrder: tilemapBase.args.sortingOrder
         }
     };
     
@@ -1165,10 +1220,10 @@ function Update ()
         {
             const switchee = layers[dragging.index - 1];
 
-            switchee.indexNonManaged++;
+            switchee.index++;
             switchee.dockPos = switchee.index * 24;
 
-            dragging.indexNonManaged--;
+            dragging.index--;
 
             layers.sort((a, b) => a.index - b.index);
         }
@@ -1177,10 +1232,10 @@ function Update ()
         {
             const switchee = layers[dragging.index + 1];
 
-            switchee.indexNonManaged--;
+            switchee.index--;
             switchee.dockPos = switchee.index * 24;
 
-            dragging.indexNonManaged++;
+            dragging.index++;
 
             layers.sort((a, b) => a.index - b.index);
         }

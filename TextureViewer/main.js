@@ -398,6 +398,16 @@ async function NewTexture (path, src)
     resources.push(texture);
     textures.push(texture);
 
+    EvalToMain(`
+        TextureManager.AddTexture(${JSON.stringify({
+            path: path.replaceAll("\\", "\\\\"),
+            type: "Texture",
+            args: { src: src.replaceAll("\\", "\\\\") }
+        })});
+    `);
+
+    await new Promise(resolve => requestAnimationFrame(resolve));
+
     await Save();
 
     const item = document.createElement("div");
@@ -439,7 +449,7 @@ async function Import ()
     let path = src.split(".");
     path.pop();
     path.join(".");
-    path = path[0];
+    path = path[0].replaceAll("\\", "/");
 
     await NewTexture(path, src);
 }

@@ -107,6 +107,7 @@ let textureSize = null;
 
 const MapperView = new Refractor.Embed(mapperViewWrap, projectDir);
 MapperView.content.addEventListener("load", () => MapperView.Refract("window.targetScene = 2"));
+MapperView.content.addEventListener("mousedown", () => document.activeElement?.blur);
 MapperView.onLoad.Add(async () => {
     await new Promise(resolve => Loop.Append(() => { if (textureSize != null) resolve(); }, null, () => textureSize != null));
 
@@ -451,13 +452,15 @@ paletteDockName.onUpdate = value => {
 
 const paletteCreate = UI.Button("Create Palette");
 paletteCreate.onClick = async () => {
-    if (!(await UnsavedPrompt())) return;
-
     paletteDock.style.display = "";
-
-    // do the majik on main
     
     openToPalette = false;
+
+    if (!(await UnsavedPrompt())) return;
+
+    await new Promise(resolve => requestAnimationFrame(resolve));
+
+    EvalToMain(`Palette.FromTexture(${JSON.stringify(texture.path)}, ${JSON.stringify(paletteName)})`);
 };
 
 const paletteCancel = UI.Button("Cancel");
@@ -596,6 +599,8 @@ function MarkAsEdited ()
     document.title = `${texture.path} - Texture Mapper*`;
 }
 
+const OnSave = new DelegateEvent();
+
 async function Save ()
 {
     edited = false;
@@ -642,6 +647,17 @@ async function Save ()
 
     EvalToMain(`TextureManager.ReloadTextureSprites(${JSON.stringify(texture.path)})`);
 
+    let saveResolve = null;
+    const onSave = () => {
+        OnSave.Remove(onSave);
+
+        saveResolve();
+    };
+
+    OnSave.Add(onSave);
+
+    await new Promise(resolve => saveResolve = resolve);
+
     Input.RestateKeys();
 }
 
@@ -672,21 +688,21 @@ async function ToPalette ()
 }
 
 
-// let forceDOMClose = false;
+let forceDOMClose = false;
 
-// window.addEventListener("beforeunload", async event => {
-//     if (forceDOMClose) return;
+window.addEventListener("beforeunload", async event => {
+    if (forceDOMClose) return;
 
-//     if (edited)
-//     {
-//         event.preventDefault();
+    if (edited)
+    {
+        event.preventDefault();
 
-//         if (!(await UnsavedPrompt())) return;
+        if (!(await UnsavedPrompt())) return;
         
-//         forceDOMClose = true;
-//         window.close();
-//     }
-// });
+        forceDOMClose = true;
+        window.close();
+    }
+});
 
 ipcRenderer.on("OnTextureUpdate", async (event, path) => {
     document.title = `${path} - Texture Mapper`;
@@ -710,3 +726,4 @@ ipcRenderer.on("OnTextureUpdate", async (event, path) => {
 
     MapperView.Refract(`Resources.Find(${JSON.stringify(oldPath)}).name = ${JSON.stringify(texture.path.split("/").slice(-1)[0])}`);
 });
+ipcRenderer.on("OnSave", () => OnSave.Invoke());
