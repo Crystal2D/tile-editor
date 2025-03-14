@@ -111,8 +111,8 @@ async function SaveEditorData ()
 
 
 module.exports = {
-    editiorVersion: 2025.1,
-    editorDisplayVersion: "2025.1f (The Bare Minimum Edition)",
+    editiorVersion: "2025.1.1",
+    editorDisplayVersion: "2025.1.1f (The Bare Minimum Edition)",
     ProjectDir,
     ProjectName,
     GetEditorData,

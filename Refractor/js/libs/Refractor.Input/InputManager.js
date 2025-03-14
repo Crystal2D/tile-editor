@@ -92,7 +92,7 @@ class InputManager
             
             this.#keys[keyIndex].active = true;
 
-            window.parent.RefractBack("document.activeElement?.blur()");
+            window.parent.RefractBack("window.getSelection().removeAllRanges(); document.activeElement.blur()");
         });
         document.addEventListener("mouseup", event => {            
             event.preventDefault();

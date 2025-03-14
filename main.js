@@ -35,10 +35,6 @@ async function main ()
 
     await app.whenReady();
 
-    // globalShortcut.register("CommandOrControl+R", () => { });
-    // globalShortcut.register("CommandOrControl+Shift+R", () => { });
-    // globalShortcut.register("F5", () => { });
-
     app.on("second-instance", () => {
         if (closeHub)
         {

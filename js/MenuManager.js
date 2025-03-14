@@ -93,7 +93,12 @@ class ContextMenu
         document.body.append(this.#box);
 
         if (settings.posX == null) settings.posX = 0;
-        if (settings.posY == null) settings.posY = minY;
+        if (settings.posY == null)
+        {
+            settings.posY = minY;
+
+            this.#box.style.top = `${minY}px`;
+        }
 
         if (settings.thinPadding) this.#box.setAttribute("thin-padding", 1);
 

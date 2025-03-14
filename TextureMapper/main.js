@@ -107,7 +107,6 @@ let textureSize = null;
 
 const MapperView = new Refractor.Embed(mapperViewWrap, projectDir);
 MapperView.content.addEventListener("load", () => MapperView.Refract("window.targetScene = 2"));
-MapperView.content.addEventListener("mousedown", () => document.activeElement?.blur);
 MapperView.onLoad.Add(async () => {
     await new Promise(resolve => Loop.Append(() => { if (textureSize != null) resolve(); }, null, () => textureSize != null));
 

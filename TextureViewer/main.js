@@ -38,12 +38,14 @@ let currentRegPath = null;
 
     for (let i = 0; i < textures.length; i++)
     {
+        const texture = textures[i];
+
         const item = document.createElement("div");
         item.classList.add("item");
         item.setAttribute("focused", 0);
-        item.append(textures[i].path);
+        item.append(texture.path);
         
-        item.addEventListener("click", () => FocusTexture(textures[i].path));
+        item.addEventListener("click", () => FocusTexture(texture.path));
         item.addEventListener("mouseover", () => keepFocus = true);
         item.addEventListener("mouseout", () => keepFocus = false);
 
@@ -415,7 +417,7 @@ async function NewTexture (path, src)
     item.setAttribute("focused", 0);
     item.append(path);
     
-    item.addEventListener("click", () => FocusTexture(path));
+    item.addEventListener("click", () => FocusTexture(texture.path));
     item.addEventListener("mouseover", () => keepFocus = true);
     item.addEventListener("mouseout", () => keepFocus = false);
 

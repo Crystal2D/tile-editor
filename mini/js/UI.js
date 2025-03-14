@@ -256,17 +256,27 @@ function NumberField (label, defaultValue)
     return output;
 }
 
+function FocusElement (element)
+{
+    tree.push(element);
+}
+
+function UnfocusElement ()
+{
+    return tree.pop();
+}
+
 function ContainerStart ()
 {
     const output = document.createElement("div");
-    tree.push(output);
+    FocusElement(output);
 
     return output;
 }
 
 function ContainerEnd ()
 {
-    const output = tree.pop();
+    const output = UnfocusElement();
 
     AddContent(output);
 
@@ -497,6 +507,8 @@ module.exports = {
     TextArea,
     TextField,
     NumberField,
+    FocusElement,
+    UnfocusElement,
     ContainerStart,
     ContainerEnd,
     Vector2Field,

@@ -3,7 +3,7 @@ const { FuseV1Options, FuseVersion } = require('@electron/fuses');
 
 module.exports = {
   packagerConfig: {
-    name: "Crystal Tile Editor 2025.1f",
+    name: "Crystal Tile Editor 2025.1.1f",
     asar: true,
     icon: `${__dirname}\\icon\\forge\\icon`
   },
