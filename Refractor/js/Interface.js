@@ -20,6 +20,16 @@ class Interface
     {
         return this.#aspect;
     }
+
+    static get canvasWidth ()
+    {
+        return (window.innerWidth / window.innerHeight < this.aspect) ? window.innerWidth : (this.aspect * window.innerHeight);
+    }
+
+    static get canvasHeight ()
+    {
+        return (window.innerWidth / window.innerHeight < this.aspect) ? (window.innerWidth / this.aspect) : window.innerHeight;
+    }
     
     static SetResolution (width, height)
     {

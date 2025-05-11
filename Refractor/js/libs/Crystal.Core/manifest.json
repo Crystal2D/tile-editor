@@ -1,6 +1,7 @@
 {
     "name" : "Crystal.Core",
     "description" : "The core module that Crystal runs on. We allow modifications, but it may break the engine. Please tamper with care",
+    "version": "2025.3fr",
     "scripts" : [
         "bindings",
         "DelegateEvent",
@@ -9,6 +10,7 @@
         "Object.bindings",
         "Resources",
         "Time",
+        "Math/Vector2",
         "Input/Input",
         "Input/KeyCode",
         "Scripting/Component",
@@ -16,7 +18,6 @@
         "Scripting/GameBehavior",
         "Math/Math.bindings",
         "Math/Matrix3x3",
-        "Math/Vector2",
         "Math/Color",
         "Math/Geometry/Rect",
         "Math/Geometry/Bounds",

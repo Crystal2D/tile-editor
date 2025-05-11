@@ -20,7 +20,7 @@ class PaletteInput extends GameBehavior
         
         if (grid == null || SceneModifier.focusedTilemap == null) return;
         
-        if (InputManager.GetKeyDown("left")) this.SelectTileByPos(grid.WorldToCell(this.#inputHandler.mousePosSnapped));
+        if (Input.GetMouseButtonDown(0)) this.SelectTileByPos(grid.WorldToCell(this.#inputHandler.mousePosSnapped));
 
        const gridSize = Vector2.Add(grid.cellSize, grid.cellGap);
 

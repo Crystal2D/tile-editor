@@ -2,7 +2,7 @@
 
 A tile editor for Crystal projects.
 
-**Latest version**: [2025.1.1f (The Bare Minimum Edition)](https://github.com/Crystal2D/tile-editor/releases/tag/2025.1.1f)<br>
+**Latest version**: [2025.2f (The Bare Minimum Edition)](https://github.com/Crystal2D/tile-editor/releases/tag/2025.2f)<br>
 **Licensed under**: [MIT](https://github.com/Crystal2D/tile-editor?tab=MIT-1-ov-file#readme)
 
 
@@ -51,7 +51,6 @@ If you decide to not open one, it will create a new one for you.
     | Zoom In            | Scroll Up / Zoom In Trackpad         |
     | Zoom Out           | Scroll Down / Zoom Out Trackpad      |
     | Use Mouse Function | Left Click                           |
-    |                    |                                      |
 
 - Scene Viewer
     | Function               | Bind  |
@@ -61,14 +60,12 @@ If you decide to not open one, it will create a new one for you.
     | Move Left              | S     |
     | Move Right             | D     |
     | Speed Up WASD Movement | Shift |
-    |                        |       |
 
 - Edit
     | Function | Bind         |
     |----------|--------------|
     | Undo     | Ctrl+Z       |
     | Redo     | Ctrl+Shift+Z |
-    |          |              |
 
 - Project
     | Function   | Bind         |
@@ -77,7 +74,6 @@ If you decide to not open one, it will create a new one for you.
     | Open Scene | Ctrl+O       |
     | Save       | Ctrl+S       |
     | Save As    | Ctrl+Shift+S |
-    |            |              |
 
 - Drawing (Only works when a layer is focused)
     | Function                  | Bind               |
@@ -91,7 +87,6 @@ If you decide to not open one, it will create a new one for you.
     | Transform Selected        | T                  |
     | Select All                | Ctrl+A             |
     | Deselect                  | Ctrl+Shift+A       |
-    |                           |                    |
 
 - Layers Tab (Only works when tab is focused)
     | Function                                     | Bind                       |
@@ -102,7 +97,6 @@ If you decide to not open one, it will create a new one for you.
     | Paste                                        | Ctrl+V                     |
     | Duplicate                                    | Ctrl+D                     |
     | New Layer                                    | Ctrl+Shift+N               |
-    |                                              |                            |
 
 - Texture Mapper
     | Function        | Bind               |
@@ -110,7 +104,6 @@ If you decide to not open one, it will create a new one for you.
     | Save            | Ctrl+S             |
     | New Sprite      | Left Click+Drag    |
     | Delete Selected | Delete / Backspace |
-    |                 |                    |
 
 
 ## Building the App (Custom Build)

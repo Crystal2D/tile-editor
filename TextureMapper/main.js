@@ -4,6 +4,7 @@ const ActionManager = require("./../js/ActionManager");
 const URLSearch = new URLSearchParams(window.location.search);
 const projectDir = decodeURIComponent(URLSearch.get("dir"));
 const texturePath = decodeURIComponent(URLSearch.get("path"));
+const resourcesPath = decodeURIComponent(URLSearch.get("res"));
 
 Refractor.SetDirectory("../");
 
@@ -86,8 +87,8 @@ let textureSize = null;
 
 (async () => {
     document.title = `${texturePath} - Texture Mapper`;
-
-    const resRequest = await fetch(`${projectDir}\\data\\resources.json`);
+    
+    const resRequest = await fetch(resourcesPath);
     resources = await resRequest.json();
 
     texture = resources.find(item => item.path === texturePath);
@@ -105,7 +106,7 @@ let textureSize = null;
     if (texture.args.sprites == null) texture.args.sprites = [];
 })();
 
-const MapperView = new Refractor.Embed(mapperViewWrap, projectDir);
+const MapperView = new Refractor.Embed(mapperViewWrap, projectDir, resourcesPath);
 MapperView.content.addEventListener("load", () => MapperView.Refract("window.targetScene = 2"));
 MapperView.onLoad.Add(async () => {
     await new Promise(resolve => Loop.Append(() => { if (textureSize != null) resolve(); }, null, () => textureSize != null));
@@ -624,7 +625,7 @@ async function Save ()
 
     if (texture.args.sprites.length === 0) texture.args.sprites = undefined;
 
-    await FS.writeFile(`${projectDir}\\data\\resources.json`, JSON.stringify(resources, null, 4));
+    await FS.writeFile(resourcesPath, JSON.stringify(resources, null, 4));
 
     for (let i = 0; i < sprites.length; i++)
     {
@@ -708,7 +709,7 @@ ipcRenderer.on("OnTextureUpdate", async (event, path) => {
 
     window.miniID = `texture-mapper:${path}`;
 
-    const resRequest = await fetch(`${projectDir}\\data\\resources.json`);
+    const resRequest = await fetch(resourcesPath);
     resources = await resRequest.json();
 
     const newTexture = resources.find(item => item.path === path);

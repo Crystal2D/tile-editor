@@ -6,6 +6,7 @@ class Application
     static #unloaded = false;
     static #binded = false;
     static #projDir = "";
+    static #resPath = "";
     static #onLoad = () => { };
     static #onUnload = () => { };
     
@@ -39,6 +40,11 @@ class Application
     {
         return this.#projDir;
     }
+
+    static get resourcesPath ()
+    {
+        return this.#resPath;
+    }
     
     static get htmlCanvas ()
     {
@@ -66,6 +72,7 @@ class Application
         
         const URLSearch = new URLSearchParams(window.location.search);
         this.#projDir = decodeURIComponent(URLSearch.get("dir"));
+        this.#resPath = decodeURIComponent(URLSearch.get("res"));
         
         this.#canvas = document.createElement("canvas");
         
@@ -75,7 +82,7 @@ class Application
         this.#gl = this.#canvas.getContext("webgl2", {
             antialias: false,
             powerPreference: "high-performance",
-            preserveDrawingBuffer: true
+            preserveDrawingBuffer: false
         });
         this.#gl.clearColor(0.0, 0.0, 0.0, 1.0);
 
@@ -130,7 +137,8 @@ class Application
     {
         if (this.#unloaded) return;
 
-        this.unloading.Invoke();
+        try { this.unloading.Invoke(); }
+        catch { }
 
         await this.#onUnload();
 

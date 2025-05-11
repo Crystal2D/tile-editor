@@ -45,7 +45,7 @@ class RectDraggable
             this.#mouseOver = hovered;
         }
 
-        if (hovered && InputManager.GetKeyDown("left"))
+        if (hovered && Input.GetMouseButtonDown(0))
         {
             this.onMouseDown();
 
@@ -57,7 +57,7 @@ class RectDraggable
         
         if (!this.#clickedPos.Equals(mousePos)) this.#moving = true;
         
-        if (InputManager.GetKeyUp("left")) lettingGo = true;
+        if (Input.GetMouseButtonUp(0)) lettingGo = true;
 
         if (lettingGo)
         {

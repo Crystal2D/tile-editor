@@ -1,6 +1,5 @@
 class InputHandler extends GameBehavior
 {
-    #recalcViewMat = false;
     #draggingView = false;
     #cancelWalk = false;
     #mouseX = 0;
@@ -13,10 +12,7 @@ class InputHandler extends GameBehavior
 
     #docBody = null;
     #cam = null;
-    #viewMat = null;
     #mousePos = null;
-
-    onRecalcMatrix = new DelegateEvent();
 
     maxZoom = null;
     bounds = null;
@@ -67,13 +63,7 @@ class InputHandler extends GameBehavior
                 this.bounds.min,
                 this.bounds.max
             );
-
-            this.RecalcViewMatrix();
         });
-
-        this.#onResize = Interface.onResize.Add(() => this.#recalcViewMat = true);
-
-        this.RecalcViewMatrix();
     }
 
     OnDisable ()
@@ -85,37 +75,27 @@ class InputHandler extends GameBehavior
     Update ()
     {
         this.#mouseXOld = this.#mouseX;
-        this.#mouseX = InputManager.GetMouseX();
+        this.#mouseX = Input.mousePosition.x;
 
         this.#mouseYOld = this.#mouseY;
-        this.#mouseY = InputManager.GetMouseY();
+        this.#mouseY = Input.mousePosition.y;
 
-        if (InputManager.GetKey("right") || InputManager.GetKey("middle")) this.DragView();
-        if (this.#draggingView && ((InputManager.GetKeyUp("right") && !InputManager.GetKey("middle")) || (InputManager.GetKeyUp("middle") && !InputManager.GetKey("right"))))
+        if (Input.GetMouseButton(1) || Input.GetMouseButton(2)) this.DragView();
+        if (this.#draggingView && ((Input.GetMouseButtonUp(1) && !Input.GetMouseButton(2)) || (Input.GetMouseButtonUp(2) && !Input.GetMouseButton(1))))
         {
             this.#docBody.style.cursor = "auto";
             this.#draggingView = false;
         }
 
-        if (this.#recalcViewMat)
+        this.#mousePos = this.#cam.ScreenToWorldPoint(Input.mousePosition);
+
+        if (InputManager.mousePresent !== Input.mousePresent)
         {
-            this.#viewMat = Matrix3x3.TRS(
-                Vector2.Scale(this.#cam.transform.position, new Vector2(1, -1)),
-                5.555555555555556e-3 * -this.#cam.transform.rotation * Math.PI,
-                this.#cam.bounds.size
-            );
-            this.#recalcViewMat = false;
+            InputManager.mousePresent = Input.mousePresent;
 
-            this.onRecalcMatrix.Invoke();
+            if (InputManager.mousePresent) InputManager.onMouseEnter.Invoke();
+            else InputManager.onMouseExit.Invoke();
         }
-
-        const mouseMat = Matrix3x3.Translate(new Vector2(
-            (this.#mouseX / Interface.width) - 0.5,
-            (this.#mouseY / Interface.height) - 0.5
-        ));
-        const targetMat = Matrix3x3.Multiply(this.#viewMat, mouseMat);
-
-        this.#mousePos = new Vector2(targetMat.GetValue(2, 0), -targetMat.GetValue(2, 1));
 
         if (SceneModifier.focusedGrid == null) return;
 
@@ -152,18 +132,11 @@ class InputHandler extends GameBehavior
             this.bounds.min,
             this.bounds.max
         );
-
-        this.RecalcViewMatrix();
     }
 
     CancelWalk ()
     {
         this.#cancelWalk = true;
-    }
-
-    RecalcViewMatrix ()
-    {
-        this.#recalcViewMat = true;
     }
 
     WalkView ()
@@ -195,7 +168,5 @@ class InputHandler extends GameBehavior
             this.bounds.min,
             this.bounds.max
         );
-        
-        this.RecalcViewMatrix();
     }
 }

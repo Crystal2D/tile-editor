@@ -158,7 +158,7 @@ async function ChangePath (oldPath, newPath)
 
 async function ReloadTextureSprites (path)
 {
-    const resRequest = await fetch(`${ProjectManager.ProjectDir()}\\data\\resources.json`);
+    const resRequest = await fetch(ProjectManager.GetResourcesPath());
     const newRes = await resRequest.json();
 
     const texture = ProjectManager.FindResource(path);

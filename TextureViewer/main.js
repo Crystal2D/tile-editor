@@ -1,5 +1,6 @@
 const URLSearch = new URLSearchParams(window.location.search);
 const projectDir = decodeURIComponent(URLSearch.get("dir"));
+const resourcesPath = decodeURIComponent(URLSearch.get("res"));
 
 let dockResizing = false;
 let keepFocus = false;
@@ -28,7 +29,7 @@ let currentPPU = null;
 let currentRegPath = null;
 
 (async () => {
-    const resRequest = await fetch(`${projectDir}\\data\\resources.json`);
+    const resRequest = await fetch(resourcesPath);
     resources = await resRequest.json();
 
     textures = resources.filter(item => item.type === "Texture");
@@ -187,7 +188,7 @@ let currentRegPath = null;
         `texture-mapper:${currentTexture}`,
         "TextureMapper/main",
         "TextureMapper/styles",
-        `dir=${projectDir}&path=${currentTexture}`
+        `dir=${projectDir}&path=${currentTexture}&res=${resourcesPath}`
     );
     
     inspectorRevert = UI.Button("Revert");
@@ -249,7 +250,7 @@ function Update ()
         const newSize = mouse;
 
         dockSize = newSize;
-        document.body.style.setProperty("--dock-size", `${dockSize}px`);
+        main.style.setProperty("--dock-size", `${dockSize}px`);
     }
 
     inspectorPreview.element.style.height = `${window.innerHeight - inspectorPreview.element.previousElementSibling.getBoundingClientRect().bottom - 14}px`;
@@ -289,7 +290,7 @@ async function Save ()
 
     ProcessTextureData();
 
-    await FS.writeFile(`${projectDir}\\data\\resources.json`, JSON.stringify(resources, null, 4));
+    await FS.writeFile(resourcesPath, JSON.stringify(resources, null, 4));
 }
 
 async function Revert ()
@@ -474,7 +475,7 @@ window.addEventListener("beforeunload", async event => {
 });
 
 ipcRenderer.on("UpdateTexture", async (event, path) => {
-    const resRequest = await fetch(`${projectDir}\\data\\resources.json`);
+    const resRequest = await fetch(resourcesPath);
     const newRes = await resRequest.json();
 
     const texture = resources.find(item => item.path === path);

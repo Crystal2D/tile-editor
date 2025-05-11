@@ -475,8 +475,6 @@ async function LoadMapBase (name)
             
             cam.transform.position = new Vector2(bounds.center.x, bounds.center.y);
             cam.orthographicSize = Math.max(bounds.size.x, bounds.size.y) * 1.25;
-            
-            GameObject.FindComponents("InputHandler")[0].RecalcViewMatrix();
         });
     })()`);
 }
@@ -770,8 +768,6 @@ async function RecalcMapsByTexture (path)
 
                 cam.transform.position = new Vector2(bounds.center.x, bounds.center.y);
                 cam.orthographicSize = Math.max(bounds.size.x, bounds.size.y) * 1.25;
-
-                GameObject.FindComponents("InputHandler")[0].RecalcViewMatrix();
             });
         `);
     }

@@ -516,6 +516,7 @@ body > .context-menu div[enabled="0"] .tip
     user-select: none;
     border: 1.5px solid transparent;
     border-right: none !important;
+    width: 20px;
 }
 
 [cursor-locked="0"] .ui-search img

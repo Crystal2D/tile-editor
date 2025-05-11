@@ -23,12 +23,12 @@ class Embed
         return this.#index;
     }
 
-    constructor (wrapper, projectDir)
+    constructor (wrapper, projectDir, resPath)
     {
         this.#wrap = wrapper;
         
         this.content = document.createElement("iframe");
-        this.content.src = `${dir}Refractor/index.html?dir=${projectDir ?? ProjectManager.ProjectDir()}`;
+        this.content.src = `${dir}Refractor/index.html?dir=${projectDir ?? ProjectManager.ProjectDir()}&res=${resPath ?? ProjectManager.GetResourcesPath()}`;
 
         wrapper.append(this.content);
 

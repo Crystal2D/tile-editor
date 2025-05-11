@@ -51,6 +51,26 @@ class CrystalEngine
             this.#loaded = true;
         }
     }
+
+    static IsBehavior (className)
+    {
+        let classCheck = eval(className).toString().replace(/\s+/g, " ");
+
+        const searchString = `${className} extends `;
+        const checkIndex = classCheck.indexOf(searchString);
+
+        if (checkIndex >= 0)
+        {
+            classCheck = classCheck.substring(checkIndex + searchString.length);
+            classCheck = classCheck.substring(0, classCheck.indexOf("{")).trim();
+            
+            if (classCheck === "Behavior") return true;
+
+            return this.IsBehavior(classCheck);
+        }
+
+        return false;
+    }
     
     static Inner = class
     {
@@ -130,6 +150,11 @@ class CrystalEngine
                 {
                     if (this.#classes[i].name == null) continue;
                     else if (this.#classes[i].args == null) this.#classes[i].args = [];
+
+                    if (this.#classes[i].type === 0 && CrystalEngine.IsBehavior(this.#classes[i].name)) this.#classes[i].args.push({
+                        type: "boolean",
+                        name: "enabled"
+                    });
                     
                     newClasses.push(this.#classes[i]);
                 }
@@ -164,6 +189,11 @@ class CrystalEngine
                 {
                     if (this.#classes[i].name == null) continue;
                     else if (this.#classes[i].args == null) this.#classes[i].args = [];
+
+                    if (this.#classes[i].type === 0 && CrystalEngine.IsBehavior(this.#classes[i].name)) this.#classes[i].args.push({
+                        type: "boolean",
+                        name: "enabled"
+                    });
                     
                     newClasses.push(this.#classes[i]);
                 }
@@ -235,7 +265,12 @@ class CrystalEngine
                 
                 this.#terminateStart = true;
                 
-                if (Application.isLoaded) Application.Unload();
+                if (Application.isLoaded)
+                {
+                    PlayerLoop.OnError();
+
+                    Application.Unload();
+                }
                 else Application.htmlCanvas.style.display = "none";
                 
                 document.body.style.height = "";
@@ -253,7 +288,7 @@ class CrystalEngine
                 errLogs.append(error.stack);
                 
                 const tip = document.createElement("span");
-                tip.append("\n\n\n----------\n\nPlease report this");
+                tip.append("\n\n\n----------\n\nPlease report this problem");
                 
                 errWrap.append(errLogs, tip)
                 document.body.append(errWrap);
@@ -324,8 +359,8 @@ class CrystalEngine
 
                 this.#compiledData.shaders.push(await shaderResponse.text());
             }
-
-            const resResponse = await fetch(`${projDir}\\data\\resources.json`);
+            
+            const resResponse = await fetch(Application.resourcesPath);
             this.#resources = await resResponse.json();
 
             this.#compiledData.layers = buildData.layers;

@@ -2,7 +2,25 @@ class Input
 {
     static #terminating = false;
     static #terminated = false;
+    static #mouseOver = false;
     static #keys = [];
+    static #mousePos = new Vector2();
+    static #mousePosOld = new Vector2();
+
+    static get mousePresent ()
+    {
+        return this.#mouseOver;
+    }
+
+    static get mousePosition ()
+    {
+        return new Vector2(this.#mousePos.x, this.#mousePos.y);
+    }
+
+    static get mousePositionDelta ()
+    {
+        return Vector2.Subtract(this.#mousePosOld, this.#mousePos);
+    }
     
     static #Key = class
     {
@@ -72,8 +90,64 @@ class Input
             new this.#Key("x", "x", true),
             new this.#Key("del", "Delete"),
             new this.#Key("o", "o", true),
-            new this.#Key("z", "z", true)
+            new this.#Key("z", "z", true),
+            new this.#Key("mouse0", "mouse0"),
+            new this.#Key("mouse1", "mouse1"),
+            new this.#Key("mouse2", "mouse2")
         ];
+
+        document.addEventListener("mousemove", event => {
+            setMousePos(event.clientX, event.clientY);
+
+            if (this.#mouseOver) return;
+
+            this.#mouseOver = true;
+        });
+        document.addEventListener("mouseleave", event => {
+            setMousePos(event.clientX, event.clientY);
+
+            this.#mouseOver = false;
+        });
+        document.addEventListener("contextmenu", event => event.preventDefault());
+
+        const getScreenPos = (x, y) => new Vector2(
+            Math.Clamp(x - (window.innerWidth - Interface.canvasWidth) * 0.5, 0, Interface.canvasWidth),
+            Math.Clamp(y - (window.innerHeight - Interface.canvasHeight) * 0.5, 0, Interface.canvasHeight)
+        );
+        const setMousePos = (x, y) => {
+            this.#mousePosOld = this.#mousePos;
+            this.#mousePos = getScreenPos(x, y);
+        };
+        const mouseKeys = [
+            "mouse0",
+            "mouse2",
+            "mouse1"
+        ];
+
+        document.addEventListener("mousedown", event => {
+            if (this.#terminated) return;
+
+            event.preventDefault();
+
+            setMousePos(event.clientX, event.clientY);
+
+            const keyIndex = this.#FindKeyByCode(mouseKeys[event.button]);
+            
+            this.#keys[keyIndex].active = true;
+            
+            window.parent.RefractBack("window.getSelection().removeAllRanges(); document.activeElement.blur()");
+        });
+        document.addEventListener("mouseup", event => {
+            if (this.#terminated) return;
+
+            event.preventDefault();
+
+            setMousePos(event.clientX, event.clientY);
+
+            const keyIndex = this.#FindKeyByCode(mouseKeys[event.button]);
+            
+            this.#keys[keyIndex].active = false;
+        });
     }
 
     static KeyDown (code)
@@ -113,8 +187,6 @@ class Input
         if (this.#terminated) return;
         
         for (let i = 0; i < this.#keys.length; i++) this.#keys[i].lastState = this.#keys[i].active;
-
-        InputManager.End();
         
         if (this.#terminating) this.#terminated = true;
     }
@@ -162,6 +234,39 @@ class Input
         else if (key < 0 || key >= this.#keys.length) return;
         
         return !this.#keys[keyIndex].active && this.#keys[keyIndex].lastState;
+    }
+
+    static GetMouseButton (key)
+    {
+        const mouseKeys = [
+            "mouse0",
+            "mouse1",
+            "mouse2"
+        ];
+
+        return this.GetKey(mouseKeys[key]);
+    }
+
+    static GetMouseButtonDown (key)
+    {
+        const mouseKeys = [
+            "mouse0",
+            "mouse1",
+            "mouse2"
+        ];
+
+        return this.GetKeyDown(mouseKeys[key]);
+    }
+
+    static GetMouseButtonUp (key)
+    {
+        const mouseKeys = [
+            "mouse0",
+            "mouse1",
+            "mouse2"
+        ];
+
+        return this.GetKeyUp(mouseKeys[key]);
     }
 
     static OnCtrl (key)

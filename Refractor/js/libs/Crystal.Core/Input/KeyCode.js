@@ -19,5 +19,8 @@ class KeyCode
     static get X () { return 16; }
     static get Delete () { return 17; }
     static get O () { return 18; }
-    static get Z () { return 1; }
+    static get Z () { return 19; }
+    static get Mouse0 () { return 20; }
+    static get Mouse1 () { return 21; }
+    static get Mouse2 () { return 22; }
 }

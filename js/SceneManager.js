@@ -264,7 +264,7 @@ async function Load (src)
 
     try
     {
-        const sceneRequest = await fetch(src);
+        const sceneRequest = await fetch(`${ProjectManager.ProjectDir()}\\data\\scenes\\${src}`);
         activeScene = await sceneRequest.json();
     }
     catch
@@ -309,16 +309,22 @@ async function Load (src)
     const grids = activeScene.gameObjects.filter(item => item.name.startsWith("tilegrid_"));
     const tilemaps = activeScene.gameObjects.filter(item => item.name.startsWith("tile_"));
 
-    tileCount = tilemaps.map(item => item.components.find(component => component.type === "Tilemap").args?.tiles)?.flat()?.filter(item => item != null)?.length ?? 0;
-
-    Footer.FindItem("tiles").text = `Tiles: ${tileCount}`;
-
     for (let i = tilemaps.length - 1; i >= 0; i--)
     {
+        const component = tilemaps[i].components.find(item => item.type === "Tilemap");
+
+        if (component.args == null) component.args = { };
+
+        if (ProjectManager.CompareVersion(ProjectManager.LibraryVersion(), "2025.2") >= 0) component.args.tiles = ProjectManager.Compact2BaseTiles(component.args.tiles);
+
         const grid = grids.find(item => item.id === tilemaps[i].parent);
 
         new Layer(tilemaps[i], grid);
     }
+
+    tileCount = tilemaps.map(item => item.components.find(component => component.type === "Tilemap").args?.tiles)?.flat()?.filter(item => item != null)?.length ?? 0;
+
+    Footer.FindItem("tiles").text = `Tiles: ${tileCount}`;
 
     const loadCall = () => SceneView.Refract(`(async () => {
         await SceneInjector.Grid(...${JSON.stringify(grids)});
@@ -336,8 +342,6 @@ async function Load (src)
 
     SceneView.Refract(`
         GameObject.FindComponents("Camera")[0].orthographicSize = ${(sceneCam.args?.orthographicSize ?? 9) + 1};
-        
-        requestAnimationFrame(() => GameObject.FindComponents("InputHandler")[0].RecalcViewMatrix());
     `);
 
     Dock.FocusByIndex(0);
@@ -381,6 +385,8 @@ async function SaveSceneAs (src)
     for (let i = 0; i < tilemaps.length; i++) activeScene.gameObjects.splice(activeScene.gameObjects.indexOf(tilemaps[i]), 1);
 
     const ordering = Layers.GetOrdering();
+    const onAfterSave = new DelegateEvent();
+
     let lastOnOrder = grids[grids.length - 1];
     let includedPalettes = [];
 
@@ -392,11 +398,21 @@ async function SaveSceneAs (src)
         if (tilemap.args != null)
         {
             if (tilemap.args.tiles == null || tilemap.args.tiles?.length === 0) tilemap.args.tiles = undefined;
-            else for (let j = 0; j < tilemap.args.tiles.length; j++)
+            else
             {
-                const palette = tilemap.args.tiles[j].palette;
+                for (let j = 0; j < tilemap.args.tiles.length; j++)
+                {
+                    const palette = tilemap.args.tiles[j].palette;
 
-                if (!includedPalettes.includes(palette)) includedPalettes.push(palette);
+                    if (!includedPalettes.includes(palette)) includedPalettes.push(palette);
+                }
+
+                if (ProjectManager.CompareVersion(ProjectManager.LibraryVersion(), "2025.2") >= 0)
+                {
+                    tilemap.args.tiles = ProjectManager.Base2CompactTiles(tilemap.args.tiles);
+
+                    onAfterSave.Add(() => tilemap.args.tiles = ProjectManager.Compact2BaseTiles(tilemap.args.tiles));
+                }
             }
 
             if (tilemap.args.color != null)
@@ -450,6 +466,8 @@ async function SaveSceneAs (src)
 
     await FS.writeFile(src, JSON.stringify(activeScene, null, 4));
 
+    onAfterSave.Invoke();
+
     LoadingScreen.Disable();
 }
 
@@ -496,7 +514,7 @@ async function NewScene ()
 
     LoadingScreen.LockText();
 
-    await Load(`${ProjectManager.ProjectDir()}\\data\\scenes\\.newscene`);
+    await Load(".newscene");
 
     await FS.unlink(`${ProjectManager.ProjectDir()}\\data\\scenes\\.newscene`);
 
@@ -525,8 +543,10 @@ async function OpenScene ()
     else if (file.path === activeSceneSrc) return;
 
     edited = false;
-    
-    await Load(file.path);
+
+    const path = require("node:path");
+
+    await Load(path.relative(`${ProjectManager.ProjectDir()}\\data\\scenes`, file.path));
 }
 
 async function Save ()

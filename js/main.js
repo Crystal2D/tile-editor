@@ -92,7 +92,22 @@ window.onload = async () => {
             new ContextMenu(    
                 [
                     undo,
-                    redo   
+                    redo,
+                    new MenuLine(),
+                    new MenuItem("Preferences", async () => {
+                        MenuManager.UnfocusBar();
+                        MenuManager.CloseContextMenus();
+
+                        await ipcRenderer.invoke(
+                            "OpenMini",
+                            "Preferences",
+                            window.windowID,
+                            "prefs",
+                            "Preferences/main",
+                            "Preferences/styles",
+                            `dir=${ProjectManager.ProjectDir()}&res=${ProjectManager.GetResourcesPath()}`
+                        );
+                    })
                 ],
                 {
                     posX : 51,
@@ -152,7 +167,17 @@ window.onload = async () => {
                         MenuManager.UnfocusBar();
                         MenuManager.CloseContextMenus();
 
-                        if (SceneManager.AreSettingsOpen()) return;
+                        if (SceneManager.AreSettingsOpen())
+                        {
+                            await ipcRenderer.invoke(
+                                "OpenMini",
+                                "Scene Settings",
+                                window.windowID,
+                                "scene-settings"
+                            );
+
+                            return;
+                        }
 
                         const buildRequest = await fetch(`${ProjectManager.ProjectDir()}\\data\\build.json`);
                         const buildData = await buildRequest.json();
@@ -191,7 +216,7 @@ window.onload = async () => {
                 "texture-viewer",
                 "TextureViewer/main",
                 "TextureViewer/styles",
-                `dir=${ProjectManager.ProjectDir()}`
+                `dir=${ProjectManager.ProjectDir()}&res=${ProjectManager.GetResourcesPath()}`
             );
         },
         () => MenuManager.CloseContextMenus()

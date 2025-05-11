@@ -2,6 +2,7 @@ class PlayerLoop
 {
     static #loaded = false;
     static #callUpdate = false;
+    static #crashed = false;
     static #quitState = 0;
     
     static #RequestUpdate ()
@@ -50,18 +51,28 @@ class PlayerLoop
         const activeScene = SceneManager.GetActiveScene();
         const gameObjs = activeScene.gameObjects;
         
+        const BroadcastMessage = (method, params, data) => {
+            if (this.#crashed) return;
+
+            for (let i = 0; i < gameObjs.length; i++) gameObjs[i].BroadcastMessage(method, params, data);
+        };
+        
         // PlayerStart
         // ScriptRunBehaviorAwake
-        for (let i = 0; i < gameObjs.length; i++) gameObjs[i].BroadcastMessage("Awake", null, {
+        BroadcastMessage("Awake", null, {
             specialCall : 1,
+            passActive : true,
             clearAfter : true
         });
 
         // ScriptRunBehaviorOnEnable
-        for (let i = 0; i < gameObjs.length; i++) gameObjs[i].BroadcastMessage("OnEnable", null, { specialCall : 2 });
+        BroadcastMessage("OnEnable", null, {
+            specialCall : 2,
+            passActive : true
+        });
 
         // ScriptRunBehaviorStart
-        for (let i = 0; i < gameObjs.length; i++) gameObjs[i].BroadcastMessage("Start", null, { clearAfter : true });
+        BroadcastMessage("Start", null, { clearAfter : true });
 
 
         // TimeUpdate
@@ -85,21 +96,24 @@ class PlayerLoop
         if (this.#callUpdate)
         {
             // UpdateMainGameViewRect
-            const gl = Application.gl;
-
-            gl.viewport(0, 0, Application.htmlCanvas.width, Application.htmlCanvas.height);
-
-            const cameras = GameObject.FindComponents("Camera");
-
-            if (cameras.length > 0)
+            if (!this.#crashed)
             {
-                const color = cameras[cameras.length - 1].backgroundColor;
-                gl.clearColor(color.r, color.g, color.b, color.a);
-                gl.clear(gl.COLOR_BUFFER_BIT);
-                gl.enable(gl.BLEND);
-                gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
-            }
+                const gl = Application.gl;
 
+                gl.viewport(0, 0, Application.htmlCanvas.width, Application.htmlCanvas.height);
+
+                const cameras = GameObject.FindComponents("Camera");
+
+                if (cameras.length > 0)
+                {
+                    const color = cameras[cameras.length - 1].backgroundColor;
+
+                    gl.clearColor(color.r, color.g, color.b, color.a);
+                    gl.clear(gl.COLOR_BUFFER_BIT);
+                    gl.enable(gl.BLEND);
+                    gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+                }
+            }
 
             // UpdateInputManager
             Input.Update();
@@ -109,7 +123,7 @@ class PlayerLoop
         if (this.#callUpdate)
         {
             // ScriptRunBehaviorUpdate
-            for (let i = 0; i < gameObjs.length; i++) gameObjs[i].BroadcastMessage("Update");
+            BroadcastMessage("Update");
         }
 
 
@@ -117,31 +131,30 @@ class PlayerLoop
         if (this.#callUpdate)
         {
             // ScriptRunBehaviorLateUpdate
-            for (let i = 0; i < gameObjs.length; i++) gameObjs[i].BroadcastMessage("LateUpdate");
+            BroadcastMessage("LateUpdate");
+
+            // UpdateAllRenderers
+            if (!this.#crashed)
+            {
+                const renderers = GameObject.FindComponents("Renderer");
+                        
+                for (let i = 0; i < renderers.length; i++) if (renderers[i].meshChanged) renderers[i].ForceMeshUpdate();
+                
+                const cameras = GameObject.FindComponents("Camera");
+                            
+                for (let i = 0; i < cameras.length; i++) cameras[i].Render();
+                            
+                Application.gl.flush();
+            }
         }
 
 
         // PostLateUpdate
         if (this.#callUpdate)
         {
-            this.#callUpdate = false;
-
-            // UpdateAllRenderers
-            const renderers = GameObject.FindComponents("Renderer");
-                        
-            for (let i = 0; i < renderers.length; i++)
-            {
-                if (renderers[i].meshChanged) renderers[i].ForceMeshUpdate();
-            }
-            
-            const cameras = GameObject.FindComponents("Camera");
-                        
-            for (let i = 0; i < cameras.length; i++) cameras[i].Render();
-                        
-            Application.gl.flush();
-            
             // InputEndFrame
             Input.End();
+
 
             // PlayerEnd
             // ScriptRunBehaviorOnApplicationQuit
@@ -163,8 +176,8 @@ class PlayerLoop
                 if (gameObjs[i].destroying) gameObjs[i].SetActive(false);
                 
                 gameObjs[i].BroadcastMessage("OnDisable", null, {
-                    passActive : true,
-                    specialCall : 3
+                    specialCall : 3,
+                    passActive : true
                 });
             }
     
@@ -174,7 +187,7 @@ class PlayerLoop
     
             for (let i = 0; i < deadGameObjs.length; i++)
             {
-                deadGameObjs[i].BroadcastMessage("OnDestroy");
+                deadGameObjs[i].BroadcastMessage("OnDestroy", { passActive : true });
     
                 tree.Remove(deadGameObjs[i]);
     
@@ -195,7 +208,8 @@ class PlayerLoop
         
             if (!Application.isPlaying)
             {
-                Application.wantsToQuit.Invoke();
+                try { Application.wantsToQuit.Invoke(); }
+                catch { }
                 
                 this.#quitState = 1;
             }
@@ -205,9 +219,22 @@ class PlayerLoop
                 if (Application.isPlaying) this.#quitState = 0;
                 else this.#quitState++;
             }
+            
+            this.#callUpdate = false;
         }
 
         
+        this.#RequestUpdate();
+    }
+
+    static OnError ()
+    {
+        if (this.#crashed) return;
+
+        this.#crashed = true;
+
+        Application.vSyncCount = 1;
+
         this.#RequestUpdate();
     }
 

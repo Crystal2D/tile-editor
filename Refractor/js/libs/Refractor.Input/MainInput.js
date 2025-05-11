@@ -16,6 +16,7 @@ class MainInput extends GameBehavior
     #selectEnd = null;
     #lastTransPos = null;
     #sceneListener = null;
+    #cam = null;
 
     set tile (value)
     {
@@ -112,21 +113,20 @@ class MainInput extends GameBehavior
         this.#selectionRenderer = this.#selectionRect.GetComponent("RectRenderer");
         this.#sceneListener = this.GetComponent("SceneListener");
 
-        const camera = GameObject.Find("camera").GetComponent("Camera");
+        this.#cam = GameObject.Find("camera").GetComponent("Camera");
 
-        this.#inputHandler.onRecalcMatrix.Add(() => {
-            const min = camera.bounds.min;
-            const max = camera.bounds.max;
-
-            window.parent.RefractBack(`Footer.FindItem("camera").text = "Min: (${min.x.toFixed(2)}, ${min.y.toFixed(2)}) Max: (${max.x.toFixed(2)}, ${max.y.toFixed(2)})"`);
-        });
         InputManager.onMouseEnter.Add(() => window.parent.RefractBack("Footer.FindItem(\"cursor\").visible = true"));
         InputManager.onMouseExit.Add(() => window.parent.RefractBack("Footer.FindItem(\"cursor\").visible = false"));
     }
 
     Update ()
     {
-        if (InputManager.isMouseOver) window.parent.RefractBack(`Footer.FindItem("cursor").text = "(${this.#inputHandler.mousePos.x.toFixed(2)}, ${this.#inputHandler.mousePos.y.toFixed(2)})"`);
+        const min = this.#cam.bounds.min;
+        const max = this.#cam.bounds.max;
+
+        window.parent.RefractBack(`Footer.FindItem("camera").text = "Min: (${min.x.toFixed(2)}, ${min.y.toFixed(2)}) Max: (${max.x.toFixed(2)}, ${max.y.toFixed(2)})"`);
+
+        if (Input.mousePresent) window.parent.RefractBack(`Footer.FindItem("cursor").text = "(${this.#inputHandler.mousePos.x.toFixed(2)}, ${this.#inputHandler.mousePos.y.toFixed(2)})"`);
 
         const grid = SceneModifier.focusedGrid;
         const tilemap = SceneModifier.focusedTilemap;
@@ -217,7 +217,7 @@ class MainInput extends GameBehavior
 
     PencilAction (tilemap, grid, gridPos)
     {
-        if (this.#existingTiles.length > 0 && (!this.#existingTiles[0].position.Equals(gridPos) || !InputManager.isMouseOver))
+        if (this.#existingTiles.length > 0 && (!this.#existingTiles[0].position.Equals(gridPos) || !Input.mousePresent))
         {
             tilemap.AddTile(this.#existingTiles[0]);
             this.#existingTiles = [];
@@ -225,8 +225,8 @@ class MainInput extends GameBehavior
             this.#sceneListener.SortOrdering();
         }
 
-        if (InputManager.isMouseOver && !this.#selectionRenderer.color.Equals(Color.green)) this.#selectionRenderer.color = Color.green;
-        else if (!InputManager.isMouseOver) this.#selectionRenderer.color = new Color(0, 0, 0, 0);
+        if (Input.mousePresent && !this.#selectionRenderer.color.Equals(Color.green)) this.#selectionRenderer.color = Color.green;
+        else if (!Input.mousePresent) this.#selectionRenderer.color = new Color(0, 0, 0, 0);
 
         const gridSize = Vector2.Add(grid.cellSize, grid.cellGap);
 
@@ -236,8 +236,8 @@ class MainInput extends GameBehavior
 
         if (this.#preview == null) return;
 
-        if (InputManager.isMouseOver && !this.#preview.activeSelf) this.#preview.SetActive(true);
-        else if (!InputManager.isMouseOver) this.#preview.SetActive(false);
+        if (Input.mousePresent && !this.#preview.activeSelf) this.#preview.SetActive(true);
+        else if (!Input.mousePresent) this.#preview.SetActive(false);
 
         const gridScale = new Vector2(grid.transform.scale.x, grid.transform.scale.y);
 
@@ -247,7 +247,7 @@ class MainInput extends GameBehavior
 
         const hoveredTile = tilemap.GetTile(gridPos);
 
-        if (hoveredTile != null && InputManager.isMouseOver && (hoveredTile.palette !== this.#tile.palette || hoveredTile.spriteID !== this.#tile.spriteID))
+        if (hoveredTile != null && Input.mousePresent && (hoveredTile.palette !== this.#tile.palette || hoveredTile.spriteID !== this.#tile.spriteID))
         {
             this.#existingTiles.push(hoveredTile);
             tilemap.RemoveTileByPosition(gridPos);
@@ -255,9 +255,9 @@ class MainInput extends GameBehavior
             this.#sceneListener.SortOrdering();
         }
 
-        if (InputManager.GetKeyUp("left")) this.StopRecording();
+        if (Input.GetMouseButtonUp(0)) this.StopRecording();
 
-        if (!InputManager.GetKey("left") || (hoveredTile?.palette === this.#tile.palette && hoveredTile?.spriteID === this.#tile.spriteID) || (this.#existingTiles[0]?.palette === this.#tile.palette && this.#existingTiles[0]?.spriteID === this.#tile.spriteID)) return;
+        if (!Input.GetMouseButton(0) || (hoveredTile?.palette === this.#tile.palette && hoveredTile?.spriteID === this.#tile.spriteID) || (this.#existingTiles[0]?.palette === this.#tile.palette && this.#existingTiles[0]?.spriteID === this.#tile.spriteID)) return;
 
         this.#StartRecording();
 
@@ -298,8 +298,8 @@ class MainInput extends GameBehavior
 
     EraserAction (tilemap, grid, gridPos)
     {
-        if (InputManager.isMouseOver && !this.#selectionRenderer.color.Equals(Color.red)) this.#selectionRenderer.color = Color.red;
-        else if (!InputManager.isMouseOver) this.#selectionRenderer.color = new Color(0, 0, 0, 0);
+        if (Input.mousePresent && !this.#selectionRenderer.color.Equals(Color.red)) this.#selectionRenderer.color = Color.red;
+        else if (!Input.mousePresent) this.#selectionRenderer.color = new Color(0, 0, 0, 0);
 
         const gridSize = Vector2.Add(grid.cellSize, grid.cellGap);
 
@@ -307,9 +307,9 @@ class MainInput extends GameBehavior
 
         this.#selectionRect.transform.position = this.#inputHandler.mousePosSnapped;
 
-        if (InputManager.GetKeyUp("left")) this.StopRecording();
+        if (Input.GetMouseButtonUp(0)) this.StopRecording();
 
-        if (!InputManager.GetKey("left") || tilemap.GetTile(gridPos) == null) return;
+        if (!Input.GetMouseButton(0) || tilemap.GetTile(gridPos) == null) return;
 
         this.#StartRecording();
 
@@ -330,8 +330,8 @@ class MainInput extends GameBehavior
 
     EyedropperAction (tilemap, grid, gridPos)
     {
-        if (InputManager.isMouseOver && !this.#selectionRenderer.color.Equals(Color.blue)) this.#selectionRenderer.color = Color.blue;
-        else if (!InputManager.isMouseOver) this.#selectionRenderer.color = new Color(0, 0, 0, 0);
+        if (Input.mousePresent && !this.#selectionRenderer.color.Equals(Color.blue)) this.#selectionRenderer.color = Color.blue;
+        else if (!Input.mousePresent) this.#selectionRenderer.color = new Color(0, 0, 0, 0);
 
         const gridSize = Vector2.Add(grid.cellSize, grid.cellGap);
 
@@ -339,7 +339,7 @@ class MainInput extends GameBehavior
 
         this.#selectionRect.transform.position = this.#inputHandler.mousePosSnapped;
 
-        if (!InputManager.GetKeyUp("left")) return;
+        if (!Input.GetMouseButtonUp(0)) return;
 
         const tile = tilemap.GetTile(gridPos)
 
@@ -359,7 +359,7 @@ class MainInput extends GameBehavior
 
     SelectAction (grid)
     {
-        if (InputManager.GetKeyDown("left") && !this.#transforming)
+        if (Input.GetMouseButtonDown(0) && !this.#transforming)
         {
             this.#selectStart = this.#inputHandler.mousePosSnapped;
 
@@ -368,8 +368,8 @@ class MainInput extends GameBehavior
 
         if (this.#selectStart == null)
         {
-            if (InputManager.isMouseOver && !this.#selectionRenderer.color.Equals(Color.white)) this.#selectionRenderer.color = Color.white;
-            else if (!InputManager.isMouseOver) this.#selectionRenderer.color = new Color(0, 0, 0, 0);
+            if (Input.mousePresent && !this.#selectionRenderer.color.Equals(Color.white)) this.#selectionRenderer.color = Color.white;
+            else if (!Input.mousePresent) this.#selectionRenderer.color = new Color(0, 0, 0, 0);
 
             const gridSize = Vector2.Add(grid.cellSize, grid.cellGap);
 
@@ -378,7 +378,7 @@ class MainInput extends GameBehavior
             this.#selectionRect.transform.position = this.#inputHandler.mousePosSnapped;
         }
 
-        if (this.#selectStart != null && !this.#transforming && InputManager.GetKey("left"))
+        if (this.#selectStart != null && !this.#transforming && Input.GetMouseButton(0))
         {
             if (!this.#selectionRenderer.color.Equals(new Color(0, 1, 1))) this.#selectionRenderer.color = new Color(0, 1, 1);
 
@@ -424,9 +424,9 @@ class MainInput extends GameBehavior
             window.parent.RefractBack(`Footer.FindItem("rect").text = "(${rect.center.x.toFixed(2)}, ${rect.center.y.toFixed(2)}) W: ${disSize.x} H: ${disSize.y}"`);
         }
 
-        if (this.#transforming && !InputManager.GetKey("middle") && !InputManager.GetKey("right")) document.body.style.cursor = "move";
+        if (this.#transforming && !Input.GetMouseButton(2) && !Input.GetMouseButton(1)) document.body.style.cursor = "move";
 
-        if (this.#transforming && InputManager.GetKey("left"))
+        if (this.#transforming && Input.GetMouseButton(0))
         {
             if (this.#lastTransPos != null)
             {
@@ -438,7 +438,7 @@ class MainInput extends GameBehavior
             this.#lastTransPos = this.#inputHandler.mousePosSnapped;
         }
 
-        if (this.#transforming && InputManager.GetKeyUp("left"))
+        if (this.#transforming && Input.GetMouseButtonUp(0))
         {
             this.#lastTransPos = null;
 

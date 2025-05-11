@@ -245,7 +245,7 @@ class MapperInput extends GameBehavior
     {
         if (this.#sprRenderer == null) return;
 
-        if (InputManager.GetKeyDown("left"))
+        if (Input.GetMouseButtonDown(0))
         {
             let run = true;
 
@@ -294,7 +294,7 @@ class MapperInput extends GameBehavior
         this.#creationRect.transform.position = rect.center;
         this.#creationRect.transform.scale = Vector2.Add(rect.size, Vector2.one);
 
-        if (InputManager.GetKeyUp("left"))
+        if (Input.GetMouseButtonUp(0))
         {
             const rectInput = this.#creationRect.GetComponent("SpriteRectInput");
             rectInput.SetBaseRect();
@@ -376,8 +376,6 @@ class MapperInput extends GameBehavior
         this.#cam.orthographicSize = Math.max(bounds.size.x, bounds.size.y) * 1.25;
 
         this.#sprRenderer.color = Color.white;
-        
-        this.#inputHandler.RecalcViewMatrix();
 
         this.#background.transform.scale = new Vector2(bounds.size.x, bounds.size.y);
         this.#inputHandler.maxZoom = Math.max(bounds.size.x, bounds.size.y) * 2.25;
