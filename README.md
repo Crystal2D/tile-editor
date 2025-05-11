@@ -121,7 +121,7 @@ Please help me with this so I can include more platforms in upcoming versions
 - Electron ^29.1.4
 - Electron Forge ^7.4.0
 
-## Commands
+### Commands
 - Mac:
 ``` ps1
 npm run make -- --platform darwin
