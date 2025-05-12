@@ -98,15 +98,7 @@ window.onload = async () => {
                         MenuManager.UnfocusBar();
                         MenuManager.CloseContextMenus();
 
-                        await ipcRenderer.invoke(
-                            "OpenMini",
-                            "Preferences",
-                            window.windowID,
-                            "prefs",
-                            "Preferences/main",
-                            "Preferences/styles",
-                            `dir=${ProjectManager.ProjectDir()}&res=${ProjectManager.GetResourcesPath()}`
-                        );
+                        await Preferences.Open();
                     })
                 ],
                 {

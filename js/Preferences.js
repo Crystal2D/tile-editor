@@ -1,3 +1,16 @@
+async function Open ()
+{
+    await ipcRenderer.invoke(
+        "OpenMini",
+        "Preferences",
+        window.windowID,
+        "prefs",
+        "Preferences/main",
+        "Preferences/styles",
+        `dir=${ProjectManager.ProjectDir()}&res=${ProjectManager.GetResourcesPath()}`
+    );    
+}
+
 async function ChangeResPath (path)
 {
     ProjectManager.GetEditorData().resources = path;
@@ -30,5 +43,6 @@ async function RequestRestart ()
 
 
 module.exports = {
+    Open,
     ChangeResPath
 };

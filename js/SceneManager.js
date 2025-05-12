@@ -464,7 +464,7 @@ async function SaveSceneAs (src)
 
     for (let i = 0; i < includedTextures.length; i++) if (!activeScene.resources.includes(includedTextures[i])) activeScene.resources.push(includedTextures[i]);
 
-    await FS.writeFile(src, JSON.stringify(activeScene, null, 4));
+    await FS.writeFile(`${ProjectManager.ProjectDir()}\\data\\scenes\\${src}`, JSON.stringify(activeScene, null, 4));
 
     onAfterSave.Invoke();
 

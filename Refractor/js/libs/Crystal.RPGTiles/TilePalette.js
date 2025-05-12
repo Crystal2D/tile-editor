@@ -36,14 +36,26 @@ class TilePalette
 
             const texture = Resources.Find(data.textures[i].src);
 
-            obj.sprites.push(...data.textures[i].sprites.map(item => {
-                const sprite = item.name != null ? texture.sprites.find(spr => spr.name === item.name) : texture.sprites[item.index ?? 0]
+            try
+            {
+                obj.sprites.push(...data.textures[i].sprites.map(item => {
+                    const sprite = item.name != null ? texture.sprites.find(spr => spr.name === item.name) : texture.sprites[item.index ?? 0]
 
-                return {
-                    id: item.id,
-                    sprite: sprite.Duplicate()
-                };
-            }));
+                    return {
+                        id: item.id,
+                        sprite: sprite.Duplicate()
+                    };
+                }));
+            }
+            catch (error)
+            {
+                window.parent.RefractBack(`
+                    LoadingScreen.SetText("PLEASE SELECT THE CORRECT TEXTURE RESOURCE FILE");
+                    Preferences.Open();
+                `);
+
+                throw error;
+            }
         }
 
         this.#palettes.push(obj);
