@@ -159,6 +159,10 @@ async function SelectFile (path, data)
 
 async function InitWindow ()
 {
+    // OpenProject("C:\\Users\\marcp\\Documents\\GitHub\\Crystal2D\\crystal2d.github.io");
+
+    // return;
+
     hubWindow = await CreateWindow({
         name: "Crystal Tile Editor",
         width: 900,

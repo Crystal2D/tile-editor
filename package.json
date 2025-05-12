@@ -1,6 +1,6 @@
 {
   "name": "crystal-tile-editor",
-  "version": "2025.2.1",
+  "version": "2025.2.2",
   "description": "A tile editor for Crystal projects",
   "main": "main.js",
   "scripts": {

@@ -2,7 +2,7 @@
 
 A tile editor for Crystal projects.
 
-**Latest version**: [2025.2.1f (The Bare Minimum Edition)](https://github.com/Crystal2D/tile-editor/releases/tag/2025.2.1f)<br>
+**Latest version**: [2025.2.2f (The Bare Minimum Edition)](https://github.com/Crystal2D/tile-editor/releases/tag/2025.2.2f)<br>
 **Licensed under**: [MIT](https://github.com/Crystal2D/tile-editor?tab=MIT-1-ov-file#readme)
 
 

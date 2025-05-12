@@ -568,12 +568,14 @@ async function SaveAs ()
 
     if (file.canceled) return;
 
-    activeSceneSrc = file.path;
+    const path = require("node:path");
 
-    ProjectManager.GetEditorData().scene = file.path;
+    activeSceneSrc = path.relative(`${ProjectManager.ProjectDir()}\\data\\scenes`, file.path);
+
+    ProjectManager.GetEditorData().scene = activeSceneSrc;
     await ProjectManager.SaveEditorData();
 
-    await SaveSceneAs(file.path);
+    await SaveSceneAs(activeSceneSrc);
 }
 
 function IsLoaded ()
