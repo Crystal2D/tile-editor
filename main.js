@@ -9,6 +9,7 @@ let projectWindows = [];
 let modalDialogs = [];
 let minis = [];
 
+let depWin = null;
 let hubWindow = null;
 let appTray = null;
 
@@ -52,6 +53,10 @@ async function main ()
 
 async function CreateWindow (data)
 {
+    let icon = "icon";
+
+    if (data.name.includes("Dweller's Empty Path") || (depWin != null && data.search.includes(`parent-id=${depWin}`))) icon = "dep";
+
     const win = new BrowserWindow({
         title : data.name,
         width : data.width,
@@ -67,7 +72,7 @@ async function CreateWindow (data)
             contextIsolation : false,
             nodeIntegration : true
         },
-        icon: `${__dirname}/icon/icon.png`
+        icon: `${__dirname}/icon/${icon}.png`
     });
 
     win.setMenuBarVisibility(false);
@@ -75,6 +80,8 @@ async function CreateWindow (data)
     let winID = 0;
     
     while (windowList.find(item => item.id === winID) != null) winID++;
+
+    if (data.name.includes("Dweller's Empty Path")) depWin = winID;
 
     let search = `window-id=${winID}`;
     if (data.search != null) search += `&${data.search}`;

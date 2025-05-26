@@ -1,7 +1,7 @@
 {
     "name" : "Crystal.RPGTiles",
     "description" : "Adds fast tiles and tilemap rendering",
-    "version": "2025.1.1fr",
+    "version": "2025.3fr",
     "scripts" : [
         "TilePalette",
         "Tile",

@@ -69,6 +69,8 @@ class Resources
 
             if (res == null) continue;
 
+            res.obj.Unload();
+
             const index = this.#resources.indexOf(res);
 
             this.#resources.splice(index, 1);
@@ -77,6 +79,8 @@ class Resources
     
     static UnloadAll ()
     {
+        for (let i = 0; i < this.#resources.length; i++) this.#resources[i].obj.Unload();
+
         this.#resources = [];
     }
 

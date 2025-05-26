@@ -317,6 +317,31 @@ async function Load (src)
 
         if (ProjectManager.CompareVersion(ProjectManager.LibraryVersion(), "2025.2") >= 0) component.args.tiles = ProjectManager.Compact2BaseTiles(component.args.tiles);
 
+        // I u ever get an error possibly made by accidental dupes,
+        // then uncomm this :v
+        // 
+        // LIB VER 2025.2+ ONLY
+        // {
+        //     const mustRemove = [];
+
+        //     for (let j = 0; j < component.args.tiles.length; j++)
+        //     {
+        //         const curr = component.args.tiles[j];
+        //         const dupe = component.args.tiles.find(item => item !== curr && item.position.x === curr.position.x && item.position.y === curr.position.y);
+
+        //         if (dupe == null) continue;
+
+        //         console.log(dupe);
+
+        //         // Uncomm to remove dupes
+        //         // mustRemove.push(dupe);
+        //     }
+
+        //     for (let j = 0; j < mustRemove.length; j++) component.args.tiles.splice(component.args.tiles.indexOf(mustRemove[j]), 1);
+
+        //     if (mustRemove.length > 0) await Save();
+        // }
+
         const grid = grids.find(item => item.id === tilemaps[i].parent);
 
         new Layer(tilemaps[i], grid);
@@ -409,9 +434,11 @@ async function SaveSceneAs (src)
 
                 if (ProjectManager.CompareVersion(ProjectManager.LibraryVersion(), "2025.2") >= 0)
                 {
+                    const oldTiles = tilemap.args.tiles;
+
                     tilemap.args.tiles = ProjectManager.Base2CompactTiles(tilemap.args.tiles);
 
-                    onAfterSave.Add(() => tilemap.args.tiles = ProjectManager.Compact2BaseTiles(tilemap.args.tiles));
+                    onAfterSave.Add(() => tilemap.args.tiles = oldTiles);
                 }
             }
 

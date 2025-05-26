@@ -19,7 +19,7 @@ class Input
 
     static get mousePositionDelta ()
     {
-        return Vector2.Subtract(this.#mousePosOld, this.#mousePos);
+        return Vector2.Subtract(this.#mousePos, this.#mousePosOld);
     }
     
     static #Key = class
