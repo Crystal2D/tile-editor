@@ -615,12 +615,7 @@ async function Save ()
         if (sprites[i].rect.x === 0) sprites[i].rect.x = undefined;
         if (sprites[i].rect.y === 0) sprites[i].rect.y = undefined;
 
-        if (sprites[i].pivot != null)
-        {
-            if (sprites[i].pivot.x === 0.5) sprites[i].pivot.x = undefined;
-            if (sprites[i].pivot.y === 0.5) sprites[i].pivot.y = undefined;
-            if (sprites[i].pivot.x == null && sprites[i].pivot.y == null) sprites[i].pivot = undefined;
-        }
+        if (sprites[i].pivot != null && sprites[i].pivot.x === 0.5 && sprites[i].pivot.y === 0.5) sprites[i].pivot = undefined;
     }
 
     if (texture.args.sprites.length === 0) texture.args.sprites = undefined;
