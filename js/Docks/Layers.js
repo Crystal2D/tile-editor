@@ -567,8 +567,10 @@ class Layer
 
         if (focused === this) UnfocusBase();
 
-        const onlyChild = SceneManager.GetGridChildren(this.#gridData.id).length === 1;
+        const onlyChild = SceneManager.GetGridChildren(this.#gridData.id).length === 1
+        const tilemap = this.#data.components.find(item => item.type === "Tilemap");
 
+        SceneManager.AddTileCount(-(tilemap.args?.tiles ?? []).length);
         SceneManager.DestroyObject(this.objID);
 
         if (onlyChild) SceneManager.DestroyObject(this.#gridData.id);
@@ -595,6 +597,9 @@ class Layer
 
         layers.push(this);
         layers.sort((a, b) => a.index - b.index);
+
+        const tilemap = this.#data.components.find(item => item.type === "Tilemap");
+        SceneManager.AddTileCount((tilemap.args?.tiles ?? []).length);
         
         const gridBase = {
             position: { x: this.position.x, y: this.position.y },
@@ -729,7 +734,7 @@ class Layer
 
                 SceneView.Refract(`SceneModifier.ChangeParent(${this.#data.id}, ${gridData.id})`);
 
-                SceneManager.DestroyObject(this.#gridData.id);
+                if (SceneManager.GetGridChildren(this.#gridData.id).length === 0) SceneManager.DestroyObject(this.#gridData.id);
 
                 this.#gridData = gridData;
                 
@@ -757,7 +762,7 @@ class Layer
                 return;
             }
 
-            this.#gridData = SceneManager.FindGrid(grid) ?? SceneManager.NewGrid(grid);
+            this.#gridData = SceneManager.NewGrid(grid);
 
             const gridComponent = this.#gridData.components.find(item => item.type === "Grid");
             if (gridComponent.args == null) gridComponent.args = { };
@@ -803,7 +808,7 @@ class Layer
 
                 SceneView.Refract(`SceneModifier.ChangeParent(${this.#data.id}, ${gridData.id})`);
 
-                SceneManager.DestroyObject(this.#gridData.id);
+                if (SceneManager.GetGridChildren(this.#gridData.id).length === 0) SceneManager.DestroyObject(this.#gridData.id);
 
                 this.#gridData = gridData;
 
@@ -831,7 +836,7 @@ class Layer
                 return;
             }
 
-            this.#gridData = SceneManager.FindGrid(grid) ?? SceneManager.NewGrid(grid);
+            this.#gridData = SceneManager.NewGrid(grid);
             
             const gridComponent = this.#gridData.components.find(item => item.type === "Grid");
             if (gridComponent.args == null) gridComponent.args = { };
@@ -877,7 +882,7 @@ class Layer
 
                 SceneView.Refract(`SceneModifier.ChangeParent(${this.#data.id}, ${gridData.id})`);
 
-                SceneManager.DestroyObject(this.#gridData.id);
+                if (SceneManager.GetGridChildren(this.#gridData.id).length === 0) SceneManager.DestroyObject(this.#gridData.id);
 
                 this.#gridData = gridData;
                 
@@ -903,7 +908,7 @@ class Layer
                 return;
             }
 
-            this.#gridData = SceneManager.FindGrid(grid) ?? SceneManager.NewGrid(grid);
+            this.#gridData = SceneManager.NewGrid(grid);
 
             const gridComponent = this.#gridData.components.find(item => item.type === "Grid");
             if (gridComponent.args == null) gridComponent.args = { };
@@ -949,7 +954,7 @@ class Layer
 
                 SceneView.Refract(`SceneModifier.ChangeParent(${this.#data.id}, ${gridData.id})`);
 
-                SceneManager.DestroyObject(this.#gridData.id);
+                if (SceneManager.GetGridChildren(this.#gridData.id).length === 0) SceneManager.DestroyObject(this.#gridData.id);
 
                 this.#gridData = gridData;
 
@@ -975,7 +980,7 @@ class Layer
                 return;
             }
 
-            this.#gridData = SceneManager.FindGrid(grid) ?? SceneManager.NewGrid(grid);
+            this.#gridData = SceneManager.NewGrid(grid);
 
             const gridComponent = this.#gridData.components.find(item => item.type === "Grid");
             if (gridComponent.args == null) gridComponent.args = { };
@@ -1052,6 +1057,8 @@ async function PasteLayerBase ()
 
     if (tilemapBase.args == null) tilemapBase.args = { };
     if (tilemapBase.args.tiles == null) tilemapBase.args.tiles = [];
+
+    SceneManager.AddTileCount(tilemapBase.args.tiles.length);
 
     const colorBase = tilemapBase.args.color ?? { };
 

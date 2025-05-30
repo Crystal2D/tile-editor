@@ -177,8 +177,7 @@ function AddTileBase (tilemap, data)
 
     tilemap.args.tiles.push(data);
 
-    tileCount++;
-    Footer.FindItem("tiles").text = `Tiles: ${tileCount}`;
+    AddTileCount(1);
 }
 
 function RemoveTileBase (tilemap, data)
@@ -197,8 +196,7 @@ function RemoveTileBase (tilemap, data)
 
     tilemap.args.tiles.splice(index, 1);
 
-    tileCount--;
-    Footer.FindItem("tiles").text = `Tiles: ${tileCount}`;
+    AddTileCount(-1);
 }
 
 function AddTile (mapID, data)
@@ -665,6 +663,12 @@ function RedrawSettings ()
     ipcRenderer.invoke("eval", `FindMini(${window.windowID}, "scene-settings").webContents.send("DrawUI", ${JSON.stringify(activeSceneSrc)})`);
 }
 
+function AddTileCount (amount)
+{
+    tileCount += amount;
+    Footer.FindItem("tiles").text = `Tiles: ${tileCount}`;
+}
+
 
 module.exports = {
     GetActiveSceneSrc,
@@ -690,5 +694,6 @@ module.exports = {
     MarkAsEdited,
     AreSettingsOpen,
     SetSettingsOpened,
-    RedrawSettings
+    RedrawSettings,
+    AddTileCount
 };

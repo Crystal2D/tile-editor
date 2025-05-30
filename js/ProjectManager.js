@@ -313,8 +313,8 @@ function CompareVersion (a, b)
 
 
 module.exports = {
-    editiorVersion: "2025.2.4f",
-    editorDisplayVersion: "2025.2.4f (The Bare Minimum Edition)",
+    editiorVersion: "2025.2.5f",
+    editorDisplayVersion: "2025.2.5f (The Bare Minimum Edition)",
     ProjectDir,
     ProjectName,
     GetEditorData,
