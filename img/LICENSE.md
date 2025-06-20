@@ -21,6 +21,7 @@ From Fluent UI System Icons (https://github.com/microsoft/fluentui-system-icons)
     search.svg
     footer/cursor.svg
     footer/rect.svg
+    footer/copy.svg
 
 From Instructure UI (https://github.com/instructure/instructure-ui) of Instructure, Inc.
     checkmark/checked.svg

@@ -1,5 +1,6 @@
 {
     "name": "Refractor.Rendering",
+    "id": "com.crystal.refractor.rendering",
     "description": "",
     "scripts": [
         "GridRenderer",

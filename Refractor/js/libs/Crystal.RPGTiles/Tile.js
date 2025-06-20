@@ -12,4 +12,17 @@ class Tile
         this.spriteID = spriteID ?? 0;
         this.position = position ?? Vector2.zero;
     }
+
+    Duplicate ()
+    {
+        const tile = new Tile(
+            this.palette,
+            this.spriteID,
+            this.position,
+        );
+
+        tile.sprite = this.sprite.Duplicate();
+
+        return tile;
+    }
 }

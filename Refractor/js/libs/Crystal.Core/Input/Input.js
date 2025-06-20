@@ -99,8 +99,6 @@ class Input
         document.addEventListener("mousemove", event => {
             setMousePos(event.clientX, event.clientY);
 
-            if (this.#mouseOver) return;
-
             this.#mouseOver = true;
         });
         document.addEventListener("mouseleave", event => {

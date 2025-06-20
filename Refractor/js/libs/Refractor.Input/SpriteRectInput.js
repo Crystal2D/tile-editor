@@ -417,9 +417,11 @@ class SpriteRectInput extends GameBehavior
         if (!ignoreOnDock) window.parent.RefractBack(`FocusSprite(${JSON.stringify(this.spriteName)})`);
     
         this.#mapperInput.focused = this;
+        this.#mapperInput.outlineRect.SetActive(true);
+        this.#mapperInput.outlineRect.transform.parent = this.#renderer.transform;
         this.#renderer.color = new Color(0, 1, 1);
-        this.#renderer.thickness = 4;
-        this.#renderer.sortingOrder = 1;
+        this.#renderer.thickness = 3;
+        this.#renderer.sortingOrder = 2;
 
         this.#mapperInput.pivot.transform.position = new Vector2(
             this.#rect.xMin + (this.#rect.xMax - this.#rect.xMin) * this.pivot.x,
@@ -441,7 +443,9 @@ class SpriteRectInput extends GameBehavior
         this.#mapperInput.SetCursor("");
 
         this.#mapperInput.focused = null;
-        this.#renderer.color = Color.white;
+        this.#mapperInput.outlineRect.SetActive(false);
+        this.#mapperInput.outlineRect.transform.parent = null;
+        this.#renderer.color = Color.blue;
         this.#renderer.thickness = 1;
         this.#renderer.sortingOrder = 0;
 

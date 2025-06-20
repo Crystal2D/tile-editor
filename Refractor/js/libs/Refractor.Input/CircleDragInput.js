@@ -8,6 +8,7 @@ class CircleDragInput extends GameBehavior
     #inputHandler = null;
     #mapperInput = null;
     #renderer = null;
+    #outline = null;
     #cam = null;
     #clickedPos = null;
     #clickOffset = null;
@@ -34,6 +35,7 @@ class CircleDragInput extends GameBehavior
         this.#enabled = state;
 
         this.#renderer.color.a = +state;
+        this.#outline.SetActive(state);
     }
 
     Start ()
@@ -42,6 +44,10 @@ class CircleDragInput extends GameBehavior
         this.#inputHandler = handlers.GetComponent("InputHandler");
         this.#mapperInput = handlers.GetComponent("MapperInput");
         this.#renderer = this.GetComponent("CircleRenderer");
+
+        this.#outline = GameObject.Find("pivot_outline");
+        this.#outline.SetActive(false);
+
         this.#cam = GameObject.Find("camera").GetComponent("Camera");
     }
 

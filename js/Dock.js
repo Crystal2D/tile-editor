@@ -1,4 +1,5 @@
 let resizing = false;
+let mouseIn = false;
 let sizerOffset = 0;
 let size = 0;
 let tree = [];
@@ -13,6 +14,11 @@ let focused = null;
 
 const onResize = new DelegateEvent();
 const onResizeEnd = new DelegateEvent();
+
+function MouseFocused ()
+{
+    return mouseIn;
+}
 
 function OnResize ()
 {
@@ -58,12 +64,11 @@ function Init ()
     content = document.createElement("div");
     content.classList.add("content");
 
-    let mouseOver = false;
     let contextDown = false;
     let contextUp = false;
 
-    content.addEventListener("mouseover", () => mouseOver = true);
-    content.addEventListener("mouseout", () => mouseOver = false);
+    content.addEventListener("mouseover", () => mouseIn = true);
+    content.addEventListener("mouseout", () => mouseIn = false);
     content.addEventListener("mouseup", event => {
         const clicked = contextDown;
         contextDown = false;
@@ -81,7 +86,7 @@ function Init ()
             document.activeElement.blur();
         }
 
-        requestAnimationFrame(() => { if (event.button === 2 && mouseOver) contextDown = true; })
+        requestAnimationFrame(() => { if (event.button === 2 && mouseIn) contextDown = true; })
     });
     Input.OnMouseUp().Add(() => {
         if (resizing)
@@ -698,6 +703,7 @@ function SearchBar ()
 
 
 module.exports = {
+    MouseFocused,
     OnResize,
     OnResizeEnd,
     Init,

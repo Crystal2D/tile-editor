@@ -219,6 +219,7 @@ window.onload = async () => {
     const footerCamera = new FooterItem("camera", false, "camera.svg");
     new FooterItem("rect", false, "rect.svg");
     new FooterItem("cursor", false, "cursor.svg");
+    new FooterItem("copy", false, "copy.svg");
 
     const footerTiles = new FooterItem("tiles", true);
     const footerFPS = new FooterItem("fps", true);

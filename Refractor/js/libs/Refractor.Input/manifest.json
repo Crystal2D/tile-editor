@@ -1,5 +1,6 @@
 {
     "name": "Refractor.Input",
+    "id": "com.crystal.refractor.input",
     "description": "",
     "scripts": [
         "InputManager",

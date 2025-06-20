@@ -1,5 +1,6 @@
 {
     "name": "Refractor.Scene",
+    "id": "com.crystal.refractor.scene",
     "description": "",
     "scripts": [
         "SceneBank",

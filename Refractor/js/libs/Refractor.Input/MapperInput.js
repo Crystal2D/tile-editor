@@ -18,6 +18,7 @@ class MapperInput extends GameBehavior
 
     pivot = null;
     focused = null;
+    outlineRect = null;
 
     StartRecording ()
     {
@@ -98,6 +99,9 @@ class MapperInput extends GameBehavior
         this.#cam = GameObject.Find("camera").GetComponent("Camera");
 
         this.pivot = GameObject.Find("pivot").GetComponent("CircleDragInput");
+
+        this.outlineRect = GameObject.Find("outline_rect");
+        this.outlineRect.SetActive(false);
         
         let bgLayerID = SortingLayer.layers.find(item => item.name === "Refractor Background")?.id;
 
@@ -136,8 +140,8 @@ class MapperInput extends GameBehavior
                     type: "RectRenderer",
                     args: {
                         color: {
-                            r: 255,
-                            g: 255,
+                            r: 0,
+                            g: 0,
                             b: 255
                         },
                         thickness: 1
@@ -220,12 +224,11 @@ class MapperInput extends GameBehavior
                     type: "RectRenderer",
                     args: {
                         color: {
-                            r: 0,
+                            r: 255,
                             g: 0,
                             b: 255
                         },
-                        thickness: 4,
-                        sortingOrder: 1
+                        sortingOrder: 2
                     }
                 },
                 {
@@ -239,6 +242,8 @@ class MapperInput extends GameBehavior
 
         this.#creationRect = SceneBank.FindByID(objID).GetComponent("RectRenderer");
         this.#createStart = mousePosSnapped;
+        this.outlineRect.SetActive(true);
+        this.outlineRect.transform.parent = this.#creationRect.transform;
     }
 
     Update ()

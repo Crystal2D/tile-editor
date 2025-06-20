@@ -50,7 +50,7 @@ class PlayerLoop
         // SetLoopData
         const activeScene = SceneManager.GetActiveScene();
         const gameObjs = activeScene.gameObjects;
-        
+
         const BroadcastMessage = (method, params, data) => {
             if (this.#crashed) return;
 

@@ -93,7 +93,7 @@ class Resources
     {
         const res = this.#resources.find(item => item.path === path);
         
-        return res != null ? res.obj : { };
+        return res?.obj;
     }
 
     static ChangePath (oldPath, newPath)
@@ -110,23 +110,44 @@ class Resources
     
     static async Load (...path)
     {
+        const pathCount = path.length;
+        let pathIndex = 0;
+        
         for (let i = 0; i < path.length; i++)
         {
-            const data = this.FindUnloaded(path[i]);
+            if (Array.isArray(path[i]))
+            {
+                (async () => {
+                    for (let j = 0; j < path[i].length; j++) await this.Load(path[i][j]);
 
-            if (data == null || this.#resources.find(item => item.path === path) != null) continue;
+                    pathIndex++;
+                })();
 
-            const obj = await this.#ToObject(
-                path[i].split("/").slice(-1)[0],
-                data.type,
-                data.args
-            );
+                continue;
+            }
 
-            this.#resources.push({
-                path : path[i],
-                obj : obj
-            });
+            const data = this.#unloadedRes.find(item => item.path === path[i]);
+            const loadedData = this.#resources.find(item => item.path === path);
+
+            if (data == null || loadedData != null) continue;
+
+            (async () => {
+                const obj = await this.#ToObject(
+                    path[i].split("/").slice(-1)[0],
+                    data.type,
+                    data.args
+                );
+            
+                this.#resources.push({
+                    path : path[i],
+                    obj : obj
+                });
+
+                pathIndex++;
+            })();
         }
+
+        await CrystalEngine.Wait(() => pathIndex === pathCount);
     }
 
     static AddUnloaded (resource)

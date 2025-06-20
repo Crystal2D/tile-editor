@@ -6,12 +6,16 @@ class PaletteInput extends GameBehavior
     #focusedTile = null;
     #selectionRect = null;
     #selectionRenderer = null;
+    #selectionOutlineRect = null;
 
     Start ()
     {
         this.#inputHandler = this.GetComponent("InputHandler");
         this.#selectionRect = GameObject.Find("selection_rect");
         this.#selectionRenderer = this.#selectionRect.GetComponent("RectRenderer");
+
+        this.#selectionOutlineRect = GameObject.Find("selection_outline_rect");
+        this.#selectionOutlineRect.SetActive(false);
     }
 
     Update ()
@@ -45,7 +49,8 @@ class PaletteInput extends GameBehavior
     DeselectBase ()
     {
         this.#focusedTile = null;
-        this.#selectionRenderer.color = new Color(0, 0, 0, 0);
+        this.#selectionRenderer.color.a = 0;
+        this.#selectionOutlineRect.SetActive(false);
 
         window.parent.RefractBack("SceneView.Refract(\"GameObject.FindComponents(\\\"MainInput\\\")[0].tile = null\");");
     }
@@ -84,6 +89,7 @@ class PaletteInput extends GameBehavior
         
         this.#selectionRect.transform.position = SceneModifier.focusedGrid.CellToWorld(pos);
         this.#selectionRenderer.color = new Color(0, 1, 1);
+        this.#selectionOutlineRect.SetActive(true);
 
         this.#focusedTile = tile;
 

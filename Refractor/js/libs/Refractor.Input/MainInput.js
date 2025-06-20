@@ -3,12 +3,14 @@ class MainInput extends GameBehavior
     #transforming = false;
     #recording = false;
     #action = 0;
+    #copyTime = 0;
     #existingTiles = [];
     #selection = [];
 
     #inputHandler = null;
     #selectionRect = null;
     #selectionRenderer = null;
+    #selectionOutlineRect = null;
     #tile = null;
     #preview = null;
     #previewRenderer = null;
@@ -17,6 +19,8 @@ class MainInput extends GameBehavior
     #lastTransPos = null;
     #sceneListener = null;
     #cam = null;
+    #copyBuffer = null;
+    #camFocus = null; 
 
     set tile (value)
     {
@@ -97,6 +101,19 @@ class MainInput extends GameBehavior
         this.#recording = true;
     }
 
+    #AlertCopied (isCut)
+    {
+        window.parent.RefractBack(`
+            const footerItem = Footer.FindItem("copy");
+            footerItem.text = "${isCut ? "CUT SELECTION!" : "COPIED SELECTION!"}";
+            footerItem.visible = true;
+        `);
+
+        if (!isCut) this.#selectionRenderer.color = new Color(1, 1, 0);
+
+        this.#copyTime = 1;
+    }
+
     StopRecording ()
     {
         if (!this.#recording) return;
@@ -111,6 +128,10 @@ class MainInput extends GameBehavior
         this.#inputHandler = this.GetComponent("InputHandler");
         this.#selectionRect = GameObject.Find("selection_rect");
         this.#selectionRenderer = this.#selectionRect.GetComponent("RectRenderer");
+
+        this.#selectionOutlineRect = GameObject.Find("selection_outline_rect");
+        this.#selectionOutlineRect.SetActive(false);
+
         this.#sceneListener = this.GetComponent("SceneListener");
 
         this.#cam = GameObject.Find("camera").GetComponent("Camera");
@@ -121,6 +142,38 @@ class MainInput extends GameBehavior
 
     Update ()
     {
+        if (this.#copyTime > 0)
+        {
+            this.#copyTime -= Time.deltaTime;
+
+            if (this.#copyTime <= 0)
+            {
+                window.parent.RefractBack("Footer.FindItem(\"copy\").visible = false");
+
+                if (this.#selectionRenderer.color.Equals(new Color(1, 1, 0))) this.#selectionRenderer.color = new Color(0, 1, 1);
+            }
+        }
+
+        if (this.#camFocus != null)
+        {
+            this.#camFocus.time -= Time.deltaTime * 2;
+
+            this.#cam.transform.position = Vector2.Lerp(
+                this.#cam.transform.position,
+                this.#camFocus.pos,
+                1 - this.#camFocus.time
+            );
+            this.#cam.orthographicSize = Math.Lerp(
+                this.#cam.orthographicSize,
+                this.#camFocus.size,
+                1 - this.#camFocus.time
+            );
+
+            if (this.#camFocus.time <= 0) this.#camFocus = null;
+
+            return;
+        }
+
         const min = this.#cam.bounds.min;
         const max = this.#cam.bounds.max;
 
@@ -134,12 +187,70 @@ class MainInput extends GameBehavior
         if (grid == null || tilemap == null || tilemap.color.a === 0)
         {
             if (this.#preview != null && this.#preview.activeSelf) this.#preview.SetActive(false);
-            if (this.#selectionRenderer.color.a !== 0) this.#selectionRenderer.color = new Color(0, 0, 0, 0);
+            if (this.#selectionRenderer.color.a !== 0)
+            {
+                this.#selectionRenderer.color.a = 0;
+                this.#selectionOutlineRect.SetActive(false);
+            }
 
             return;
         }
 
         const gridPos = grid.WorldToCell(this.#inputHandler.mousePosSnapped);
+
+        if (Input.mousePresent && Input.OnCtrl(KeyCode.V)) this.Paste();
+        if (Input.GetKeyDown(KeyCode.F) && !Input.GetKey(KeyCode.Ctrl) && !Input.GetKey(KeyCode.Shift))
+        {
+            let bounds = null;
+
+            if (this.#selectStart != null && this.#selectEnd != null)
+            {
+                const rect = new Rect();
+
+                if (this.#selectStart.x < this.#selectEnd.x)
+                {
+                    rect.xMin = this.#selectStart.x;
+                    rect.xMax = this.#selectEnd.x;
+                }
+                else
+                {
+                    rect.xMin = this.#selectEnd.x;
+                    rect.xMax = this.#selectStart.x;
+                }
+            
+                if (this.#selectStart.y < this.#selectEnd.y)
+                {
+                    rect.yMin = this.#selectStart.y;
+                    rect.yMax = this.#selectEnd.y;
+                }
+                else
+                {
+                    rect.yMin = this.#selectEnd.y;
+                    rect.yMax = this.#selectStart.y;
+                }
+
+                bounds = new Bounds(
+                    rect.center,
+                    Vector2.Add(rect.size, Vector2.Scale(
+                        Vector2.Add(grid.cellSize, grid.cellGap),
+                        grid.transform.scale
+                    ))
+                );
+            }
+            else bounds = SceneModifier.focusedTilemap.bounds;
+
+            if (!bounds.center.Equals(new Vector2(NaN, NaN)))
+            {
+                const camBounds = this.#cam.bounds;
+                const size = Math.max(bounds.size.x, bounds.size.y) * 1.25;
+
+                if (!camBounds.center.Equals(bounds.center) || size !== this.#cam.orthographicSize) this.#camFocus = {
+                    time: 1,
+                    pos: bounds.center,
+                    size: size
+                };
+            }
+        }
 
         switch (this.#action)
         {
@@ -203,7 +314,11 @@ class MainInput extends GameBehavior
 
         if (index === 4 && SceneModifier.focusedTilemap != null) { }
         else if (this.#action === 3) this.Deselect();
-        else this.#selectionRenderer.color = new Color(0, 0, 0, 0);
+        else
+        {
+            this.#selectionRenderer.color.a = 0;
+            this.#selectionOutlineRect.SetActive(false);
+        }
 
         this.#action = index;
 
@@ -225,10 +340,18 @@ class MainInput extends GameBehavior
             this.#sceneListener.SortOrdering();
         }
 
-        if (Input.mousePresent && !this.#selectionRenderer.color.Equals(Color.green)) this.#selectionRenderer.color = Color.green;
-        else if (!Input.mousePresent) this.#selectionRenderer.color = new Color(0, 0, 0, 0);
+        if (Input.mousePresent && !this.#selectionRenderer.color.Equals(Color.green))
+        {
+            this.#selectionRenderer.color = Color.green;
+            this.#selectionOutlineRect.SetActive(true);
+        }
+        else if (!Input.mousePresent)
+        {
+            this.#selectionRenderer.color.a = 0;
+            this.#selectionOutlineRect.SetActive(false);
+        }
 
-        const gridSize = Vector2.Add(grid.cellSize, grid.cellGap);
+        const gridSize = Vector2.Scale(Vector2.Add(grid.cellSize, grid.cellGap), grid.transform.scale);
 
         if (!this.#selectionRect.transform.scale.Equals(gridSize)) this.#selectionRect.transform.scale = gridSize;
 
@@ -298,10 +421,18 @@ class MainInput extends GameBehavior
 
     EraserAction (tilemap, grid, gridPos)
     {
-        if (Input.mousePresent && !this.#selectionRenderer.color.Equals(Color.red)) this.#selectionRenderer.color = Color.red;
-        else if (!Input.mousePresent) this.#selectionRenderer.color = new Color(0, 0, 0, 0);
+        if (Input.mousePresent && !this.#selectionRenderer.color.Equals(Color.red))
+        {
+            this.#selectionRenderer.color = Color.red;
+            this.#selectionOutlineRect.SetActive(true);
+        }
+        else if (!Input.mousePresent)
+        {
+            this.#selectionRenderer.color.a = 0;
+            this.#selectionOutlineRect.SetActive(false);
+        }
 
-        const gridSize = Vector2.Add(grid.cellSize, grid.cellGap);
+        const gridSize = Vector2.Scale(Vector2.Add(grid.cellSize, grid.cellGap), grid.transform.scale);
 
         if (!this.#selectionRect.transform.scale.Equals(gridSize)) this.#selectionRect.transform.scale = gridSize;
 
@@ -330,10 +461,18 @@ class MainInput extends GameBehavior
 
     EyedropperAction (tilemap, grid, gridPos)
     {
-        if (Input.mousePresent && !this.#selectionRenderer.color.Equals(Color.blue)) this.#selectionRenderer.color = Color.blue;
-        else if (!Input.mousePresent) this.#selectionRenderer.color = new Color(0, 0, 0, 0);
+        if (Input.mousePresent && !this.#selectionRenderer.color.Equals(Color.blue))
+        {
+            this.#selectionRenderer.color = Color.blue;
+            this.#selectionOutlineRect.SetActive(true);
+        }
+        else if (!Input.mousePresent)
+        {
+            this.#selectionRenderer.color.a = 0;
+            this.#selectionOutlineRect.SetActive(false);
+        }
 
-        const gridSize = Vector2.Add(grid.cellSize, grid.cellGap);
+        const gridSize = Vector2.Scale(Vector2.Add(grid.cellSize, grid.cellGap), grid.transform.scale);
 
         if (!this.#selectionRect.transform.scale.Equals(gridSize)) this.#selectionRect.transform.scale = gridSize;
 
@@ -341,7 +480,7 @@ class MainInput extends GameBehavior
 
         if (!Input.GetMouseButtonUp(0)) return;
 
-        const tile = tilemap.GetTile(gridPos)
+        const tile = tilemap.GetTile(gridPos);
 
         if (tile != null) window.parent.RefractBack(`(async () => {
             await Palette.LoadMap("${tile.palette}");
@@ -368,10 +507,18 @@ class MainInput extends GameBehavior
 
         if (this.#selectStart == null)
         {
-            if (Input.mousePresent && !this.#selectionRenderer.color.Equals(Color.white)) this.#selectionRenderer.color = Color.white;
-            else if (!Input.mousePresent) this.#selectionRenderer.color = new Color(0, 0, 0, 0);
+            if (Input.mousePresent && !this.#selectionRenderer.color.Equals(Color.white))
+            {
+                this.#selectionRenderer.color = Color.white;
+                this.#selectionOutlineRect.SetActive(true);
+            }
+            else if (!Input.mousePresent)
+            {
+                this.#selectionRenderer.color.a = 0;
+                this.#selectionOutlineRect.SetActive(false);
+            }
 
-            const gridSize = Vector2.Add(grid.cellSize, grid.cellGap);
+            const gridSize = Vector2.Scale(Vector2.Add(grid.cellSize, grid.cellGap), grid.transform.scale);
 
             if (!this.#selectionRect.transform.scale.Equals(gridSize)) this.#selectionRect.transform.scale = gridSize;
             
@@ -380,7 +527,11 @@ class MainInput extends GameBehavior
 
         if (this.#selectStart != null && !this.#transforming && Input.GetMouseButton(0))
         {
-            if (!this.#selectionRenderer.color.Equals(new Color(0, 1, 1))) this.#selectionRenderer.color = new Color(0, 1, 1);
+            if (!this.#selectionRenderer.color.Equals(new Color(0, 1, 1)))
+            {
+                this.#selectionRenderer.color = new Color(0, 1, 1);
+                this.#selectionOutlineRect.SetActive(true);
+            }
 
             this.#selectEnd = this.#inputHandler.mousePosSnapped;
 
@@ -411,7 +562,7 @@ class MainInput extends GameBehavior
             }
 
             this.#selectionRect.transform.position = rect.center;
-            this.#selectionRect.transform.scale = Vector2.Add(rect.size, Vector2.Add(grid.cellSize, grid.cellGap));
+            this.#selectionRect.transform.scale = Vector2.Add(rect.size, Vector2.Scale(Vector2.Add(grid.cellSize, grid.cellGap), grid.transform.scale));
 
             const disSize = Vector2.Add(
                 Vector2.Subtract(
@@ -448,19 +599,51 @@ class MainInput extends GameBehavior
         if ((Input.GetKeyDown(KeyCode.Backspace) || Input.GetKeyDown(KeyCode.Delete)) && !Input.GetKey(KeyCode.Ctrl) && !Input.GetKey(KeyCode.Shift)) this.DeleteSelection();
         if (Input.OnCtrl(KeyCode.F)) this.FillSelection();
         if (Input.OnCtrlShift(KeyCode.A)) this.Deselect();
+
+        if (!Input.mousePresent || this.#selection.length === 0) return;
+
+        if (Input.OnCtrl(KeyCode.C))
+        {
+            this.#copyBuffer = {
+                selection: this.#selection,
+                start: Vector2.Scale(this.#selectStart, 1),
+                end: Vector2.Scale(this.#selectEnd, 1)
+            };
+
+            this.#AlertCopied();
+        }
+        if (Input.OnCtrl(KeyCode.X))
+        {
+            this.#copyBuffer = {
+                selection: this.#selection,
+                start: Vector2.Scale(this.#selectStart, 1),
+                end: Vector2.Scale(this.#selectEnd, 1)
+            };
+
+            this.DeleteSelection();
+
+            this.#AlertCopied(true);
+        }
     }
 
     SelectAll ()
     {
-        if (this.#action !== 3 && this.#action !== 4) this.UseAction(3);
+        if (this.#transforming) this.Deselect();
 
-        if (!this.#selectionRenderer.color.Equals(new Color(0, 1, 1))) this.#selectionRenderer.color = new Color(0, 1, 1);
+        if (this.#action !== 3) this.UseAction(3);
+
+        if (!this.#selectionRenderer.color.Equals(new Color(0, 1, 1)))
+        {
+            this.#selectionRenderer.color = new Color(0, 1, 1);
+            this.#selectionOutlineRect.SetActive(true);
+        }
 
         const bounds = SceneModifier.focusedTilemap.bounds;
 
         if (bounds.center.Equals(new Vector2(NaN, NaN))) return;
 
-        const gridSizeOffset = Vector2.Scale(Vector2.Add(SceneModifier.focusedGrid.cellSize, SceneModifier.focusedGrid.cellGap), 0.5);  
+        const gridSize = Vector2.Scale(Vector2.Add(SceneModifier.focusedGrid.cellSize, SceneModifier.focusedGrid.cellGap), SceneModifier.focusedGrid.transform.scale);
+        const gridSizeOffset = Vector2.Scale(gridSize, 0.5);  
 
         if (this.#selectStart == null) window.parent.RefractBack("Footer.FindItem(\"rect\").visible = true");
 
@@ -474,7 +657,7 @@ class MainInput extends GameBehavior
         rect.max = new Vector2(this.#selectEnd.x, this.#selectEnd.y);
 
         this.#selectionRect.transform.position = rect.center;
-        this.#selectionRect.transform.scale = Vector2.Add(rect.size, Vector2.Add(SceneModifier.focusedGrid.cellSize, SceneModifier.focusedGrid.cellGap));
+        this.#selectionRect.transform.scale = Vector2.Add(rect.size, gridSize);
 
         const disSize = Vector2.Add(
             Vector2.Subtract(
@@ -497,7 +680,8 @@ class MainInput extends GameBehavior
 
         this.#selectStart = null;
         this.#selectEnd = null;
-        this.#selectionRenderer.color = new Color(0, 0, 0, 0);
+        this.#selectionRenderer.color.a = 0;
+        this.#selectionOutlineRect.SetActive(false);
         this.#selection = [];
         this.#existingTiles = [];
         this.#transforming = false;
@@ -800,10 +984,134 @@ class MainInput extends GameBehavior
         }
 
         this.#selectionRect.transform.position = rect.center;
-        this.#selectionRect.transform.scale = Vector2.Add(rect.size, Vector2.Add(
-            SceneModifier.focusedGrid.cellSize,
-            SceneModifier.focusedGrid.cellGap
-        ));
+        this.#selectionRect.transform.scale = Vector2.Add(rect.size, Vector2.Scale(Vector2.Add(SceneModifier.focusedGrid.cellSize, SceneModifier.focusedGrid.cellGap), SceneModifier.focusedGrid.transform.scale));
+
+        const disSize = Vector2.Add(
+            Vector2.Subtract(
+                SceneModifier.focusedGrid.WorldToCell(rect.max),
+                SceneModifier.focusedGrid.WorldToCell(rect.min)
+            ),
+            1
+        );
+
+        window.parent.RefractBack(`Footer.FindItem("rect").text = "(${rect.center.x.toFixed(2)}, ${rect.center.y.toFixed(2)}) W: ${disSize.x} H: ${disSize.y}"`);
+    }
+
+    async Paste ()
+    {
+        if (this.#copyBuffer == null) return;
+
+        if (this.#action !== 3) window.parent.RefractBack("Palette.UseAction(3)");
+
+        await CrystalEngine.Wait(() => this.#action === 3);
+
+        this.#selectStart = Vector2.zero;
+        this.#selectEnd = Vector2.zero;
+
+        window.parent.RefractBack("Palette.UseAction(4)");
+
+        await CrystalEngine.Wait(() => this.#transforming);
+
+        if (!this.#selectionRenderer.color.Equals(new Color(1, 0, 1)))
+        {
+            this.#selectionRenderer.color = new Color(1, 0, 1);
+            this.#selectionOutlineRect.SetActive(true);
+        }
+
+        if (this.#selectStart == null) window.parent.RefractBack("Footer.FindItem(\"rect\").visible = true");
+
+        this.#selectStart = Vector2.Scale(this.#copyBuffer.start, 1);
+        this.#selectEnd = Vector2.Scale(this.#copyBuffer.end, 1);
+
+        this.#StartRecording();
+
+        this.#selection = this.#copyBuffer.selection.map(item => item.Duplicate());
+
+        for (let i = 0; i < this.#selection.length; i++)
+        {
+            const existingTile = SceneModifier.focusedTilemap.GetTile(this.#selection[i].position);
+
+            if (existingTile != null)
+            {
+                this.#existingTiles.push(existingTile);
+
+                SceneModifier.focusedTilemap.RemoveTileByPosition(existingTile.position);
+
+                this.#sceneListener.SortOrdering();
+
+                window.parent.RefractBack(`
+                    SceneManager.RemoveTile(
+                        ${SceneModifier.focusedTilemapID},
+                        {
+                            x: ${existingTile.position.x},
+                            y: ${existingTile.position.y}
+                        }
+                    );
+                `);
+            }
+
+            SceneModifier.focusedTilemap.AddTile(this.#selection[i]);
+
+            this.#sceneListener.SortOrdering();
+
+            window.parent.RefractBack(`
+                SceneManager.AddTile(
+                    ${SceneModifier.focusedTilemapID},
+                    {
+                        palette: \"${this.#selection[i].palette}\",
+                        spriteID: ${this.#selection[i].spriteID},
+                        position: {
+                            x: ${this.#selection[i].position.x},
+                            y: ${this.#selection[i].position.y}
+                        }
+                    }
+                );
+            `);
+        }
+
+        const rect = new Rect();
+
+        if (this.#selectStart.x < this.#selectEnd.x)
+        {
+            rect.xMin = this.#selectStart.x;
+            rect.xMax = this.#selectEnd.x;
+        }
+        else
+        {
+            rect.xMin = this.#selectEnd.x;
+            rect.xMax = this.#selectStart.x;
+        }
+
+        if (this.#selectStart.y < this.#selectEnd.y)
+        {
+            rect.yMin = this.#selectStart.y;
+            rect.yMax = this.#selectEnd.y;
+        }
+        else
+        {
+            rect.yMin = this.#selectEnd.y;
+            rect.yMax = this.#selectStart.y;
+        }
+
+        this.#selectionRect.transform.position = rect.center;
+        this.#selectionRect.transform.scale = Vector2.Add(rect.size, Vector2.Scale(Vector2.Add(SceneModifier.focusedGrid.cellSize, SceneModifier.focusedGrid.cellGap), SceneModifier.focusedGrid.transform.scale));
+
+        if (!this.#cam.bounds.Intersects(this.#selectionRenderer.bounds))
+        {
+            const camSize = Vector2.Add(rect.size, Vector2.Scale(
+                Vector2.Add(SceneModifier.focusedGrid.cellSize, SceneModifier.focusedGrid.cellGap),
+                SceneModifier.focusedGrid.transform.scale
+            ));
+
+            this.#camFocus = {
+                time: 1,
+                pos: rect.center,
+                size: Math.max(
+                    Math.max(camSize.x, camSize.y) * 1.25,
+                    this.#cam.orthographicSize
+                )
+            };
+        }
 
         const disSize = Vector2.Add(
             Vector2.Subtract(

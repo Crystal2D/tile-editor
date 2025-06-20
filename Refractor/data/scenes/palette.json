@@ -39,7 +39,28 @@
             "id" : 2,
             "components" : [
                 {
-                    "type": "RectRenderer"
+                    "type": "RectRenderer",
+                    "args": {
+                        "sortingOrder" : 2
+                    }
+                }
+            ]
+        },
+        {
+            "name" : "selection_outline_rect",
+            "id" : 3,
+            "parent": 2,
+            "components" : [
+                {
+                    "type": "RectRenderer",
+                    "args": {
+                        "color": {
+                            "r": 0,
+                            "g": 0,
+                            "b": 0
+                        },
+                        "thickness": 7
+                    }
                 }
             ]
         }

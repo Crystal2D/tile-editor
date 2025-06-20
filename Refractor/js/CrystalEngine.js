@@ -71,6 +71,22 @@ class CrystalEngine
 
         return false;
     }
+
+    static async Wait (conditionCall)
+    {
+        const loop = callback => {
+            if (conditionCall())
+            {
+                callback();
+    
+                return;
+            }
+    
+            requestAnimationFrame(loop.bind(this, callback));
+        };
+    
+        await new Promise(resolve => loop(resolve));
+    }
     
     static Inner = class
     {
@@ -88,9 +104,13 @@ class CrystalEngine
         
         static #Lib = class
         {
+            #startedLoading = false;
             #loaded = false;
             #name = "";
+            #id = "";
             #desc = "";
+            #ver = "";
+            #deps = [];
             #unloadedScripts = [];
             #scripts = [];
             #classes = [];
@@ -106,10 +126,20 @@ class CrystalEngine
             {
                 return this.#name;
             }
+
+            get id ()
+            {
+                return this.#id;
+            }
             
             get description ()
             {
                 return this.#desc;
+            }
+
+            get version ()
+            {
+                return this.#ver;
             }
             
             get scripts ()
@@ -121,20 +151,48 @@ class CrystalEngine
             {
                 return this.#classes;
             }
+
+            get deps ()
+            {
+                return this.#deps;
+            }
             
-            constructor (name, desc, scripts, classes, src)
+            constructor (name, id, desc, ver, scripts, classes, src, deps)
             {
                 this.#name =  name;
+                this.#id = id;
                 this.#desc = desc ?? "";
+                this.#ver = ver;
                 this.#unloadedScripts = scripts;
                 this.#classes = classes ?? [];
                 this.#src = src;
+                this.#deps = deps ?? [];
             }
             
             async Load ()
             {
                 if (this.#loaded) return;
-                
+
+                if (this.#startedLoading)
+                {
+                    await CrystalEngine.Wait(() => this.#loaded);
+
+                    return;
+                }
+
+                this.#startedLoading = true;
+
+                const scriptCount = this.#unloadedScripts.length;
+                let scriptIndex = 0;
+
+                // preload lol
+                for (let i = 0; i < scriptCount; i++) (async () => {
+                    await fetch(`js/libs/${this.#src}/${this.#unloadedScripts[i]}.js`);
+                    scriptIndex++;
+                })();
+
+                await CrystalEngine.Wait(() => scriptIndex === scriptCount);
+
                 for (let i = 0; i < this.#unloadedScripts.length; i++)
                 {
                     const script = new CrystalEngine.Script(`js/libs/${this.#src}/${this.#unloadedScripts[i]}.js`);
@@ -308,24 +366,42 @@ class CrystalEngine
             Interface.SetResolution(window.innerWidth, window.innerHeight);
             
             const engineBuildResponse = await fetch("data/build.json");
-            
             this.#buildData = await engineBuildResponse.json();
-            
             this.#buildData.libs.unshift("Crystal.Core");
+
+            const projDir = Application.projectDir;
+
+            const buildResponse = await fetch(`${projDir}\\data\\build.json`);
+            const buildData = await buildResponse.json();
+            buildData.shaders.unshift("vertex", "fragment");
+
+            const loadEnd = this.#buildData.libs.length + buildData.shaders.length + this.#buildData.shaders.length + 1;
+            let loadCount = 0;
             
-            for (let i = 0; i < this.#buildData.libs.length; i++)
-            {
+            for (let i = 0; i < this.#buildData.libs.length; i++) (async () => {
                 const libResponse = await fetch(`js/libs/${this.#buildData.libs[i]}/manifest.json`);
                 const libData = await libResponse.json();
+
+                if (libData.id !== "com.crystal.core")
+                {
+                    if (libData.deps == null) libData.deps = [];
+
+                    libData.deps.unshift("com.crystal.core");
+                }
                 
                 this.#compiledData.libs.push(new this.#Lib(
                     libData.name,
+                    libData.id,
                     libData.description,
+                    libData.version,
                     libData.scripts,
                     libData.classes,
-                    this.#buildData.libs[i]
+                    this.#buildData.libs[i],
+                    libData.deps
                 ));
-            }
+
+                loadCount++;
+            })();
             
             for (let i = 0; i < this.#buildData.scripts.length; i++)
             {
@@ -338,39 +414,62 @@ class CrystalEngine
                 
                 this.#compiledData.scripts.push(script);
             }
-
-            const projDir = Application.projectDir;
-
-            const buildResponse = await fetch(`${projDir}\\data\\build.json`);
-            const buildData = await buildResponse.json();
-
-            buildData.shaders.unshift("vertex", "fragment");
             
-            for (let i = 0; i < buildData.shaders.length; i++)
-            {
+            for (let i = 0; i < buildData.shaders.length; i++) (async () => {
                 const shaderResponse = await fetch(`${projDir}\\shaders\\${buildData.shaders[i]}.glsl`);
 
                 this.#compiledData.shaders.push(await shaderResponse.text());
-            }
 
-            for (let i = 0; i < this.#buildData.shaders.length; i++)
-            {
+                loadCount++;
+            })();
+
+            for (let i = 0; i < this.#buildData.shaders.length; i++) (async () => {
                 const shaderResponse = await fetch(`shaders/${this.#buildData.shaders[i]}.glsl`);
 
                 this.#compiledData.shaders.push(await shaderResponse.text());
-            }
-            
-            const resResponse = await fetch(Application.resourcesPath);
-            this.#resources = await resResponse.json();
+
+                loadCount++;
+            })();
+
+            (async () => {
+                const resResponse = await fetch(Application.resourcesPath);
+                this.#resources = await resResponse.json();
+
+                loadCount++;
+            })();
 
             this.#compiledData.layers = buildData.layers;
+
+            await CrystalEngine.Wait(() => loadCount === loadEnd);
             
             this.#Init();
         }
         
         static async #Init ()
         {
-            for (let i = 0; i < this.#compiledData.libs.length; i++) await this.#compiledData.libs[i].Load();
+            const libCount = this.#compiledData.libs.length;
+            let libIndex = 0;
+
+            for (let i = 0; i < libCount; i++) (async () => {
+                const deps = this.#compiledData.libs[i].deps;
+                let loadCount = 0;
+
+                for (let i = 0; i < deps.length; i++) (async () => {
+                    const lib = this.#compiledData.libs.find(item => item.id === deps[i]);
+
+                    await lib.Load();
+
+                    loadCount++;
+                })();
+
+                await CrystalEngine.Wait(() => loadCount === deps.length);
+
+                await this.#compiledData.libs[i].Load();
+
+                libIndex++;
+            })();
+            
+            await CrystalEngine.Wait(() => libIndex === libCount);
             
             for (let i = 0; i < this.#compiledData.scripts.length; i++) await this.#compiledData.scripts[i].Load();
             

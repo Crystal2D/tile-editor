@@ -2,7 +2,7 @@
 
 A tile editor for Crystal projects.
 
-**Latest version**: [2025.2.5f (The Bare Minimum Edition)](https://github.com/Crystal2D/tile-editor/releases/tag/2025.2.5f)<br>
+**Latest version**: [2025.3f (The Bare Minimum Edition)](https://github.com/Crystal2D/tile-editor/releases/tag/2025.3f)<br>
 **Licensed under**: [MIT](https://github.com/Crystal2D/tile-editor?tab=MIT-1-ov-file#readme)
 
 
@@ -75,7 +75,8 @@ If you decide to not open one, it will create a new one for you.
     | Save       | Ctrl+S       |
     | Save As    | Ctrl+Shift+S |
 
-- Drawing (Only works when a layer is focused)
+- Drawing (Only works when a layer is focused)<br>
+\* (Only when drawing canvas is hovered)
     | Function                  | Bind               |
     |---------------------------|--------------------|
     | Pencil                    | B                  |
@@ -87,8 +88,12 @@ If you decide to not open one, it will create a new one for you.
     | Transform Selected        | T                  |
     | Select All                | Ctrl+A             |
     | Deselect                  | Ctrl+Shift+A       |
+    | Focus Layer/Selected      | F                  |
+    | Copy Selected             | *Ctrl+C            |
+    | Cut Selected              | *Ctrl+X            |
+    | Paste                     | *Ctrl+V            |
 
-- Layers Tab (Only works when tab is focused)
+- Layers Tab (Only works when tab is focused and hovered)
     | Function                                     | Bind                       |
     |----------------------------------------------|----------------------------|
     | Context Menu (Only works when mouse on dock) | Right Click / Context Menu |

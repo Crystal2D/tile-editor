@@ -1196,7 +1196,7 @@ function Init ()
 
 function Update ()
 {
-    if (!tabFocused) return;
+    if (!tabFocused || !Dock.MouseFocused()) return;
 
     if (!LoadingScreen.IsEnabled())
     {
