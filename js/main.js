@@ -242,9 +242,9 @@ window.onload = async () => {
     const inspector = Dock.AddTab("Inspector");
     const palette = Dock.AddTab("Palette");
 
-    layers.Bind(() => Layers.DrawUI(), () => Layers.OnContext(), () => Layers.OnClear());
-    inspector.Bind(() => Inspector.DrawUI(), null, () => Inspector.OnClear());
-    palette.Bind(() => Palette.DrawUI(), null, () => Palette.OnClear());
+    layers.Bind(() => Layers.DrawUI(), () => Layers.OnClear(), () => Layers.OnContext());
+    inspector.Bind(() => Inspector.DrawUI(), () => Inspector.OnClear());
+    palette.Bind(() => Palette.DrawUI(), () => Palette.OnClear());
 
     Loop.Append(() => {
         if (!SceneManager.IsLoaded() || LoadingScreen.IsEnabled()) return;
@@ -274,22 +274,23 @@ window.onload = async () => {
     let paletteCounterA = 0;
     let paletteCounterB = 0;
 
-    SceneView.onResourceLoad.Add(() => paletteCounterA++);
+    SceneView.onResourceLoad.Add(() => {
+        paletteCounterA++;
+        LoadingScreen.SetText(`Loading Resources (${Math.min(paletteCounterA, paletteCounterB) + 1}/${paletteResources.length})`);
+    });
     SceneView.onLoad.Add(() => SceneView.Refract(`SceneInjector.Resources(...${JSON.stringify(paletteResources)})`));
 
-    Palette.PaletteView().onResourceLoad.Add(() => paletteCounterB++);
+    Palette.PaletteView().onResourceLoad.Add(() => {
+        paletteCounterB++;
+        LoadingScreen.SetText(`Loading Resources (${Math.min(paletteCounterA, paletteCounterB) + 1}/${paletteResources.length})`);
+    });
     Palette.PaletteView().onLoad.Add(() => Palette.PaletteView().Refract(`SceneInjector.Resources(...${JSON.stringify(paletteResources)})`));
 
-    await new Promise(resolve => Loop.Append(() => {
-        if (paletteCounterA === paletteResources.length && paletteCounterB === paletteResources.length)
-        {
-            resolve();
+    let noPaletteTexture = false;
 
-            return;
-        }
+    Palette.PaletteView().onResourceLoadFail.Add(() => noPaletteTexture = true);
 
-        LoadingScreen.SetText(`Loading Resources (${Math.min(paletteCounterA, paletteCounterB) + 1}/${paletteResources.length})`);
-    }, null, () => paletteCounterA === paletteResources.length && paletteCounterB === paletteResources.length));
+    await Loop.Wait(() => paletteCounterA === paletteResources.length && paletteCounterB === paletteResources.length)
 
     await SceneManager.Load(ProjectManager.GetEditorData().scene);
 

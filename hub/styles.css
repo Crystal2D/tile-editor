@@ -42,12 +42,12 @@ header
     background: black;
     height: 25px;
     line-height: 29px;
-    padding-left: 13px;
     padding-bottom: 2px;
     font-weight: 550;
     user-select: none;
     pointer-events: none;
     color: #aaaaaa;
+    text-align: center;
 }
 
 main

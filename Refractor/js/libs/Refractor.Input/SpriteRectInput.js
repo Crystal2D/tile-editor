@@ -110,9 +110,9 @@ class SpriteRectInput extends GameBehavior
                     Math.round(posRaw.x - this.#rect.width * 0.5),
                     Math.round(posRaw.y - this.#rect.height * 0.5)
                 ),
-                new Vector2(-this.#mapperInput.baseWidth, -this.#mapperInput.baseHeight),
+                new Vector2(0, -this.#mapperInput.baseHeight),
                 Vector2.Add(
-                    new Vector2(this.#mapperInput.baseWidth, this.#mapperInput.baseHeight),
+                    new Vector2(this.#mapperInput.baseWidth, 0),
                     new Vector2(-this.#rect.width, -this.#rect.height)
                 )
             );
@@ -133,7 +133,7 @@ class SpriteRectInput extends GameBehavior
             this.#rect.yMax = Math.Clamp(
                 pos.y,
                 this.#rect.yMin + 1,
-                this.#mapperInput.baseHeight
+                0
             );
             this.transform.position = this.#rect.center;
             this.transform.scale = this.#rect.size;
@@ -172,7 +172,7 @@ class SpriteRectInput extends GameBehavior
         this.#leftDraggable.onDrag = pos => {
             this.#rect.xMin = Math.Clamp(
                 pos.x,
-                -this.#mapperInput.baseWidth,
+                0,
                 this.#rect.xMax - 1
             );
             this.transform.position = this.#rect.center;
@@ -212,13 +212,13 @@ class SpriteRectInput extends GameBehavior
         this.#upleftDraggable.onDrag = pos => {
             this.#rect.xMin = Math.Clamp(
                 pos.x,
-                -this.#mapperInput.baseWidth,
+                0,
                 this.#rect.xMax - 1
             );
             this.#rect.yMax = Math.Clamp(
                 pos.y,
                 this.#rect.yMin + 1,
-                this.#mapperInput.baseHeight
+                0
             );
             this.transform.position = this.#rect.center;
             this.transform.scale = this.#rect.size;
@@ -238,7 +238,7 @@ class SpriteRectInput extends GameBehavior
             this.#rect.max = Vector2.Clamp(
                 pos,
                 Vector2.Add(this.#rect.min, 1),
-                new Vector2(this.#mapperInput.baseWidth, this.#mapperInput.baseHeight)
+                new Vector2(this.#mapperInput.baseWidth, 0)
             );
             this.transform.position = this.#rect.center;
             this.transform.scale = this.#rect.size;
@@ -257,7 +257,7 @@ class SpriteRectInput extends GameBehavior
         this.#downleftDraggable.onDrag = pos => {
             this.#rect.min = Vector2.Clamp(
                 pos,
-                new Vector2(-this.#mapperInput.baseWidth, -this.#mapperInput.baseHeight),
+                new Vector2(0, -this.#mapperInput.baseHeight),
                 Vector2.Add(this.#rect.max, -1)
             );
             this.transform.position = this.#rect.center;
@@ -296,7 +296,7 @@ class SpriteRectInput extends GameBehavior
     {
         if (!ignoreOnDock)
         {
-            const position = this.finalRect.position;
+            const position = Vector2.Subtract(this.finalRect.position, new Vector2(this.#mapperInput.baseWidth, this.#mapperInput.baseHeight));
             const size = this.finalRect.size;
 
             window.parent.RefractBack(`
@@ -329,12 +329,12 @@ class SpriteRectInput extends GameBehavior
     {
         this.#rect.position = Vector2.Clamp(
             new Vector2(
-                pos.x - this.#mapperInput.baseWidth,
-                -pos.y + this.#mapperInput.baseHeight - this.#rect.height
+                pos.x,
+                -pos.y - this.#rect.height
             ),
-            new Vector2(-this.#mapperInput.baseWidth, -this.#mapperInput.baseHeight),
+            new Vector2(0, -this.#mapperInput.baseHeight),
             Vector2.Add(
-                new Vector2(this.#mapperInput.baseWidth, this.#mapperInput.baseHeight),
+                new Vector2(this.#mapperInput.baseWidth, 0),
                 new Vector2(-this.#rect.width, -this.#rect.height)
             )
         );

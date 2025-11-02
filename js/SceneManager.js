@@ -286,7 +286,7 @@ async function Load (src)
 
         SceneView.Refract("SceneInjector.DestroyAll(); requestAnimationFrame(() => window.parent.RefractBack(\"SceneManager.MarkAsUnloaded()\"))");
 
-        await new Promise(resolve => Loop.Append(() => { if (unloaded) resolve(); }, null, () => unloaded));
+        await Loop.Wait(() => unloaded);
 
         ActionManager.ClearActions();
 
@@ -359,7 +359,7 @@ async function Load (src)
     if (SceneView.isLoaded) loadCall();
     else SceneView.onLoad.Add(() => loadCall());
 
-    await new Promise(resolve => Loop.Append(() => { if (loaded) resolve(); }, null, () => loaded));
+    await Loop.Wait(() => loaded);
 
     const sceneCam = activeScene.gameObjects.find(item => item.components.find(component => component.type === "Camera") != null).components.find(component => component.type === "Camera");
 
@@ -660,7 +660,7 @@ function RedrawSettings ()
 {
     if (!settingsOpened) return;
 
-    ipcRenderer.invoke("eval", `FindMini(${window.windowID}, "scene-settings").webContents.send("DrawUI", ${JSON.stringify(activeSceneSrc)})`);
+    ipcRenderer.invoke("eval", `FindMini(${window.windowID}, "scene-settings").webContents.send("DrawUI", ${JSON.stringify(`${ProjectManager.ProjectDir()}\\data\\scenes\\${activeSceneSrc}`)})`);
 }
 
 function AddTileCount (amount)

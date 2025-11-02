@@ -129,7 +129,17 @@ class Resources
             const data = this.#unloadedRes.find(item => item.path === path[i]);
             const loadedData = this.#resources.find(item => item.path === path);
 
-            if (data == null || loadedData != null) continue;
+            if (data == null || loadedData != null)
+            {
+                window.parent.RefractBack(`
+                    Refractor.FindEmbed(${window.refractorID}).onResourceLoad.RemoveAll();
+                    Refractor.FindEmbed(${window.refractorID}).onResourceLoadFail.Invoke();
+                    LoadingScreen.SetText("Texture '${path[i]}' not found. CHANGE YOUR PREFERENCES");
+                    Preferences.Open();
+                `);
+
+                continue;
+            }
 
             (async () => {
                 const obj = await this.#ToObject(

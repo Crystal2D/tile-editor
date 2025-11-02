@@ -109,10 +109,14 @@ let textureSize = null;
 const MapperView = new Refractor.Embed(mapperViewWrap, projectDir, resourcesPath);
 MapperView.content.addEventListener("load", () => MapperView.Refract("window.targetScene = 2"));
 MapperView.onLoad.Add(async () => {
-    await new Promise(resolve => Loop.Append(() => { if (textureSize != null) resolve(); }, null, () => textureSize != null));
+    await Loop.Wait(() => textureSize != null);
 
     MapperView.Refract(`(async () => {
         await SceneInjector.Resources(${JSON.stringify(texturePath)});
+
+        const sprite = Resources.Find(${JSON.stringify(texturePath)}).sprites[0];
+        sprite.pivot = Vector2.zero;
+
         await SceneInjector.GameObject(${JSON.stringify({
             name: "texture",
             id: 0,

@@ -96,6 +96,9 @@ class Input
             new this.#Key("mouse2", "mouse2")
         ];
 
+        document.addEventListener("mouseover", event => {
+            setMousePos(event.clientX, event.clientY);
+        });
         document.addEventListener("mousemove", event => {
             setMousePos(event.clientX, event.clientY);
 

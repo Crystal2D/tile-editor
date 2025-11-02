@@ -37,11 +37,11 @@ class MapperInput extends GameBehavior
         this.focused.LetGo();
         this.pivot.LetGo();
 
-        const lastPosition = this.#lastRect.position;
+        const lastPosition = Vector2.Subtract(this.#lastRect.position, new Vector2(this.baseWidth, this.baseHeight));
         const lastSize = this.#lastRect.size;
 
         const finalRect = this.focused.finalRect;
-        const position = finalRect.position;
+        const position = Vector2.Subtract(finalRect.position, new Vector2(this.baseWidth, this.baseHeight));
         const size = finalRect.size;
         const pivot = this.focused.pivot;
 
@@ -127,8 +127,8 @@ class MapperInput extends GameBehavior
             id: objID,
             transform: {
                 position: {
-                    x: (position.x + size.x * 0.5) - this.baseWidth,
-                    y: -(position.y + size.y * 0.5) + this.baseHeight
+                    x: (position.x + size.x * 0.5),
+                    y: -(position.y + size.y * 0.5)
                 },
                 scale: {
                     x: size.x,
@@ -175,8 +175,8 @@ class MapperInput extends GameBehavior
     {
         const mousePosSnapped = this.#grid.SnapToGrid(this.#inputHandler.mousePos);
 
-        if (mousePosSnapped.x < -this.baseWidth + 0.5 || mousePosSnapped.x > this.baseWidth - 0.5) return;
-        if (mousePosSnapped.y < -this.baseHeight + 0.5 || mousePosSnapped.y > this.baseHeight - 0.5) return;
+        if (mousePosSnapped.x < 0.5 || mousePosSnapped.x > this.baseWidth - 0.5) return;
+        if (mousePosSnapped.y > -0.5 || mousePosSnapped.y < -this.baseHeight + 0.5) return;
 
         let objID = null;
 
@@ -268,8 +268,8 @@ class MapperInput extends GameBehavior
 
         this.#createEnd = Vector2.Clamp(
             this.#grid.SnapToGrid(this.#inputHandler.mousePos),
-            new Vector2(-this.baseWidth + 0.5, -this.baseHeight + 0.5),
-            new Vector2(this.baseWidth - 0.5, this.baseHeight - 0.5)
+            new Vector2(0.5, -this.baseHeight + 0.5),
+            new Vector2(this.baseWidth - 0.5, -0.5)
         );
 
         const rect = new Rect();
@@ -304,7 +304,7 @@ class MapperInput extends GameBehavior
             const rectInput = this.#creationRect.GetComponent("SpriteRectInput");
             rectInput.SetBaseRect();
 
-            const position = rectInput.finalRect.position;
+            const position = Vector2.Subtract(rectInput.finalRect.position, new Vector2(this.baseWidth, this.baseHeight));
             const size = rectInput.finalRect.size;
 
             window.parent.RefractBack(`
@@ -379,22 +379,19 @@ class MapperInput extends GameBehavior
 
         const bounds = this.#sprRenderer.bounds;
         this.#cam.orthographicSize = Math.max(bounds.size.x, bounds.size.y) * 1.25;
+        this.#cam.transform.position = new Vector2(bounds.center.x, bounds.center.y);
 
         this.#sprRenderer.color = Color.white;
 
         this.#background.transform.scale = new Vector2(bounds.size.x, bounds.size.y);
+        this.#background.transform.position = new Vector2(bounds.center.x, bounds.center.y);
         this.#inputHandler.maxZoom = Math.max(bounds.size.x, bounds.size.y) * 2.25;
-        this.#inputHandler.bounds = new Bounds(Vector2.zero, bounds.size);
+        this.#inputHandler.bounds = new Bounds(new Vector2(bounds.center.x, bounds.center.y), bounds.size);
 
         const sprites = this.#sprRenderer.sprite.texture.sprites;
 
-        this.baseWidth = this.#sprRenderer.sprite.texture.width * 0.5;
-        this.baseHeight = this.#sprRenderer.sprite.texture.height * 0.5;
-
-        this.#grid.transform.position = new Vector2(
-            +(this.#sprRenderer.sprite.texture.width % 2 === 0) * 0.5,
-            +(this.#sprRenderer.sprite.texture.height % 2 === 0) * 0.5
-        )
+        this.baseWidth = this.#sprRenderer.sprite.texture.width;
+        this.baseHeight = this.#sprRenderer.sprite.texture.height;
 
         for (let i = 1; i < sprites.length; i++)
         {

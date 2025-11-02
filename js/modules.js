@@ -1,4 +1,5 @@
 const FS = require("fs/promises");
+const SyncFS = require("fs");
 const HideFile = require("hidefile");
 const { ipcRenderer } = require("electron");
 

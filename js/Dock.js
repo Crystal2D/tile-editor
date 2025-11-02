@@ -4,8 +4,8 @@ let sizerOffset = 0;
 let size = 0;
 let tree = [];
 let tabList = [];
-let onContext = () => { };
 let onClear = () => { };
+let onContext = () => { };
 
 let sizer = null;
 let tabs = null;
@@ -153,11 +153,11 @@ function AddTab (label)
     const output = {
         element: tab,
         onFocus: () => { },
-        Bind: (callback, onCtx, onClr) => {
+        Bind: (callback, onClr, onCtx) => {
             output.onFocus = () => {
                 callback();
-                onContext = onCtx ?? (() => { });
                 onClear = onClr ?? (() => { });
+                onContext = onCtx ?? (() => { });
             };
 
             if (focused !== tab) return;

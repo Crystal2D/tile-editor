@@ -51,6 +51,12 @@
         {
             "name" : "grid",
             "id": 3,
+            "transform": {
+                "position": {
+                    "x": 0.5,
+                    "y": 0.5
+                }
+            },
             "components": [
                 {
                     "type": "Grid",

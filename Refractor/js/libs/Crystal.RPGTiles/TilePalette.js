@@ -17,8 +17,12 @@ class TilePalette
     {
         if (this.#loaded) return;
 
-        const dataRequest = await fetch(`${Application.projectDir}\\data\\tilepalettes.json`);
-        this.#unloadedPal = await dataRequest.json();
+        try
+        {
+            const dataRequest = await fetch(`${Application.projectDir}\\data\\tilepalettes.json`);
+            this.#unloadedPal = await dataRequest.json();
+        }
+        catch { }
 
         this.#loaded = true;
     }

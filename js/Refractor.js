@@ -10,6 +10,7 @@ class Embed
 
     onLoad = new DelegateEvent();
     onResourceLoad = new DelegateEvent();
+    onResourceLoadFail = new DelegateEvent();
 
     content = null;
 

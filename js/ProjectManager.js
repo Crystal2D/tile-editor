@@ -60,8 +60,45 @@ async function Init (dir)
     })();
 
     (async () => {
-        const newLibRequest = await fetch(`${projectDir}\\js\\libs\\Crystal.RPGTiles\\manifest.json`);
-        libVersion = (await newLibRequest.json()).version;
+        try
+        {
+            const newLibRequest = await fetch(`${projectDir}\\js\\libs\\Crystal.RPGTiles\\manifest.json`);
+            libVersion = (await newLibRequest.json()).version;
+        }
+        catch
+        {
+            const cachedLibRequest = await fetch("cached\\Crystal.RPGTiles\\manifest.json");
+            const cachedLibData = await cachedLibRequest.json();
+
+            LoadingScreen.SetText(`Importing Crystal.RPGTiles ${cachedLibData.version}`);
+
+            const libFiles = await FS.readdir("cached\\Crystal.RPGTiles", { recursive : true });
+            let counter = 0;
+            
+            for (let i = 0; i < libFiles.length; i++) (async () => {
+                if ((await FS.stat(`cached\\Crystal.RPGTiles\\${libFiles[i]}`)).isDirectory())
+                {
+                    counter++;
+                    return;
+                }
+
+                const file = `${projectDir}\\js\\libs\\Crystal.RPGTiles\\${libFiles[i]}`;
+
+                let path = file.split("\\");
+                path.pop();
+                path = path.join("\\");
+
+                if (!SyncFS.existsSync(path)) await FS.mkdir(path, { recursive : true });
+                
+                await FS.copyFile(`cached\\Crystal.RPGTiles\\${libFiles[i]}`, file);
+                
+                counter++;
+            })();
+
+            await Loop.Wait(() => counter === libFiles.length);
+
+            libVersion = cachedLibData.version;
+        }
 
         try
         {
@@ -121,14 +158,7 @@ async function Init (dir)
         counter++;
     })();
 
-    await new Promise(resolve => Loop.Append(() => {
-        if (counter === 3)
-        {
-            resolve();
-
-            return;
-        }
-    }, null, () => counter === 3));
+    await Loop.Wait(() => counter === 3);
 }
 
 async function SaveEditorData ()
@@ -231,18 +261,11 @@ async function UpdateByVersion ()
             await FS.writeFile(`${projectDir}\\data\\scenes\\${scenes[i]}`, JSON.stringify(scene, null, 4));
 
             counter++;
-        })();
-
-        await new Promise(resolve => Loop.Append(() => {
-            if (counter === scenes.length)
-            {
-                resolve();
-
-                return;
-            }
 
             LoadingScreen.SetText(`Remapping Scenes (${counter + 1}/${scenes.length})`);
-        }, null, () => counter === scenes.length));
+        })();
+
+        await Loop.Wait(() => counter === scenes.length);
     }
 
     // libVersion < 2025.2f && savedLibVer >= 2025.2f
@@ -271,18 +294,11 @@ async function UpdateByVersion ()
             await FS.writeFile(`${projectDir}\\data\\scenes\\${scenes[i]}`, JSON.stringify(scene, null, 4));
 
             counter++;
-        })();
-
-        await new Promise(resolve => Loop.Append(() => {
-            if (counter === scenes.length)
-            {
-                resolve();
-
-                return;
-            }
 
             LoadingScreen.SetText(`Remapping Scenes (${counter + 1}/${scenes.length})`);
-        }, null, () => counter === scenes.length));
+        })();
+
+        await Loop.Wait(() => counter === scenes.length);
     }
 
     
@@ -313,8 +329,8 @@ function CompareVersion (a, b)
 
 
 module.exports = {
-    editiorVersion: "2025.3f",
-    editorDisplayVersion: "2025.3f (The Bare Minimum Edition)",
+    editiorVersion: "2025.3.1f",
+    editorDisplayVersion: "2025.3.1f (The Bare Minimum Edition)",
     ProjectDir,
     ProjectName,
     GetEditorData,

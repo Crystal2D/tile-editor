@@ -128,11 +128,24 @@ class Loop
         
         let done = false;
         
-        return new Promise(resolve => this.Append(() => {
-            done = true;
-            
-            resolve();
-        }, time, () => done));
+        return Loop.Wait(() => done);
+    }
+
+    static async Wait (conditionCall)
+    {
+        const loop = callback => {
+            if (conditionCall())
+            {
+                callback();
+    
+                return;
+            }
+    
+            if (scheduler != null) scheduler.postTask(loop.bind(this, callback));
+            else setTimeout(loop.bind(this, callback), 0);
+        };
+    
+        await new Promise(resolve => loop(resolve));
     }
 }
 

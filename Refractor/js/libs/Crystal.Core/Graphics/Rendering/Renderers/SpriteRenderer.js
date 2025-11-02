@@ -1,11 +1,12 @@
 class SpriteRenderer extends Renderer
 {
-    #changedDrawMode = false;
+    #remapColors = false;
     #meshChanged = true;
     #drawMode = 0;
     #indexes = [];
     #trisCounts = [];
     
+    #texSize = Vector2.zero;
     #boundsSize = Vector2.zero;
     #bounds = new Bounds();
     #transMat = new Matrix3x3();
@@ -44,8 +45,10 @@ class SpriteRenderer extends Renderer
 
     set drawMode (value)
     {
+        if (this.#drawMode === value) return;
+
         this.#drawMode = value;
-        this.#changedDrawMode = true;
+        this.#remapColors = true;
 
         this.Reload();
     }
@@ -65,7 +68,11 @@ class SpriteRenderer extends Renderer
 
     set size (value)
     {
+        if (this.#size.Equals(value)) return;
+
         this.#size = value;
+
+        if (this.#drawMode > 0) this.#remapColors = true;
 
         this.Reload();
     }
@@ -104,19 +111,25 @@ class SpriteRenderer extends Renderer
     
     Reload ()
     {
+        if (this.updatedMaterial) this.#remapColors = true;
+
         super.Reload();
 
         this.#spriteOld = this.#sprite;
 
         const ppu = this.sprite.pixelPerUnit;
+        const sizeBase = new Vector2(
+            ppu / this.sprite.rect.width,
+            ppu / this.sprite.rect.height,
+        );
 
-        if (this.#size == null) this.#size = Vector2.Divide(Vector2.one, ppu);
+        if (this.#size == null) this.#size = Vector2.Divide(Vector2.one, sizeBase);
 
         this.#indexes = [];
         this.#trisCounts = [];
         
         const verts = this.sprite.vertices;
-        const renderSize = Vector2.Scale(this.#size, ppu);
+        const renderSize = Vector2.Scale(this.#size, sizeBase);
 
         if (!renderSize.Equals(Vector2.one))
         {
@@ -144,6 +157,7 @@ class SpriteRenderer extends Renderer
         const rescaleW = texX / ppu;
         const rescaleH = texY / ppu;
 
+        this.#texSize = new Vector2(rescaleW, rescaleH);
         this.#boundsSize = new Vector2(
             rescaleW * (verts[3].x - vertexPos.x),
             rescaleH * (verts[3].y - vertexPos.y)
@@ -499,7 +513,11 @@ class SpriteRenderer extends Renderer
         this.material.SetBuffer(this.geometryBufferID, vertexArray);
         this.material.SetBuffer(this.textureBufferID, textureArray);
 
-        if (this.#colorOld == null || this.#changedDrawMode) this.#RemapColors();
+        if (this.#colorOld == null || this.#remapColors)
+        {
+            this.#RemapColors();
+            this.#remapColors = false;
+        }
 
         this.#transMat = Matrix3x3.TRS(
             Vector2.Scale(
@@ -544,10 +562,10 @@ class SpriteRenderer extends Renderer
         );
 
         const posMat = Matrix3x3.Multiply(refMat, Matrix3x3.Translate(
-            Vector2.Scale(
-                Vector2.Add(Vector2.Scale(this.sprite.pivot, -2), 1),
-                0.5
-            )
+            new Vector2(
+                (0.5 - this.sprite.pivot.x) * this.#texSize.x,
+                (0.5 - this.sprite.pivot.y) * this.#texSize.y
+            ),
         ));
 
         bounds.center = new Vector2(posMat.GetValue(2, 0), -posMat.GetValue(2, 1));
@@ -604,5 +622,18 @@ class SpriteRenderer extends Renderer
         );
         
         gl.useProgram(null);
+    }
+
+    Duplicate ()
+    {
+        const output = new SpriteRenderer(this.sprite.Duplicate(), this.material.Duplicate());
+
+        output.color = this.color.Duplicate();
+        output.sortingLayer = this.sortingLayer;
+        output.sortingOrder = this.sortingOrder;
+        output.drawMode = this.drawMode;
+        output.size = this.size.Duplicate();
+
+        return output;
     }
 }

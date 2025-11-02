@@ -223,6 +223,10 @@ body > .context-menu div[enabled="0"] .tip
 .ui-textarea[type="number"] .input
 {
     padding: 3px 7px;
+    white-space: nowrap;
+    width: 0;
+    overflow: clip;
+    text-overflow: ellipsis;
 }
 
 .ui-textarea .input
